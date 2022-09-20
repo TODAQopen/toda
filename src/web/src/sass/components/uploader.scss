@@ -1,0 +1,27 @@
+.uploader {
+  display: inline-block;
+  width: 100%;
+  padding: 50px;
+  border: 1px dashed #000;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 50px;
+
+  &:hover, &.hover {
+    background: #9acfea;
+  }
+
+  label {
+    display: block;
+    cursor: pointer;
+  }
+
+  input {
+    padding-top: 20px;
+    cursor: pointer;
+  }
+
+  ul {
+    list-style-type: none;
+  }
+}

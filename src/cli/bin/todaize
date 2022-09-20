@@ -1,0 +1,115 @@
+#!/usr/bin/env node
+/*************************************************************
+ * TODAQ Open: TODA File Implementation
+ * Toronto 2022
+ * 
+ * Apache License 2.0
+ *************************************************************/
+
+const { getArgs, getVersion, getFileOrInput, formatInputs, getAtomsFromPath} = require('./util');
+const { handleProcessException } = require('./helpers/process-exception');
+const {DI, DIAssetClassClass, AssetClassField} = require('../../abject/di');
+const {Abject} = require("../../abject/abject");
+const {SimpleRigged} = require('../../abject/actionable');
+const {P1String, P1Float} = require('../../abject/primitive');
+const {ArbitraryPacket} = require("../../core/packet");
+const {ByteArray} = require("../../core/byte-array");
+const fs = require('fs-extra');
+const path = require('path');
+const chalk = require('chalk');
+
+// Default outputs are binary streams
+void async function () {
+
+    let args = getArgs(process);
+
+    if (args['version']) {
+      return showVersion(args);
+    }
+
+    if (args['help']) {
+      return showHelp();
+    }
+
+      let filename = args['_'][0];
+
+      let buf = await getFileOrInput(process, filename);
+      let ba = new ByteArray(buf);
+      let packet = new ArbitraryPacket(ba);
+
+      let fFileName = new AssetClassField();
+      fFileName.consolidation = DI.consolidations.lastWriteWins;
+      fFileName.type = P1String.interpreter;
+      fFileName.required = false;
+
+      let fFileSize = new AssetClassField();
+      fFileSize.consolidation = DI.consolidations.firstWriteWins;
+      fFileSize.type = P1Float.interpreter;
+      fFileSize.required = false;
+
+      let fFileDescr = new AssetClassField();
+      fFileDescr.consolidation = DI.consolidations.lastWriteWins;
+      fFileDescr.type = P1String.interpreter;
+      fFileDescr.required = false;
+
+      let fFileContent = new AssetClassField();
+      fFileDescr.consolidation = DI.consolidations.firstWriteWins;
+      fFileDescr.required = true;
+
+      let fFileCreated = new AssetClassField();
+      fFileCreated.consolidation = DI.consolidations.firstWriteWins;
+      fFileCreated.type = P1String.interpreter;
+      fFileCreated.required = false;
+
+      let fFileModified = new AssetClassField();
+      fFileModified.consolidation = DI.consolidations.firstWriteWins;
+      fFileModified.type = P1String.interpreter;
+      fFileModified.required = false;
+
+      Todaized = new DIAssetClassClass();
+      Todaized.fieldSyms = {fFileName: DI.gensym('todaized/field/fFileName'),
+                            fFileSize: DI.gensym('todaized/field/fFileSize'),
+                            fFileDescr: DI.gensym('todaized/field/fFileDescr'),
+                            fFileContent: DI.gensym('todaized/field/fFileContent'),
+                            fFileCreated: DI.gensym('todaized/field/fFileCreated'),
+                            fFileModified: DI.gensym('todaized/field/fFileModified')};
+
+      Todaized.addACField(Todaized.fieldSyms.fFileName, fFileName);
+      Todaized.addACField(Todaized.fieldSyms.fFileSize, fFileSize);
+      Todaized.addACField(Todaized.fieldSyms.fFileDescr, fFileDescr);
+      Todaized.addACField(Todaized.fieldSyms.fFileContent, fFileContent);
+      Todaized.addACField(Todaized.fieldSyms.fFileCreated, fFileCreated);
+      Todaized.addACField(Todaized.fieldSyms.fFileModified, fFileModified);
+
+      let x = new DI();
+      x.setAssetClass(Todaized);
+    x.setField(Todaized.fieldSyms.fFileContent, packet);
+    x.setFieldAbject(Todaized.fieldSyms.fFileSize, new P1Float(ba.length));
+      if (filename) {
+          x.setFieldAbject(Todaized.fieldSyms.fFileName, new P1String(path.basename(filename)));
+          let stat = fs.statSync(filename);
+          x.setFieldAbject(Todaized.fieldSyms.fFileCreated, new P1String(stat.ctime.toISOString()));
+          x.setFieldAbject(Todaized.fieldSyms.fFileModified, new P1String(stat.mtime.toISOString()));
+      }
+    if (args['descr']) {
+        x.setFieldAbject(Todaized.fieldSyms.fFileDescr, new P1String(args['descr']));
+    }
+
+    let sr = new SimpleRigged();
+    sr.setContext(x);
+
+    args = await formatInputs(args);
+    let popTopHash = (await getAtomsFromPath(args.poptop)).lastAtomHash() // fragile
+    sr.setPopTop(popTopHash);
+
+    // HACK(acg): we do NOT use the SR serializer here -- we avoid gettign a twist.
+    process.stdout.write(Abject.prototype.serialize.bind(sr)().toBytes());
+}()
+
+function showHelp() {
+  console.log(fs.readFileSync(path.join(__dirname, '../help-todaize.txt'), 'utf8'));
+}
+
+function showVersion(args) {
+  console.log(`v${getVersion(args)}`);
+}

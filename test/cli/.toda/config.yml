@@ -1,0 +1,12 @@
+store: ./test/cli/.toda/store
+publicKey: ./test/cli/.toda/secure/id_secp256r1.pub
+privateKey: ./test/cli/.toda/secure/id_secp256r1
+salt: ./test/cli/.toda/secure/salt
+line: ./test/cli/.toda/store/line.toda
+# Change poptop to https://line.todaq.net/ to test integrity with the line servers
+poptop: ./test/cli/.toda/store/poptop.toda
+inventoryServer: https://inventory.todaq.net
+maxHeaderSize: 1048576
+webPort: 3001
+invPort: 3001
+invUrl: ../

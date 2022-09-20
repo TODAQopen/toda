@@ -1,0 +1,41 @@
+@import '../variables.scss';
+
+.inventory {
+  display: inline-block;
+  text-align:center;
+  overflow-x: scroll;
+  max-width: 80%;
+
+  .file-link a {
+    padding: 5px;
+
+    &:hover {
+      background: darkgrey;
+    }
+  }
+
+  .pagination-nav {
+    text-align: center;
+    margin: 20px 0;
+    overflow-x: scroll;
+    white-space: nowrap;
+
+    button {
+      margin: 0 2px;
+      background: white;
+      color: $todaRed;
+      border: 1px solid $todaGrey;
+      border-radius: 5px;
+      cursor: pointer;
+
+      &.disabled {
+        opacity: 0.1;
+        cursor: default;
+      }
+
+      &.selected, &:hover:not(.disabled) {
+        background: $grey;
+      }
+    }
+  }
+}

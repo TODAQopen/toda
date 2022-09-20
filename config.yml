@@ -1,0 +1,13 @@
+---
+# TodaWeb ./src/web
+WEB:
+  server: ".."
+
+# Inventory Server ./src/inventory
+INVENTORY:
+  inventory: "/.toda/store"
+  port: 3000
+
+# CLI ./src/cli
+CLI:
+  configPath: "/.toda/config"
