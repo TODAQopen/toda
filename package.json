@@ -18,8 +18,6 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "build-blake3": "npx webpack -c ./build/blake3/webpack.config.js",
-    "pull-toda-tests": "aws s3 cp --recursive s3://toda-tests test/toda-tests/",
     "test": "mocha --recursive --timeout 60000",
     "build": "cd ./build && NODE_ENV=production npx webpack && cd ..",
     "test-only": "mocha --timeout 60000",
@@ -46,10 +44,8 @@
     "fs-extra": "^10.1.0",
     "js-yaml": "^4.1.0",
     "minimist": "^1.2.6",
-    "mysql2": "^2.3.2",
     "node-json-color-stringify": "^1.1.0",
     "npm": "^8.12.1",
-    "sqlite3": "^5.0.2",
     "uuid": "^8.3.2",
     "vue": "^3",
     "vue-router": "^4.0.14",

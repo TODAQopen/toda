@@ -1,5 +1,4 @@
 const reqsat = require('../src/core/reqsat.js');
-const file = require('../src/core/file.js');
 const packet = require('../src/core/packet.js');
 const hash = require('../src/core/hash.js');
 const interpret = require('../src/core/interpret.js');
@@ -16,7 +15,6 @@ const { Shield } = require('../src/core/shield.js');
 const { MemorySyncPacketStore, SerialStore } = require('../src/core/store.js');
 
 exports.reqsat = reqsat;
-exports.file = file;
 exports.packet = packet;
 exports.hash = hash;
 exports.interpret = interpret;
