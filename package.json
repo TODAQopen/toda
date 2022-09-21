@@ -1,11 +1,14 @@
 {
   "name": "todajs",
-  "version": "0.1.0",
+  "version": "0.1.001",
   "description": "",
   "author": "TodaQ",
   "license": "Apache License 2.0",
-  "homepage": "",
-  "repository": {},
+  "homepage": "https://engineering.todaq.net",
+  "repository": {
+      "url": "https://github.com/TODAQopen/toda",
+      "type": "git"
+  },
   "bin": {
     "toda": "./src/cli/bin/toda",
     "todaize": "./src/cli/bin/todaize"
