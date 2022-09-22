@@ -1,11 +1,19 @@
 # TODA Command Line Suite
 
 ## Getting Started
+See also the [quickstart guide](quickstart.md)
+
+## Table of contents
+
+- [Setup](#setup)
+- [Tutorial](#tutorial)
+- [Command Reference](#command-reference)
+- [Advanced](developer.md)
 
 ### Setup
 `npm install -g todajs` using node >= 16 LTS
 
-### Quickstart Tutorial
+### Tutorial
 The following tutorial will walk you through some of the basic functionality of the CLI. For more detailed documentation on each command and the available options, please see the Usage section following this Quickstart tutorial.
 
 This tutorial reflects the common use of the CLI for *low level developer shell operations* only.  Application developers (and, certainly, users) should _never_ deal with raw structures in this manner.  Applications are built out of higher level constructs, using provided libraries and APIs.  The examples below demonstrate creating assets which do not have significant application components: all asset payloads/cargo remain up to the application developer to create and assess.

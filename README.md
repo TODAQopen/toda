@@ -1,13 +1,26 @@
-# TODA Cryptographic Asset System
+<p align="center">
+  <a href="https://engineering.todaq.net/">
+    <img src="https://engineering.todaq.net/logo.png" alt="Bootstrap logo" width="200" height="65">
+  </a>
+</p>
 
-TODA is a system for creating digital assets, based on a unique crypographic distributed data structure and supporting systems.
+<h3 align="center">TODA Cryptographic Asset System</h3>
 
+TODA is a system for creating digital assets, based on a unique cryptographic distributed data structure and supporting systems.
+<br>
+<br>
 This package contains the library for interacting with low-level structures, as well as higher-level abstractions for application design.  It additionally contains the `toda` command-line tool to assist with development, debugging, admin and support.  Further, the CLI now contains a quick-start server for serving and viewing assets.
 
 * Authors: https://engineering.todaq.net
 * Theoretics: https://arxiv.org/abs/2208.13617
 * Institute: https://trie.site
 * Specifications: https://trie.site/rigging_specifications.pdf
+
+## Table of contents
+
+- [Command Line Suite](#command-line-suite)
+- [Code Layout](#code-layout)
+- [TODA Client](#toda-client)
 
 ## Command Line Suite
 
