@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -293,7 +293,7 @@ async function isControlled(twist, pk) {
     if (!satisfiedRequirement && twist.tether()) {
         return isControlled(twist.tether(), pk);
     }
-  
+
     return true;
 }
 

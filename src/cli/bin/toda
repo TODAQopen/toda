@@ -2,46 +2,47 @@
 /*************************************************************
  * TODAQ Open: TODA File Implementation
  * Toronto 2022
- * 
+ *
  * Apache License 2.0
  *************************************************************/
 
-const { getArgs, initConfig, getConfig, initKeys, initSalt, getVersion, getPrivateKey } = require('./util');
-const { create } = require('./helpers/twist');
-const { SignatureRequirement } = require('../../core/reqsat');
-const { importPublicKey } = require('../lib/pki');
-const { handleProcessException, ProcessException } = require('./helpers/process-exception');
-const { spawn } = require('child_process');
-const fs = require('fs-extra');
-const path = require('path');
-const chalk = require('chalk');
+const { getArgs, initConfig, setConfig, getConfig, initKeys, initSalt, getVersion, getPrivateKey } = require("./util");
+const { create } = require("./helpers/twist");
+const { SignatureRequirement } = require("../../core/reqsat");
+const { importPublicKey } = require("../lib/pki");
+const { handleProcessException, ProcessException } = require("./helpers/process-exception");
+const { spawn } = require("child_process");
+const fs = require("fs-extra");
+const path = require("path");
+const chalk = require("chalk");
 
 // Need to include this so that the interpreter gets registered
-const { Capability } = require('../../abject/capability');
-const { SimpleHistoric } = require('../../abject/simple-historic');
+const { Capability } = require("../../abject/capability");
+const { SimpleHistoric } = require("../../abject/simple-historic");
 
 const MIN_NODE_VERSION = 16;
 
 // Default outputs are binary streams
 void async function () {
   try {
-    if (process.versions.node.split('.')[0] < MIN_NODE_VERSION) {
+    if (process.versions.node.split(".")[0] < MIN_NODE_VERSION) {
       throw new ProcessException(9, `The TODA CLI requires node version ${MIN_NODE_VERSION} or greater.`)
     }
 
     initConfig();
 
-    let args = getArgs(process);
-    await init(args['config'], args['i']);
+    let args = getArgs();
+    setConfig(args["config"]);
+    await init(args["i"] || getConfig().privateKey);
 
-    let cmd = args['_'][0];
+    let cmd = args["_"][0];
     let cmdPath = path.join(__dirname, `toda-${cmd}.js`);
 
-    if (args['version']) {
+    if (args["version"]) {
       return showVersion(args);
     }
 
-    if (args['help'] || !cmd) {
+    if (args["help"] || !cmd) {
       return showHelp();
     }
 
@@ -51,9 +52,9 @@ void async function () {
     }
 
     await new Promise(async (resolve, reject) => {
-      let p = spawn(cmdPath, process.argv.slice(3), {stdio: 'inherit'});
+      let p = spawn(cmdPath, process.argv.slice(3), {stdio: "inherit"});
 
-      p.on('close', (code) => {
+      p.on("close", (code) => {
         if (code !== 0) {
           process.exitCode = code;
           return reject();
@@ -63,33 +64,33 @@ void async function () {
       });
     }).catch(() => {});
   } catch (pe) {
-    handleProcessException(process, pe);
+    handleProcessException(pe);
   }
 }()
 
 // Initializes secure keys, salt, and local line if any are missing
-async function init(cfgPath, identity) {
-  let config = getConfig(cfgPath);
+async function init(identity) {
+  let config = getConfig();
   await initKeys(config.publicKey, config.privateKey);
   initSalt(config.salt);
-  await initLine(config.line, config.poptop, config.publicKey, await getPrivateKey(identity), config);
+  await initLine(config.line, config.poptop, config.publicKey, await getPrivateKey(identity));
 }
 
 // If the local line specified in the config file doesn't exist, generate a new one and update the pointer
-async function initLine(linePath, poptop, publicKey, pk, config) {
+async function initLine(linePath, poptop, publicKey, pk) {
   if (!fs.existsSync(linePath)) {
     let req = {
       type: SignatureRequirement.REQ_SECP256r1,
       key: await importPublicKey(publicKey)
     };
 
-    let tb = await create(null, req, poptop, pk, null, config);
+    let tb = await create(null, req, poptop, pk, null);
     fs.outputFileSync(linePath, tb.serialize().toBytes());
   }
 }
 
 function showHelp() {
-  console.log(fs.readFileSync(path.join(__dirname, '../help.txt'), 'utf8'));
+  console.log(fs.readFileSync(path.join(__dirname, "../help.txt"), "utf8"));
 }
 
 function showVersion(args) {

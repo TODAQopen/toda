@@ -2,11 +2,11 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, getConfig, formatInputs, writeToFile } = require("./util");
+const { getArgs, formatInputs, writeToFile } = require("./util");
 const { authorize } = require("./helpers/capability");
 const { verifyControl } = require("./helpers/control");
 const { handleProcessException } = require("./helpers/process-exception");
@@ -23,15 +23,14 @@ const axios = require("axios");
  */
 void async function () {
     try {
-        let args = getArgs(process);
-        let config = getConfig(args["config"]);
+        let args = getArgs();
         let inputs = await formatInputs(args);
 
-        let abject = await verifyControl(inputs.capability, inputs.privateKey, config, inputs.poptop);
-        let cap = await authorize(abject, inputs.url, inputs.verb, inputs.nonce, inputs.shield, inputs.tether, inputs.privateKey, config);
+        let abject = await verifyControl(inputs.capability, inputs.privateKey, inputs.poptop);
+        let cap = await authorize(abject, inputs.url, inputs.verb, inputs.nonce, inputs.shield, inputs.tether, inputs.privateKey);
 
         if (!args.test) {
-            writeToFile(config, cap, args.out);
+            writeToFile(cap, args.out);
         }
 
         let res = await axios({
@@ -47,6 +46,6 @@ void async function () {
 
         process.stdout.write(res.data);
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();

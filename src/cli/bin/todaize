@@ -2,12 +2,11 @@
 /*************************************************************
  * TODAQ Open: TODA File Implementation
  * Toronto 2022
- * 
+ *
  * Apache License 2.0
  *************************************************************/
 
 const { getArgs, getVersion, getFileOrInput, formatInputs, getAtomsFromPath} = require('./util');
-const { handleProcessException } = require('./helpers/process-exception');
 const {DI, DIAssetClassClass, AssetClassField} = require('../../abject/di');
 const {Abject} = require("../../abject/abject");
 const {SimpleRigged} = require('../../abject/actionable');
@@ -21,7 +20,7 @@ const chalk = require('chalk');
 // Default outputs are binary streams
 void async function () {
 
-    let args = getArgs(process);
+    let args = getArgs();
 
     if (args['version']) {
       return showVersion(args);
@@ -33,7 +32,7 @@ void async function () {
 
       let filename = args['_'][0];
 
-      let buf = await getFileOrInput(process, filename);
+      let buf = await getFileOrInput(filename);
       let ba = new ByteArray(buf);
       let packet = new ArbitraryPacket(ba);
 

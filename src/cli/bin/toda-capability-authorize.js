@@ -2,11 +2,11 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, getConfig, getFileOrInput, formatInputs , writeToFile, write } = require("./util");
+const { getArgs, getFileOrInput, formatInputs , writeToFile, write } = require("./util");
 const { handleProcessException } = require("./helpers/process-exception");
 const { authorize } = require("./helpers/capability");
 const { verifyControl } = require("./helpers/control");
@@ -24,25 +24,24 @@ const { Abject } = require("../../abject/abject");
  */
 void async function () {
     try {
-        let args = getArgs(process);
-        let config = getConfig(args["config"]);
+        let args = getArgs();
         let inputs = await formatInputs(args);
 
         if (!inputs.capability) {
-            let bytes = await getFileOrInput(process);
+            let bytes = await getFileOrInput();
             inputs.capability = Abject.parse(Atoms.fromBytes(bytes));
         }
 
-        let abject = await verifyControl(inputs.capability, inputs.privateKey, config, inputs.poptop);
-        let cap = await authorize(abject, inputs.url, inputs.verb, inputs.nonce, inputs.shield, inputs.tether, inputs.privateKey, config);
+        let abject = await verifyControl(inputs.capability, inputs.privateKey, inputs.poptop);
+        let cap = await authorize(abject, inputs.url, inputs.verb, inputs.nonce, inputs.shield, inputs.tether, inputs.privateKey);
 
         if (!args.test) {
-            writeToFile(config, cap, args.out);
+            writeToFile(cap, args.out);
         }
 
-        write(process, cap);
+        write(cap);
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();
 

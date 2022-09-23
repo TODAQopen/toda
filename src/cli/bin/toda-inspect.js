@@ -2,7 +2,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -30,17 +30,17 @@ const formattingFns = {
 // <~/.toda/store/41e231509e8df76c8cc64cfcaef3599e03a2c4812cc957d9bb435e013d51b596c6.toda
 void async function () {
     try {
-        let args = getArgs(process);
+        let args = getArgs();
         let hash = Hash.parse(new ByteArray(Buffer.from(args["_"][0], "hex")));
 
-        let bytes = await getFileOrInput(process, args["_"][1]);
+        let bytes = await getFileOrInput(args["_"][1]);
         let twist = new Twist(Atoms.fromBytes(bytes));
         let res = inspect(twist, hash, args);
 
         let isJson = args["json"];
         logFormatted(formatOutput(res, isJson), isJson);
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();
 

@@ -1,7 +1,7 @@
 const { ByteArray } = require("../../src/core/byte-array");
 const { Twist } = require("../../src/core/twist");
 const { Atoms } = require("../../src/core/atoms");
-const { getAtomsFromPath } = require("../../src/cli/bin/util");
+const { getAtomsFromPath, setConfig } = require("../../src/cli/bin/util");
 const { initPoptop } = require("./test-utils");
 const { execSync } = require("child_process");
 const path = require("path");
@@ -13,9 +13,10 @@ describe("toda-list", async() => {
     let configPath = path.resolve(__dirname, "./.toda/config.yml");
     let config = yaml.parse(fs.readFileSync(configPath, "utf8"));
     let toda = path.resolve(__dirname, "../../src/cli/bin");
+    setConfig(configPath);
 
     it("Should display the list of twists", async() => {
-        await initPoptop(config);
+        await initPoptop(config.poptop);
 
         try {
             let res = execSync(`${toda}/toda create --empty --config ${configPath}`);

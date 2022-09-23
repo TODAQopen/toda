@@ -1,5 +1,5 @@
 const { Abject } = require("../../src/abject/abject");
-const { getAtomsFromPath } = require("../../src/cli/bin/util");
+const { getAtomsFromPath, setConfig } = require("../../src/cli/bin/util");
 const { initPoptop } = require("./test-utils");
 const { execSync } = require("child_process");
 const path = require("path");
@@ -11,9 +11,10 @@ describe("toda-capability", async() => {
     let configPath = path.resolve(__dirname, "./.toda/config.yml");
     let config = yaml.parse(fs.readFileSync(configPath, "utf8"));
     let toda = path.resolve(__dirname, "../../src/cli/bin");
+    setConfig(configPath);
 
     it("Should create a Capability abject with the correct properties", async() => {
-        await initPoptop(config);
+        await initPoptop(config.poptop);
         let out = path.resolve(config.store, "toda-capability.toda");
 
         try {

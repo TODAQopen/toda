@@ -3,7 +3,7 @@ const { ByteArray } = require("../../src/core/byte-array");
 const { Atoms } = require("../../src/core/atoms");
 const { Sha256 } = require("../../src/core/hash");
 const { ArbitraryPacket } = require("../../src/core/packet");
-const { getAtomsFromPath, generateShield } = require("../../src/cli/bin/util");
+const { getAtomsFromPath, generateShield, setConfig } = require("../../src/cli/bin/util");
 const { initPoptop } = require("./test-utils");
 const { execSync } = require("child_process");
 const path = require("path");
@@ -15,9 +15,10 @@ describe("toda-create", async() => {
     let configPath = path.resolve(__dirname, "./.toda/config.yml");
     let config = yaml.parse(fs.readFileSync(configPath, "utf8"));
     let toda = path.resolve(__dirname, "../../src/cli/bin");
+    setConfig(configPath);
 
     it("Should create a twist with the correct properties", async() => {
-        await initPoptop(config);
+        await initPoptop(config.poptop);
         let out;
 
         try {

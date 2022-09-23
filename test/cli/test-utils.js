@@ -2,12 +2,12 @@ const { create } = require("../../src/cli/bin/helpers/twist");
 const fs = require("fs-extra");
 
 // Initializes the poptop if the path is local
-async function initPoptop(config, shield, req, tether, pk, cargo) {
+async function initPoptop(poptop, shield, req, tether, pk, cargo) {
     try {
-        return new URL(config.poptop);
+        return new URL(poptop);
     } catch (e) {
-        let pt = await create(shield, req, tether, pk, cargo, config);
-        fs.outputFileSync(config.poptop, pt.serialize().toBytes());
+        let pt = await create(shield, req, tether, pk, cargo);
+        fs.outputFileSync(poptop, pt.serialize().toBytes());
     }
 }
 

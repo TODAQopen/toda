@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -15,7 +15,7 @@ const { Shield } = require("../../../core/shield");
 const { ByteArray } = require("../../../core/byte-array");
 const { Twist } = require("../../../core/twist");
 const { isControlled } = require("../../../core/reqsat");
-const { getAtomsFromPath, parseAbjectOrTwist, getLineURL } = require("../util");
+const { getAtomsFromPath, parseAbjectOrTwist, getLineURL, getConfig } = require("../util");
 const fs = require("fs-extra");
 const chalk = require("chalk");
 
@@ -140,8 +140,7 @@ async function isValidAndControlled(abject, poptop, pk) {
 
     try {
         let twist = abject instanceof Twist ? abject : new Twist(abject.serialize(), abject.getHash());
-        let controlled = await isControlled(twist, pk);
-        return controlled;
+        return await isControlled(twist, pk);
     } catch(e) {
         throw new ProcessException(7, "Unable to establish local control of this file (verifying controller)");
     }
@@ -150,10 +149,9 @@ async function isValidAndControlled(abject, poptop, pk) {
 /** Adds the atoms from the tethered lines to this twist, up to the poptop
  * @param abject <Abject|Twist> the twist to refresh
  * @param poptop <Hash> the poptop of the twist
- * @param config <Object> An object containing config defaults for line and poptop
  * @returns <Promise<Atoms>> The atoms in all the tethered chains
  */
-async function getTetheredAtoms(abject, poptop, config, noStatus) {
+async function getTetheredAtoms(abject, poptop, noStatus) {
     let status = null;
     if (!noStatus) {
         status = console.draft && process.stdout.isTTY ? console.draft() : null;
@@ -166,12 +164,12 @@ async function getTetheredAtoms(abject, poptop, config, noStatus) {
             status(chalk.green.dim(">") + chalk.white.dim(twist.getHash().toString().substr(56)) + ".".repeat(15) + chalk.blue("Locating"));
         }
 
-        let tetherUrl = await getTetherUrl(abject, config);
+        let tetherUrl = await getTetherUrl(abject);
 
         if (status) {
             status(chalk.green.dim(">") + chalk.white.dim(twist.getHash().toString().substr(56)) + ".".repeat(15) + chalk.blue("Downloading " + tetherUrl));
         }
-        let atoms = await getTetheredAtoms(parseAbjectOrTwist(await getAtomsFromPath(tetherUrl)), poptop, config, noStatus);
+        let atoms = await getTetheredAtoms(parseAbjectOrTwist(await getAtomsFromPath(tetherUrl)), poptop, noStatus);
 
         if (status) {
             status(chalk.green.dim(">") + chalk.white.dim(twist.getHash().toString().substr(56)) + ".".repeat(15) + chalk.blue("Material received") + chalk.dim.white(` [${tetherUrl}]`));
@@ -194,10 +192,10 @@ async function getTetheredAtoms(abject, poptop, config, noStatus) {
  * If abject is a SimpleHistoric, grab the tetherUrl
  * Otherwise assume tethered to the local line
  * @param abject <Abject|Twist> the abject or twist whose tether url to find
- * @param config <Object> An object containing config defaults for line and poptop
  * @returns <Boolean> true if the hash is in the twist's line
  */
-async function getTetherUrl(abject, config) {
+async function getTetherUrl(abject) {
+    let config = getConfig();
     let twist = abject instanceof Twist ? abject : new Twist(abject.serialize());
     let llTwist = parseAbjectOrTwist(await getAtomsFromPath(config.line));
 

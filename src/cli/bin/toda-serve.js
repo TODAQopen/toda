@@ -2,7 +2,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -19,8 +19,8 @@ const http = require("http");
 // Starts an inventory server and a web app to browse it.
 void async function () {
     try {
-        let args = getArgs(process);
-        let config = getConfig(args["config"]);
+        let args = getArgs();
+        let config = getConfig();
         let inputs = await formatInputs(args);
 
         const projectRootPath = path.resolve(__dirname, "../../..");
@@ -59,7 +59,7 @@ void async function () {
             }
         }
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();
 

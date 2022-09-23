@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -30,14 +30,12 @@ const { Capability } = require("../../abject/capability");
 const { SimpleHistoric } = require("../../abject/simple-historic");
 
 /** Parses and returns the process args using minimist, applying defaults and formatting
- * @param process <Process> the current process
  * @param argDefaults <Object> A set of defaults to apply when parsing args using minimist
  * @returns <Object> A minimist args object
  */
-function getArgs(process, argDefaults = {}) {
-    let config = getConfig(parseArgs(process.argv)["config"]);
+function getArgs(argDefaults = {}) {
     let opts = {
-        default: { identity: config.privateKey, ...argDefaults },
+        default: argDefaults,
         boolean: ["all",
             "auto-tether",
             "content",
@@ -69,8 +67,8 @@ function getArgs(process, argDefaults = {}) {
     return parseArgs(process.argv.slice(2), opts);
 }
 
-function filePathForHash(config, hash) {
-    return path.join(config.store, `${hash}.toda`);
+function filePathForHash(hash) {
+    return path.join(getConfig().store, `${hash}.toda`);
 }
 
 /** Given a minimist args object, format the inputs in a usable way
@@ -79,14 +77,14 @@ function filePathForHash(config, hash) {
  * @returns <Object> A formatted set of inputs
  */
 async function formatInputs(args, whitelist) {
-    let config = getConfig(args["config"]);
+    let config = getConfig();
 
     let shield = args["shield"] ? new ByteArray(Buffer.from(args["shield"], "hex")) : null;
     let tether = args["tether"] || config.line;
-    let privateKey = await getPrivateKey(args["i"]);
+    let privateKey = await getPrivateKey(args["i"] || config.privateKey);
 
     let prev = args["prev"] ?
-        new Twist(Atoms.fromBytes(getFileOrHash(args, args["prev"]))) :
+        new Twist(Atoms.fromBytes(getFileOrHash(args["prev"]))) :
         null;
 
     let cargo = args["cargo"] ?
@@ -94,7 +92,7 @@ async function formatInputs(args, whitelist) {
         null;
 
     let capability = args["capability"] ?
-        Abject.parse(Atoms.fromBytes(getFileOrHash(args, args["capability"]))) :
+        Abject.parse(Atoms.fromBytes(getFileOrHash(args["capability"]))) :
         null;
 
     let req;
@@ -154,33 +152,41 @@ function getVersion() {
     return json.version;
 }
 
-/** Checks that the default config.yaml exists and creates a new one if it doesn't */
-function initConfig() {
-    let rawCfg = fs.readFileSync(path.resolve(__dirname, "../../../config.yml"), "utf8");
-    let cfg = yaml.parse(rawCfg).CLI;
-    let cfgPath = path.join(os.homedir(), cfg.configPath);
-
-    if (!fs.existsSync(cfgPath)) {
-        fs.outputFileSync(cfgPath, yaml.stringify(defaults), { mode: 0o600 });
-    }
+function getDefaultConfigPath() {
+  let rawCfg = fs.readFileSync(path.resolve(__dirname, "../../../config.yml"), "utf8");
+  let cfg = yaml.parse(rawCfg).CLI;
+  return path.join(os.homedir(), cfg.configPath);
 }
 
-/** Retrieves the user config file at the specified path or uses the default specified in the project config.yaml
- * Any missing keys default to the values specified in defaults.js
- * @param cfgPath <String|null> the path to a config file
- * @returns <Object> A js object containing the config values
+/**
+ * Checks that the default config.yaml exists and creates a new one if it doesn't.
  */
-function getConfig(cfgPath) {
-    // Get the default user config file
-    let rawCfg = fs.readFileSync(path.resolve(__dirname, "../../../config.yml"), "utf8");
-    let cfg = yaml.parse(rawCfg).CLI;
-    let defaultPath = path.join(os.homedir(), cfg.configPath);
-
-    let overrideFile = fs.readFileSync(cfgPath || defaultPath, "utf8");
-    let config = yaml.parse(overrideFile);
-    return {...defaults, ...config};
+function initConfig() {
+  let defaultPath = getDefaultConfigPath();
+  let def = yaml.stringify(defaults);
+  if (!fs.existsSync(defaultPath)) {
+      fs.outputFileSync(defaultPath, def, { mode: 0o600 });
+  }
 }
 
+/** Sets the process.env.config object.
+ * Retrieves the user config file at the specified path arg or uses the default.
+ * Any missing keys default to the values specified in defaults.js
+ * @param cfgPath <String?> The path to a custom config file to use
+ */
+function setConfig(cfgPath) {
+  let defaultPath = getDefaultConfigPath();
+  let configFile = fs.readFileSync(cfgPath || defaultPath, "utf8");
+  let config = yaml.parse(configFile);
+  process.env.config = yaml.stringify({...defaults, ...config});
+}
+
+/** Parses the config object set on the process
+ * @returns <Object> A json object containing the config values
+ */
+function getConfig() {
+  return yaml.parse(process.env.config);
+}
 
 /** Checks that the default keys exist and creates them otherwise */
 async function initKeys(publicKey, privateKey) {
@@ -202,10 +208,9 @@ async function getPrivateKey(identity) {
 
 /**
  * Accepts a stream object and reads the bytes
- * @param process <Process> A process whose STDIN to read
  * @returns {ByteArray}
  */
-async function getInputBytes(process) {
+async function getInputBytes() {
     return new Promise(function (resolve, reject) {
         const stdin = process.stdin;
         let data = new ByteArray();
@@ -238,7 +243,7 @@ async function getAtomsFromPath(path) {
     return Atoms.fromBytes(bytes);
 }
 
-function getFileOrHashPath(args, filePath) {
+function getFileOrHashPath(filePath) {
     if (!fs.existsSync(filePath)) {
         filePath = String(filePath); //hack
 
@@ -253,12 +258,10 @@ function getFileOrHashPath(args, filePath) {
             logFormatted("Fuzzy matching requires minimum 4 characters");
             return null;
         }
-        if (!args) {
-            return null;
-        }
-        let config = getConfig(args.config);
 
-        let exactFilePath = filePathForHash(config, filePath);
+        let config = getConfig();
+
+        let exactFilePath = filePathForHash(filePath);
         if (fs.existsSync(exactFilePath)) {
             return exactFilePath;
         }
@@ -298,8 +301,8 @@ function getFileOrHashPath(args, filePath) {
     return filePath;
 }
 
-function getFileOrHash(args, filePath) {
-    let fhp = getFileOrHashPath(args, filePath);
+function getFileOrHash(filePath) {
+    let fhp = getFileOrHashPath(filePath);
 
     if (fhp) {
         return new ByteArray(fs.readFileSync(`${fhp}`));
@@ -310,24 +313,20 @@ function getFileOrHash(args, filePath) {
 // Accepts a process object and a file path
 // Reads a file at the specified source, or reads in from STDIN if none specified
 // Returns ByteArray
-async function getFileOrInput(process, filePath) {
+async function getFileOrInput(filePath) {
     return new Promise(function (resolve, reject) {
         if (filePath) {
-            let ba = getFileOrHash(process ? getArgs(process) : null, filePath);
+            let ba = getFileOrHash(filePath);
             if (ba) {
                 return resolve(ba);
             }
             return reject(new ProcessException(2, `The specified file or hash ${filePath} could not be found.`));
         }
 
-        return getInputBytes(process)
+        return getInputBytes()
             .then(data => resolve(data))
             .catch(e => reject(new ProcessException(3, `${e}`)));
     });
-}
-
-async function getTwistFromInput(process, path) {
-    return new Twist(Atoms.fromBytes(await getFileOrInput(process, path)));
 }
 
 function getAcceptedInputs(args, acceptedFields, base = {}) {
@@ -380,10 +379,9 @@ function parseAbjectOrTwist(atoms, focus) {
 }
 
 /** Writes either the hex hash of the abject or else the serialized bytes if piping this into another command
- * @param process <Process> the currently running process object
  * @param abject <Abject|TwistBuilder> the abject whose details to write
  */
-function write(process, abject) {
+function write(abject) {
     if (process.stdout.isTTY) {
         console.log(abject.getHash().toString());
     } else {
@@ -392,17 +390,16 @@ function write(process, abject) {
 }
 
 /** Writes the abject to a file with the specified name or the abject's hash otherwise.
- * @param config <Object> An object containing the configurable options
  * @param abject <Abject|TwistBuilder> An abject or TwistBuilder to write
  * @param out <String?> The output file name
  */
-function writeToFile(config, abject, out) {
+function writeToFile(abject, out) {
     let prev = abject.getPrevHash ? abject.getPrevHash() : abject.buildTwist().getPrevHash();
-    let filePath = filePathForHash(config, prev);
+    let filePath = filePathForHash(prev);
     fs.outputFileSync(out || filePath, abject.serialize().toBytes());
 
     if (!out) {
-        fs.renameSync(filePath, filePathForHash(config, abject.getHash()));
+        fs.renameSync(filePath, filePathForHash(abject.getHash()));
     }
 }
 
@@ -419,6 +416,7 @@ function getLineURL(path) {
 exports.getArgs = getArgs;
 exports.formatInputs = formatInputs;
 exports.getVersion = getVersion;
+exports.setConfig = setConfig;
 exports.getConfig = getConfig;
 exports.getPrivateKey = getPrivateKey;
 
@@ -428,7 +426,6 @@ exports.initSalt = initSalt;
 
 exports.getAtomsFromPath = getAtomsFromPath;
 exports.getFileOrInput = getFileOrInput;
-exports.getTwistFromInput = getTwistFromInput;
 exports.getAcceptedInputs = getAcceptedInputs;
 exports.getInputBytes = getInputBytes;
 exports.getDistinct = getDistinct;

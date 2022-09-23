@@ -2,7 +2,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -16,10 +16,10 @@ const { Twist } = require("../../core/twist");
 // Hoists the specified file up to the specified line
 void async function () {
     try {
-        let args = getArgs(process);
-        let config = getConfig(args["config"]);
+        let args = getArgs();
+        let config = getConfig();
 
-        let bytes = await getFileOrInput(process, args["_"][0]);
+        let bytes = await getFileOrInput(args["_"][0]);
         let twist = new Twist(Atoms.fromBytes(bytes));
         let lead = getLead(twist);
         let hh = await getHoist(lead, args["line-server"] || config.poptop);
@@ -28,7 +28,7 @@ void async function () {
             logFormatted(hh.getHash().toString());
         }
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();
 

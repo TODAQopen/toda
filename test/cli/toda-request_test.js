@@ -1,13 +1,13 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
 const { Abject } = require("../../src/abject/abject");
 const { Capability } = require("../../src/abject/capability");
-const { getAtomsFromPath } = require("../../src/cli/bin/util");
+const { getAtomsFromPath, setConfig } = require("../../src/cli/bin/util");
 const { initPoptop } = require("./test-utils");
 const { app } = require("../../src/inventory/src/server");
 const { Twist } = require("../../src/core/twist");
@@ -27,9 +27,10 @@ describe("toda-request", () => {
     let configPath = path.resolve(__dirname, "./.toda/config.yml");
     let config = yaml.parse(fs.readFileSync(configPath, "utf8"));
     let toda = path.resolve(__dirname, "../../src/cli/bin");
+    setConfig(configPath);
 
     it("Should authorize a Capability and make a request with it", async () => {
-        await initPoptop(config);
+        await initPoptop(config.poptop);
 
         let srvApp = app(config.store, { enableHostnameRouting: false });
         let srv = http.createServer({ maxHeaderSize: config.maxHeaderSize }, srvApp);

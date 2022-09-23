@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -16,12 +16,13 @@ const { Shield } = require("../../../src/core/shield");
 const { create } = require("../../../src/cli/bin/helpers/twist");
 const { generateKey } = require("../../../src/cli/lib/pki");
 const { capability, authorize } = require("../../../src/cli/bin/helpers/capability");
-const { getTwistFromInput } = require("../../../src/cli/bin/util");
+const { getFileOrInput } = require("../../../src/cli/bin/util");
 const { SignatureRequirement } = require("../../../src/core/reqsat");
 const nock = require("nock");
 const assert = require("assert");
 const fs = require("fs-extra");
 const path = require("path");
+const yaml = require("yaml");
 
 const host = "https://localhost:8080";
 
@@ -193,8 +194,9 @@ describe("setRiggingTrie", () => {
 
 describe("isValidAndControlled", async () => {
     let linePath = path.resolve(__dirname, "./files/cap-line.toda");
-    let config = { line: linePath };
     let keyPair, acTwist, poptop;
+
+    beforeEach(() => process.env.config = yaml.stringify({ line: linePath }));
 
     it("Should verify the integrity of the hoist line and that control belongs to the specified line", async () => {
         keyPair = await crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
@@ -202,18 +204,18 @@ describe("isValidAndControlled", async () => {
             type: SignatureRequirement.REQ_SECP256r1,
             key: keyPair.publicKey
         };
-        let tb = await create(null, req, null, keyPair.privateKey, null, config);
+        let tb = await create(null, req, null, keyPair.privateKey, null);
         fs.outputFileSync(linePath, tb.serialize().toBytes());
 
         // create a capability with this poptop, append to it, hoist it locally (should be automatic), verify that integrity and matchy matchy
-        let cap = await capability("http://test-url.com", ["GET"], new Date(), ByteArray.fromStr("foo"), linePath, linePath, config);
-        let ac = await authorize(cap, "http://localhost", "POST", null, null, linePath, keyPair.privateKey, config);
-        let lt = await getTwistFromInput(null, linePath);
+        let cap = await capability("http://test-url.com", ["GET"], new Date(), ByteArray.fromStr("foo"), linePath, linePath);
+        let ac = await authorize(cap, "http://localhost", "POST", null, null, linePath, keyPair.privateKey);
+        let lt = new Twist(Atoms.fromBytes(await getFileOrInput(linePath)));
 
         // Should really be the Line.firstFast(), but we don't support tethering between multiple local lines at the moment
         poptop = lt.getHash();
 
-        let refreshedAtoms = await getTetheredAtoms(ac, poptop, config);
+        let refreshedAtoms = await getTetheredAtoms(ac, poptop);
         acTwist = new Twist(refreshedAtoms, ac.getHash());
 
         // Verify that the Authed Cap is controlled by the local line
@@ -221,7 +223,7 @@ describe("isValidAndControlled", async () => {
     });
 
     it("Should verify that a different key does not have control", async () => {
-    // Verify that a different key does not have control
+        // Verify that a different key does not have control
         let keyPair2 = await generateKey();
         await assert.rejects(
             async () => isValidAndControlled(acTwist, poptop, keyPair2.privateKey),
@@ -233,8 +235,8 @@ describe("isValidAndControlled", async () => {
     });
 
     it("Should fail to verify a hitch line with a different poptop", async () => {
-    // throw missing info error
-        let tb2 = await create(null, null, null, keyPair.privateKey, null, config);
+        // throw missing info error
+        let tb2 = await create(null, null, null, keyPair.privateKey, null);
         let lt2 = new Twist(tb2.serialize());
         let poptop2 = lt2.getHash();
 

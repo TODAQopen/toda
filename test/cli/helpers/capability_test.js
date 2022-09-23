@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -19,6 +19,7 @@ const { Abject } = require("../../../src/abject/abject");
 const assert = require("assert");
 const fs = require("fs-extra");
 const path = require("path");
+const yaml = require("yaml");
 
 describe("append capability", () => {
     let linePath = path.resolve(__dirname, "./files/cap-line.toda");
@@ -26,16 +27,17 @@ describe("append capability", () => {
     let verbs = ["GET", "POST"];
     let expiry = new Date(1660591597);
     let shield = ByteArray.fromStr("foo");
-    let config = { line: linePath, lineServer: linePath };
+
+    beforeEach(() => process.env.config = yaml.stringify({ line: linePath, poptop: linePath }));
 
     it("should create a Capability with the correct properties", async () => {
-    // Generate a local line
+        // Generate a local line
         let keyPair = await generateKey();
-        let tb = await create(null, null, null, keyPair.privateKey, null, config);
+        let tb = await create(null, null, null, keyPair.privateKey, null);
         fs.outputFileSync(linePath, tb.serialize().toBytes());
 
         // Generate a Capability
-        let cap = await capability(url, verbs, expiry, shield, linePath, linePath, config);
+        let cap = await capability(url, verbs, expiry, shield, linePath, linePath);
         let capTwist = new Twist(cap.serialize());
 
         assert.equal(cap.url(), url);
@@ -47,20 +49,22 @@ describe("append capability", () => {
     });
 
     it("should authorize a Capability correctly", async () => {
-    // Generate a local line
+        // Generate a local line
         let keyPair = await generateKey();
-        let tb = await create(null, null, null, keyPair.privateKey, null, config);
+        let tb = await create(null, null, null, keyPair.privateKey, null);
         fs.outputFileSync(linePath, tb.serialize().toBytes());
 
         // Generate a Capability
-        let cap = await capability(url, verbs, expiry, shield, linePath, linePath, config);
+
+        let cap = await capability(url, verbs, expiry, shield, linePath, linePath);
         let capTwist = new Twist(cap.serialize());
 
         // Append to the Capability via Authorize
         let authUrl = "http://test-url.com/authlink";
         let authVerb = "GET";
         let authNonce = "foo";
-        let ac = await authorize(cap, authUrl, authVerb, authNonce, null, linePath, keyPair.privateKey, config);
+        let ac = await authorize(cap, authUrl, authVerb, authNonce, null, linePath, keyPair.privateKey);
+
         let authCap = Abject.parse(ac.serialize());
         let authCapTwist = new Twist(authCap.serialize());
         assert.equal(authCap.url(), url);
@@ -76,33 +80,33 @@ describe("append capability", () => {
 
         // Parse and verify the updated Line and hitch hoist
         let rigging = Shield.rigForHoist(capTwist.getHash(), authCap.getHash(), capTwist.shield());
-        let lineBytes = await getFileOrInput(null, linePath);
+        let lineBytes = await getFileOrInput(linePath);
         let lineTwist = new Twist(Atoms.fromBytes(lineBytes));
         assert(lineTwist.getBody().getRiggingHash().equals(Sha256.fromPacket(rigging)));
     });
 
     it("should successfully authorize capabilities pointing to a local line and handle rigging", async () => {
-    // Generate a local line
+        // Generate a local line
         let keyPair = await generateKey();
-        let tb = await create(null, null, null, keyPair.privateKey, null, config);
+        let tb = await create(null, null, null, keyPair.privateKey, null);
         fs.outputFileSync(linePath, tb.serialize().toBytes());
 
         // Generate a Capability
-        let cap = await capability(url, verbs, expiry, shield, linePath, linePath, config);
+        let cap = await capability(url, verbs, expiry, shield, linePath, linePath);
         let capTwist = new Twist(cap.serialize());
 
         // Append to the Capability via Authorize
-        let ac = await authorize(cap, "http://test-url.com/authlink", "GET", "foo", null, linePath, keyPair.privateKey, config);
+        let ac = await authorize(cap, "http://test-url.com/authlink", "GET", "foo", null, linePath, keyPair.privateKey);
         let authCap = Abject.parse(ac.serialize());
         authCap.twistBuilder.setTether(capTwist.tether()); //todo(mje)?
 
-        let lineBytes = await getFileOrInput(null, linePath);
+        let lineBytes = await getFileOrInput(linePath);
         let lineTwist = new Twist(Atoms.fromBytes(lineBytes));
 
         // Append again to verify the rigging trie and tether point to the hitch hoist
         let authNextUrl = "http://test-url.com/authnextlink";
         let authNextVerb = "POST";
-        let authCapNext = await authorize(authCap, authNextUrl, authNextVerb, "bar", null, linePath, keyPair.privateKey, config);
+        let authCapNext = await authorize(authCap, authNextUrl, authNextVerb, "bar", null, linePath, keyPair.privateKey);
         let authCapNextTwist = new Twist(authCapNext.serialize());
 
         assert(authCapNextTwist.tether().getHash().equals(lineTwist.getHash()));

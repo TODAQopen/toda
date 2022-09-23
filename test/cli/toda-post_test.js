@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -11,7 +11,7 @@ const assert = require("assert");
 const { app: invServer } = require("../../src/inventory/src/server");
 const { Atoms } = require("../../src/core/atoms");
 const { Twist } = require("../../src/core/twist");
-const { getAtomsFromPath } = require("../../src/cli/bin/util");
+const { getAtomsFromPath, setConfig } = require("../../src/cli/bin/util");
 const { initPoptop } = require("./test-utils");
 const path = require("path");
 const yaml = require("yaml");
@@ -22,9 +22,10 @@ describe('toda-post', async() => {
   let configPath = path.resolve(__dirname, './.toda/config.yml');
   let config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
   let toda = path.resolve(__dirname, '../../src/cli/bin');
+  setConfig(configPath);
 
   it('Should send a post request to the configured inventory server', async() => {
-    await initPoptop(config);
+    await initPoptop(config.poptop);
 
     // start an inventory server here
     let invPort = 3210;

@@ -2,11 +2,11 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, getFileOrInput, getConfig, formatInputs, writeToFile, parseAbjectOrTwist, write, getAtomsFromPath } = require("./util");
+const { getArgs, getFileOrInput, formatInputs, writeToFile, parseAbjectOrTwist, write, getAtomsFromPath } = require("./util");
 const { handleProcessException } = require("./helpers/process-exception");
 const { append } = require("./helpers/twist");
 const { control, refresh } = require("./helpers/control");
@@ -30,28 +30,27 @@ if (process.stdout.isTTY) {
  */
 void async function () {
     try {
-        let args = getArgs(process);
-        let config = getConfig(args["config"]);
+        let args = getArgs();
         let inputs = await formatInputs(args);
 
         if (!inputs.prev) {
-            let atoms = Atoms.fromBytes(await getFileOrInput(process));
+            let atoms = Atoms.fromBytes(await getFileOrInput());
             inputs.prev = parseAbjectOrTwist(atoms);
         }
 
         let pt = new Twist(await getAtomsFromPath(inputs.poptop));
         let poptop = Line.fromAtoms(pt.getAtoms()).first(pt.getHash());
-        let abject = await refresh(inputs.prev, poptop, config, false, null);
+        let abject = await refresh(inputs.prev, poptop, false, null);
         await control(abject, poptop, inputs.privateKey);
 
-        let tb = await append(abject, inputs.shield, inputs.req, inputs.tether, inputs.privateKey, () => {}, inputs.cargo, config);
+        let tb = await append(abject, inputs.shield, inputs.req, inputs.tether, inputs.privateKey, () => {}, inputs.cargo);
 
         if (!args.test) {
-            writeToFile(config, tb, args.out);
+            writeToFile(tb, args.out);
         }
 
-        write(process, tb);
+        write(tb);
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();

@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -22,7 +22,7 @@ class ProcessException {
     }
 }
 
-function handleProcessException(process, pe) {
+function handleProcessException(pe) {
     if (pe.getExitCode) {
         process.exitCode = pe.getExitCode();
         process.stderr.write(chalk.red(`${pe.getReason()}\n`));

@@ -9,8 +9,8 @@ const { Atoms } = require("../../core/atoms");
 
 void async function () {
     try {
-        let args = getArgs(process);
-        let config = getConfig(args["config"]);
+        let args = getArgs();
+        let config = getConfig();
         let fileSpec = args["_"][0];
         let [hashstr, invServer] = fileSpec.split("@");
         let hash = Hash.fromHex(hashstr);
@@ -50,6 +50,6 @@ void async function () {
                 });
         logFormatted(`Successfully downloaded ${hash} from ${invServer}`);
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();

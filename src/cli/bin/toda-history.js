@@ -2,7 +2,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -21,9 +21,9 @@ const acceptedFields = {
 // Reads the specified .toda file and prints out some information about it
 void async function () {
     try {
-        let args = getArgs(process, acceptedFields);
+        let args = getArgs(acceptedFields);
         let inputs = getAcceptedInputs(args, acceptedFields);
-        let bytes = await getFileOrInput(process, args["_"][0]);
+        let bytes = await getFileOrInput(args["_"][0]);
         let atoms = Atoms.fromBytes(bytes);
         let twistHash = inputs.twist.isNull() ? atoms.lastAtomHash() : inputs.twist;
 
@@ -35,7 +35,7 @@ void async function () {
         let history = getHistory(twist);
         logFormatted(formatHistory(history, args["json"]), args["json"]);
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();
 

@@ -2,12 +2,11 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
-const { ByteArray } = require("../../core/byte-array");
-const { getArgs, getConfig, formatInputs, write, writeToFile } = require("./util");
+const { getArgs, formatInputs, write, writeToFile } = require("./util");
 const { capability } = require("./helpers/capability");
 const { handleProcessException } = require("./helpers/process-exception");
 
@@ -22,19 +21,18 @@ const { handleProcessException } = require("./helpers/process-exception");
  */
 void async function () {
     try {
-        let args = getArgs(process);
-        let config = getConfig(args.config);
+        let args = getArgs();
         let inputs = await formatInputs(args);
 
-        let cap = await capability(inputs.url, inputs.verbs, inputs.expiry, inputs.shield, inputs.poptop, inputs.tether, config);
+        let cap = await capability(inputs.url, inputs.verbs, inputs.expiry, inputs.shield, inputs.poptop, inputs.tether);
 
         if (!args.test) {
-            writeToFile(config, cap, args.out);
+            writeToFile(cap, args.out);
         }
 
-        write(process, cap);
+        write(cap);
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();
 

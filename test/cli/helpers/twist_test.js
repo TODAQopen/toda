@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -18,12 +18,14 @@ const { generateKey } = require("../../../src/cli/lib/pki");
 const assert = require("assert");
 const fs = require("fs-extra");
 const path = require("path");
+const yaml = require("yaml");
 
 describe("create", () => {
     let tether = path.resolve(__dirname, "./files/cap-line.toda");
     let shield = ByteArray.fromStr("foo");
     let salt = path.resolve(__dirname, "./files/salt");
-    let config = { line: tether, salt: salt };
+
+    beforeEach(() => process.env.config = yaml.stringify({ line: tether, salt: salt, store: '/' }));
 
     it("should create a Twist with the correct properties", async () => {
         let keyPair = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" },
@@ -32,7 +34,7 @@ describe("create", () => {
         );
 
         // Generate a local line
-        let tetherTb = await create(null, null, null, keyPair.privateKey, null, config);
+        let tetherTb = await create(null, null, null, keyPair.privateKey, null);
         fs.outputFileSync(tether, tetherTb.serialize().toBytes());
 
         let cargo = await getAtomsFromPath(path.resolve(__dirname, "./files/out4.sr.toda"));
@@ -42,7 +44,7 @@ describe("create", () => {
             key: keyPair.publicKey
         };
 
-        let tb = await create(shield, req, tether, keyPair.privateKey, cargo, config);
+        let tb = await create(shield, req, tether, keyPair.privateKey, cargo);
         let twist = new Twist(tb.serialize());
 
         assert(twist.tether().getHash().equals(tetherTb.getHash()));
@@ -63,14 +65,14 @@ describe("create", () => {
 
     it("should add a default shield to an externally tethered Twist", async () => {
         let tether = "2208318633b506017519e9b90b0bdc8451772415ba29144ab7778cb09cc2d2fa6a";
-        let tb = await create(null, null, tether, null, null, config);
+        let tb = await create(null, null, tether, null, null);
         let twist = new Twist(tb.serialize());
-        let expected = new ArbitraryPacket(generateShield(new ByteArray(fs.readFileSync(config.salt)), null));
+        let expected = new ArbitraryPacket(generateShield(new ByteArray(fs.readFileSync(salt)), null));
         assert.deepEqual(twist.shield(), expected);
     });
 
     it("should not add a default shield to a locally tethered Twist", async () => {
-        let tb = await create(null, null, tether, null, null, config);
+        let tb = await create(null, null, tether, null, null);
         let twist = new Twist(tb.serialize());
         assert.equal(twist.shield(), null);
     });
@@ -79,23 +81,24 @@ describe("create", () => {
 describe("append", () => {
     let tetherA = path.resolve(__dirname, "./files/cap-line.toda");
     let salt = path.resolve(__dirname, "./files/salt");
-    let config = { line: tetherA, salt: salt };
+
+    beforeEach(() => process.env.config = yaml.stringify({ line: tetherA, salt: salt, store: '/' }));
 
     it("should append to a twist with the correct properties", async () => {
-    // Generate a local line
+        // Generate a local line
         let keyPair = await generateKey();
-        let tbA = await create(null, null, null, keyPair.privateKey, null, config);
+        let tbA = await create(null, null, null, keyPair.privateKey, null);
         fs.outputFileSync(tetherA, tbA.serialize().toBytes());
 
-        let created = await create(null, null, tetherA, keyPair.privateKey, null, config);
+        let created = await create(null, null, tetherA, keyPair.privateKey, null);
         let twistA = new Twist(created.serialize());
 
         let tetherHash = Sha256.fromBytes(ByteArray.fromStr("foobar"));
-        let appended = await append(twistA, null, null, tetherHash.toString(), keyPair.privateKey, () => {}, null, config);
+        let appended = await append(twistA, null, null, tetherHash.toString(), keyPair.privateKey, () => {}, null);
         let twistB = new Twist(appended.serialize());
 
         // Verify the tether has changed and a shield was set, since the tether is no longer local
-        let expectedShield = new ArbitraryPacket(generateShield(new ByteArray(fs.readFileSync(config.salt)), twistB.prev().getHash()));
+        let expectedShield = new ArbitraryPacket(generateShield(new ByteArray(fs.readFileSync(salt)), twistB.prev().getHash()));
         assert(twistB.getBody().getTetherHash().equals(tetherHash));
         assert.deepEqual(twistB.shield(), expectedShield);
         assert(ByteArray.isEqual(twistA.getHash(), twistB.prev().getHash()));
@@ -105,7 +108,7 @@ describe("append", () => {
         let hitchHoist = await getHoist(twistA, tetherA);
         assert(hitchHoist.getHash().equals(lineTwist.getHash()));
 
-        let refreshedAtoms = await getTetheredAtoms(twistB, lineTwist.getHash(), config);
+        let refreshedAtoms = await getTetheredAtoms(twistB, lineTwist.getHash());
         twistB = new Twist(refreshedAtoms, twistB.getHash());
 
         // we can't verify the tether, we don't know what it is, so this should fail!
@@ -118,7 +121,7 @@ describe("append", () => {
             });
 
         // Now let's sneakily update the twist without validation anyway to prove it doesn't validate
-        let appended2 = await append(twistB, null, null, tetherHash.toString(), keyPair.privateKey, () => {}, null, config);
+        let appended2 = await append(twistB, null, null, tetherHash.toString(), keyPair.privateKey, () => {}, null);
         let twistC = new Twist(appended2.serialize());
         await assert.rejects(
             async () => isValidAndControlled(twistC, lineTwist.getHash(), keyPair.privateKey),

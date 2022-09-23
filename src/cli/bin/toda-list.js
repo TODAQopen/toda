@@ -2,17 +2,13 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
 const { Line, PersistentLine } = require("../../core/line");
-const { getArgs, getConfig, formatInputs, getFileOrInput, getDistinct, getFileOrHashPath, getFirstFast, parseAbjectOrTwist, getAtomsFromPath } = require("./util");
-const { toPagedString, logFormatted } = require("./helpers/formatters");
-const { getTetheredAtoms } = require("./helpers/rigging");
+const { getArgs, getConfig, formatInputs, getFileOrInput, getDistinct, getFileOrHashPath, parseAbjectOrTwist, getAtomsFromPath } = require("./util");
 const { refresh, control } = require("./helpers/control");
-const { handleProcessException } = require("./helpers/process-exception");
-const { Abject } = require("../../abject/abject");
 const { Atoms } = require("../../core/atoms");
 const { Twist } = require("../../core/twist");
 const fs = require("fs-extra");
@@ -23,11 +19,11 @@ const DraftLog = require("draftlog").into(console);
 // toda list [directory_path|file_path]
 void async function () {
     try {
-        let args = getArgs(process);
-        let path = args["_"][0] || getConfig(args["config"]).store;
+        let args = getArgs();
+        let path = args["_"][0] || getConfig().store;
 
         if (!fs.existsSync(path)) {
-            let betterPath = getFileOrHashPath(args, path);
+            let betterPath = getFileOrHashPath(path);
             if (betterPath) {
                 path = betterPath;
             }
@@ -41,7 +37,7 @@ void async function () {
             }
         } catch (e) {}
         if (!line) {
-            let bytes = await getFileOrInput(process, path);
+            let bytes = await getFileOrInput(path);
             line = Line.fromBytes(bytes);
         }
 
@@ -64,7 +60,7 @@ void async function () {
     } catch (pe) {
         console.log("PE:", pe);
         throw pe;
-    //handleProcessException(process, pe);
+    //handleProcessException(pe);
     }
 }();
 
@@ -72,8 +68,8 @@ void async function () {
 //const twists = {};
 
 async function showTwist(twistHash) {
-    let args = getArgs(process);
-    let config = getConfig(args["config"]);
+    let args = getArgs();
+    let config = getConfig();
 
     args.poptop = args.poptop ?? config.line;
     let inputs = await formatInputs(args);
@@ -93,7 +89,7 @@ async function showTwist(twistHash) {
 
     try {
         // obviously, duplicates a bunch from toda-control
-        let atoms = Atoms.fromBytes(await getFileOrInput(process, twist.hash));
+        let atoms = Atoms.fromBytes(await getFileOrInput(twist.hash));
         twist.statusParse = chalk.dim.white("Parsing...");
         renderTwist(twist);
         let abject = parseAbjectOrTwist(atoms);

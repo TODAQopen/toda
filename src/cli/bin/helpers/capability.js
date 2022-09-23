@@ -1,12 +1,11 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
 const { Capability } = require("../../../abject/capability");
-const { ArbitraryPacket } = require("../../../core/packet");
 const { append, setFastFields } = require("./twist");
 const { getAtomsFromPath } = require("../util");
 
@@ -18,10 +17,9 @@ const { getAtomsFromPath } = require("../util");
  * @param shield <ByteArray?> A set of bytes to act as the shield
  * @param poptop <String> Hash of a twist to be the poptop.
  * @param tether <String> Path to a line or the URL of a line server.
- * @param config <Object> A config object containing the local line and default line server paths
  * @returns <Capability> Which will need to be serialized() to be exported
  */
-async function capability(url, verbs, expiry, shield, poptop, tether, config) {
+async function capability(url, verbs, expiry, shield, poptop, tether) {
     let master = new Capability();
     master.restrict(url, verbs, expiry);
 
@@ -30,7 +28,7 @@ async function capability(url, verbs, expiry, shield, poptop, tether, config) {
     master.setPopTop(top.lastAtomHash());
 
     if (tether) {
-        await setFastFields(tether, master.buildTwist(), config, shield);
+        await setFastFields(tether, master.buildTwist(), shield);
     }
 
     //todo(mje): Support reqs/sats if we're not tethering?
@@ -46,13 +44,12 @@ async function capability(url, verbs, expiry, shield, poptop, tether, config) {
  * @param shield <ByteArray?> A set of bytes to act as the shield. If not specified defaults to H(Salt|Prev)
  * @param tether <String> The path to the tethered line
  * @param pk <CryptoKey> The private key for satisfying requirements
- * @param config <Object> A config object containing the local line and default line server paths
  * @returns <TwistBuilder> Which will need to be serialized() to be exported
  */
 
-async function authorize(cap, url, verb, nonce, shield, tether, pk, config) {
+async function authorize(cap, url, verb, nonce, shield, tether, pk) {
     let setterFn = (tb, abj) => { abj.authorize(url, verb, nonce); };
-    return append(cap, shield, null, tether, pk, setterFn, null, config);
+    return append(cap, shield, null, tether, pk, setterFn, null);
 }
 
 exports.capability = capability;

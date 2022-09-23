@@ -2,11 +2,11 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, getConfig, formatInputs, getFileOrInput, parseAbjectOrTwist, getDistinct, getAtomsFromPath, getLineURL } = require("./util");
+const { getArgs, formatInputs, getFileOrInput, parseAbjectOrTwist, getDistinct, getAtomsFromPath, getLineURL, getConfig } = require("./util");
 const { control, refresh } = require("./helpers/control");
 const { handleProcessException } = require("./helpers/process-exception");
 const { Abject } = require("../../abject/abject");
@@ -19,11 +19,10 @@ const DraftLog = require("draftlog").into(console);
 // Verifies integrity and control of the specified Twist
 void async function () {
     try {
-        let args = getArgs(process);
-        let config = getConfig(args["config"]);
+        let args = getArgs();
         let inputs = await formatInputs(args);
 
-        let atoms = Atoms.fromBytes(await getFileOrInput(process, args["_"][0]));
+        let atoms = Atoms.fromBytes(await getFileOrInput(args["_"][0]));
         let abject = parseAbjectOrTwist(atoms);
 
         let status = console.draft();
@@ -34,9 +33,11 @@ void async function () {
         }
 
         let pt = new Twist(await getAtomsFromPath(inputs.poptop));
+
         let poptop = Line.fromAtoms(pt.getAtoms()).first(pt.getHash());
-        let refreshedAbject = await refresh(abject, poptop, config, args.refresh);
+        let refreshedAbject = await refresh(abject, poptop, args.refresh);
         status(chalk.white("Determining local control..."));
+
         await control(refreshedAbject, poptop, inputs.privateKey);
         status(chalk.white("Control check complete."));
 
@@ -53,7 +54,7 @@ void async function () {
         let output = formatOutput(refreshedAbject, poptop, timestamp);
         console.log(chalk.green(output));
     } catch (pe) {
-        handleProcessException(process, pe);
+        handleProcessException(pe);
     }
 }();
 
