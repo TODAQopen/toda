@@ -12,21 +12,16 @@ const { app: invServer } = require("../../src/inventory/src/server");
 const { Atoms } = require("../../src/core/atoms");
 const { Twist } = require("../../src/core/twist");
 const { getAtomsFromPath, setConfig } = require("../../src/cli/bin/util");
-const { initPoptop } = require("./test-utils");
+const { initTestEnv, getTodaPath, getConfigPath, getConfig, cleanupTestEnv } = require("./test-utils");
 const path = require("path");
-const yaml = require("yaml");
 const fs = require("fs-extra");
 
 /** FIXME(acg): sfertman
 describe('toda-post', async() => {
-  let configPath = path.resolve(__dirname, './.toda/config.yml');
-  let config = yaml.parse(fs.readFileSync(configPath, 'utf8'));
-  let toda = path.resolve(__dirname, '../../src/cli/bin');
-  setConfig(configPath);
+  beforeEach(initTestEnv);
+  afterEach(cleanupTestEnv);
 
   it('Should send a post request to the configured inventory server', async() => {
-    await initPoptop(config.poptop);
-
     // start an inventory server here
     let invPort = 3210;
     let server = invServer(__dirname).listen(invPort, () => console.log(`Test inventory is listening on ${invPort}`));
@@ -35,7 +30,7 @@ describe('toda-post', async() => {
 
     let expectedFilePath = `${__dirname}/localhost/${fileHash}.toda`;
     try {
-      await exec(`${toda}/toda post --server http://localhost:${invPort} <${filePath}` ).then(data => console.log(data));
+      await exec(`${getTodaPath()}/toda post --server http://localhost:${invPort} <${filePath}` ).then(data => console.log(data));
 
         let expectedTwist = new Twist(await getAtomsFromPath(expectedFilePath));
       assert(expectedTwist.getHash().equals(fileHash));
@@ -45,7 +40,6 @@ describe('toda-post', async() => {
     } finally {
       server.close();
       fs.rm(expectedFilePath);
-      fs.emptyDirSync(config.store);
     }
   });
 });

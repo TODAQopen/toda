@@ -1,5 +1,7 @@
 const { create } = require("../../src/cli/bin/helpers/twist");
 const fs = require("fs-extra");
+const path = require("path");
+const yaml = require("yaml");
 
 // Initializes the poptop if the path is local
 async function initPoptop(poptop, shield, req, tether, pk, cargo) {
@@ -11,4 +13,28 @@ async function initPoptop(poptop, shield, req, tether, pk, cargo) {
     }
 }
 
-exports.initPoptop = initPoptop;
+function getTodaPath() {
+    return path.resolve(__dirname, "../../src/cli/bin");
+}
+
+function getConfigPath() {
+    return path.resolve(__dirname, "./.toda/config.yml");
+}
+
+function getConfig() {
+    return yaml.parse(fs.readFileSync(getConfigPath(), "utf8"));
+}
+
+async function initTestEnv() {
+    return initPoptop(getConfig().poptop);
+}
+
+function cleanupTestEnv() {
+    fs.emptyDirSync(getConfig().store);
+}
+
+exports.getTodaPath = getTodaPath;
+exports.getConfigPath = getConfigPath;
+exports.getConfig = getConfig;
+exports.initTestEnv = initTestEnv;
+exports.cleanupTestEnv = cleanupTestEnv;
