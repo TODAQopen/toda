@@ -8,9 +8,13 @@ const { Twist, TwistBuilder } = require("../../src/core/twist");
 const { ArbitraryPacket } = require("../../src/core/packet");
 const { bafs, sbh } = require("../util");
 const { Sha256 } = require("../../src/core/hash");
+const path = require("path");
+const { getTodaPath, getConfigPath, initTestEnv, cleanupTestEnv } = require("./test-utils");
 
-/** FIXME(acg): sfertman
 describe('toda-get', async() => {
+  beforeEach(initTestEnv);
+  afterEach(cleanupTestEnv);
+
   it('Should get a file from the configured inventory', async() => {
     function hpp(str) { // hash-packet-pair
       let p = new ArbitraryPacket(bafs(str));
@@ -26,39 +30,42 @@ describe('toda-get', async() => {
     let invPort = 3211;
     let server = invServer(__dirname).listen(invPort, () => console.log(`Test inventory is listening on ${invPort}`));
 
-    let todaBin = `${__dirname}/../../src/cli/bin/toda`;
+
     let twist = simpleTwist('one', 'two', 'three');
 
     let fileHash = twist.getHash();
-    let inFilePath = `${__dirname}/files/${fileHash}.toda`;
-    let outFilePath = `${__dirname}/${fileHash}.toda`;
-    // writing test file to disk so toda get can read it
-    await fs.writeFile(inFilePath, Buffer.from(twist.atoms.toBytes()));
+    let inFilePath = path.resolve(__dirname, ".toda", "store", `${fileHash}.toda`);
+    let outFilePath = path.resolve(__dirname, `${fileHash}.toda` );
+
+    let todaBin = `${getTodaPath()}/toda`;
 
     try {
 
+      // writing test file to disk so toda get can read it
+      await fs.writeFile(inFilePath, Buffer.from(twist.atoms.toBytes())).then(data => console.log(data));
+
       // uploading file with @ syntax
-      await exec(`${todaBin} post ${inFilePath}@http://localhost:${invPort}` ).then(data => console.log(data));
+      await exec(`${todaBin} post --config ${getConfigPath()} ${inFilePath}@http://localhost:${invPort}` ).then(data => console.log(data));
 
       // uploading file with --server syntax
-      await exec(`${todaBin} post --server http://localhost:${invPort} < ${inFilePath}` ).then(data => console.log(data));
+      await exec(`${todaBin} post --config ${getConfigPath()} --server http://localhost:${invPort} < ${inFilePath}` ).then(data => console.log(data));
 
-      // downloading file with @ syntax
-      await exec(`${todaBin} get ${fileHash}@http://localhost:${invPort} --out ${outFilePath}`).then(data => console.log(data));
+      // // downloading file with @ syntax
+      await exec(`${todaBin} get --config ${getConfigPath()} ${fileHash}@http://localhost:${invPort} --out ${outFilePath}`).then(data => console.log(data));
       // deleting local file so next download doesn't fail
       await fs.rm(outFilePath);
 
       // downloading file with --server syntax
-      await exec(`${todaBin} get ${fileHash} --server http://localhost:${invPort} --out ${outFilePath}`).then(data => console.log(data));
+      await exec(`${todaBin} get ${fileHash} --config ${getConfigPath()} --server http://localhost:${invPort} --out ${outFilePath}`).then(data => console.log(data));
     } catch (err) {
       console.error(err);
       assert(!err);
     } finally {
       await new Promise(res => server.close(() => res()));
-      await fs.rm(`${__dirname}/localhost/${fileHash}.toda`, { force: true });
+      await fs.rm(path.resolve(__dirname, "localhost", `${fileHash}.toda`), { force: true });
       await fs.rm(inFilePath, { force: true });
       await fs.rm(outFilePath, { force: true });
     }
   });
 });
-*/
+

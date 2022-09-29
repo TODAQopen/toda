@@ -21,14 +21,14 @@ void async function () {
     try {
         let args = getArgs();
         let inputs = await formatInputs(args);
-        let hex, inventoryServer;
+        let hexOrPath, inventoryServer;
         if (args["_"].length > 0) {
             let fileSource = args["_"][0];
-            [hex, inventoryServer] = fileSource.split("@");
+            [hexOrPath, inventoryServer] = fileSource.split("@");
         }
         inventoryServer = inventoryServer || inputs.inventoryServer;
 
-        let atoms = Atoms.fromBytes(await getFileOrInput(args["_"][0]));
+        let atoms = Atoms.fromBytes(await getFileOrInput(hexOrPath));
         let abject = parseAbjectOrTwist(atoms);
 
         let status = console.draft();

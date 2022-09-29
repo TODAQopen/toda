@@ -11,13 +11,13 @@ const assert = require("assert");
 const { app: invServer } = require("../../src/inventory/src/server");
 const { Atoms } = require("../../src/core/atoms");
 const { Twist } = require("../../src/core/twist");
-const { getAtomsFromPath, setConfig } = require("../../src/cli/bin/util");
-const { initTestEnv, getTodaPath, getConfigPath, getConfig, cleanupTestEnv } = require("./test-utils");
+const { getAtomsFromPath } = require("../../src/cli/bin/util");
+const { initTestEnv, getTodaPath, getConfigPath, cleanupTestEnv } = require("./test-utils");
 const path = require("path");
-const fs = require("fs-extra");
+const fs = require("fs/promises");
 
-/** FIXME(acg): sfertman
 describe('toda-post', async() => {
+
   beforeEach(initTestEnv);
   afterEach(cleanupTestEnv);
 
@@ -25,23 +25,29 @@ describe('toda-post', async() => {
     // start an inventory server here
     let invPort = 3210;
     let server = invServer(__dirname).listen(invPort, () => console.log(`Test inventory is listening on ${invPort}`));
-    let filePath = `${__dirname}/helpers/files/test.toda`;
+
+    let filePath = path.resolve(__dirname, "helpers", "files", "test.toda");
     let fileHash = new Twist(Atoms.fromBytes(await fs.readFile(filePath))).getHash();
 
-    let expectedFilePath = `${__dirname}/localhost/${fileHash}.toda`;
+    let expectedFilePath = path.resolve(__dirname, "localhost", `${fileHash}.toda`)
     try {
-      await exec(`${getTodaPath()}/toda post --server http://localhost:${invPort} <${filePath}` ).then(data => console.log(data));
+      // --server syntax
+      await exec(`${getTodaPath()}/toda post --config ${getConfigPath()} --server http://localhost:${invPort} < ${filePath}` ).then(data => console.log(data));
 
-        let expectedTwist = new Twist(await getAtomsFromPath(expectedFilePath));
+      // file@server syntax
+      await exec(`${getTodaPath()}/toda post --config ${getConfigPath()} ${filePath}@http://localhost:${invPort}`).then(data => console.log(data));
+
+      // hash@server syntax
+      await exec(`${getTodaPath()}/toda post --config ${getConfigPath()} ${fileHash}@http://localhost:${invPort}`).then(data => console.log(data));
+
+      let expectedTwist = new Twist(await getAtomsFromPath(expectedFilePath));
       assert(expectedTwist.getHash().equals(fileHash));
     } catch (err) {
       console.error(err);
       assert(!err);
     } finally {
-      server.close();
-      fs.rm(expectedFilePath);
+      await new Promise(res => server.close(() => res()));
+      await fs.rm(expectedFilePath, { force: true });
     }
   });
 });
-
-*/
