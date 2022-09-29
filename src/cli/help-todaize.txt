@@ -12,4 +12,3 @@ Options:
   --verbose             The level of logging to display on the console
   --json                Outputs the results in JSON
   --help                Show this screen
-  --reset-defaults      Resets the CLI config to the default values specified in ./defaults.js

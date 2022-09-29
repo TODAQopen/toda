@@ -60,7 +60,7 @@ cargo     	00
 To extend the newly-created asset, new twists are appended in line. When appending to a Twist with signature requirements, the CLI tries to satisfy those requirements using the `--identity` (the configured private key `~/.toda/secure/id_secp256r1` by default).
 
 ```
-$ toda append --prev 41f7c7d5f78ac70d71bfdf823916509e6bbee1dd2a88e220b3258875d794d700ae | toda history
+$ toda append 41f7c7d5f78ac70d71bfdf823916509e6bbee1dd2a88e220b3258875d794d700ae --empty | toda history
 twist     	41f7c7d5f78ac70d71bfdf823916509e6bbee1dd2a88e220b3258875d794d700ae
 sats      	00
 prev      	00
@@ -209,7 +209,7 @@ The Local Line integrity has been verified. This system has control of this file
 
 Append to that twist
 ```
-$ toda append --prev 41db1b
+$ toda append 41db1b --empty
 4192805f1cd567a799087943057abff6463ab1ffb13c33574c999115c6fd665ef6
 ```
 
@@ -221,7 +221,7 @@ The Local Line integrity has been verified. This system has control of this file
 ```
 Now change the tether of that twist by appending with the tether hash of the user you wish to send it to
 ```
-$ toda append --prev 4192805f
+$ toda append 4192805f --empty --tether 41967e3688f9398891de944ca45fd0eb86bf9ca08ef2c1f540c011d60bdb5d9b96
 410b23d6fd204c8a0ebd2d12e203bd2dc860318ebe43d219234dc9f6d39e8359fc
 ```
 Verify this twist is no longer controlled by you and refresh it with the latest tethered atoms.
@@ -261,13 +261,13 @@ $ toda create --empty --shield aabbcc
 ```
 
 ### append
-`toda append [--cargo CARGO_PATH] [--poptop URL]  [--secp256r1 PUB_KEY_PATH] [--ed25519 PUB_KEY_PATH] [--shield SHIELD_SPEC] [--tether URL] {--prev PREV_TWIST | PREV_SRC}`
+`toda append PREV [--poptop URL]  [--secp256r1 PUB_KEY_PATH] [--ed25519 PUB_KEY_PATH] [--shield SHIELD_SPEC] [--tether URL] {--cargo CARGO_PATH | --empty | CARGO_SRC}`
 
 Creates a successor to the specified PREV `*.toda` file and appends the bytes to that file, renaming it to the new hash. Verifies control against the `--poptop` (default `config.lineServer`) before appending. Defaults to `~/.toda/store/<hash>.toda`. 
 
 eg.
 ```
-$ toda append --prev 41fc9f5eb249400705724d97f2041a0e887f0ee5d9
+$ toda append 41fc9f5eb249400705724d97f2041a0e887f0ee5d9 --empty
 ```
 
 ### history

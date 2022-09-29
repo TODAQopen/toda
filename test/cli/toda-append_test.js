@@ -30,7 +30,7 @@ describe("toda-append", async () => {
             let prev = new Twist(await getAtomsFromPath(out));
             let saltBytes = new ByteArray(fs.readFileSync(getConfig().salt));
 
-            execSync(`${getTodaPath()}/toda append --prev ${out} --out ${out} --tether ${h.serialize()} --config ${getConfigPath()}`);
+            execSync(`${getTodaPath()}/toda append ${out} --empty --out ${out} --tether ${h.serialize()} --config ${getConfigPath()}`);
 
             let twist = new Twist(await getAtomsFromPath(out));
             assert(twist.prev().getHash().equals(prev.getHash()));

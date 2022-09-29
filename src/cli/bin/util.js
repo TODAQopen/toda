@@ -52,7 +52,6 @@ function getArgs(argDefaults = {}) {
             "raw",
             "rebuild",
             "refresh",
-            "reset-defaults",
             "test",
             "web",
             "verbose"],
@@ -82,10 +81,6 @@ async function formatInputs(args, whitelist) {
     let shield = args["shield"] ? new ByteArray(Buffer.from(args["shield"], "hex")) : null;
     let tether = args["tether"] || config.line;
     let privateKey = await getPrivateKey(args["i"] || config.privateKey);
-
-    let prev = args["prev"] ?
-        new Twist(Atoms.fromBytes(getFileOrHash(args["prev"]))) :
-        null;
 
     let cargo = args["cargo"] ?
         Atoms.fromBytes(new ByteArray(fs.readFileSync(args["cargo"]))) :
@@ -125,7 +120,6 @@ async function formatInputs(args, whitelist) {
         shield: shield,
         tether: tether,
         privateKey: privateKey,
-        prev: prev,
         cargo: cargo,
         req: req,
         url: url,
@@ -439,6 +433,7 @@ exports.getSuccessor = getSuccessor;
 
 exports.filePathForHash = filePathForHash;
 exports.getFileOrHashPath = getFileOrHashPath;
+exports.getFileOrHash = getFileOrHash;
 exports.parseAbjectOrTwist = parseAbjectOrTwist;
 exports.generateShield = generateShield;
 exports.write = write;

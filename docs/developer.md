@@ -9,7 +9,7 @@ Generates a default keypair under `~/.toda/secure/secp256r1` and `~/.toda/secure
 
 
 ### Usage
-`toda COMMAND [--version, -v] [-i] [-h] [--out FILENAME] [--verbose] [--test] [--json] [--help] [--reset-defaults]`
+`toda COMMAND [--version, -v] [-i] [-h] [--out FILENAME] [--verbose] [--test] [--json] [--help]`
 
 ### Options
 #### `-v, --version`
@@ -38,9 +38,6 @@ Specifies the output format should be json
 
 #### `--help`
 Display the help text
-
-#### `--reset-defaults`
-Reset the configuration defaults.
 
 ### Config Params
 #### store `${os.homedir()}/.toda/store`
@@ -76,40 +73,7 @@ The port to run a local inventory server on.
 #### invUrl `../`
 The inventory server URL for the web application to point to.
 
-`toda COMMAND [--version, -v] [-i] [-h] [--out FILENAME] [--verbose] [--test] [--json] [--help] [--reset-defaults]`
-
-### Options
-#### `-v, --version`
-Display the current CLI version
-
-#### `-i, --identity`
-Override the default identity file to use
-
-#### `-h, --human-readable`
-Display sizes in a human-readable format
-
-#### `-C [--list | --raw]`
-Display only the content of a packet as a hex string. `--list` will display the contents as a list of hashes, while `--raw` will display the raw bytes.
-
-### `--config FILE_PATH`
-Path to a different config yaml file to use. Defaults to `~/.toda/config`
-
-#### `--out FILENAME`
-Specifies the output file path. Defaults to `~/.toda/store/<hash>.toda`
-
-#### `--test`
-Dry Run. Doesn't actually create the file, just outputs raw bytes to the console
-
-#### `--json`
-Specifies the output format should be json
-
-#### `--help`
-Display the help text
-
-#### `--reset-defaults`
-Reset the configuration defaults.
-
-
+## Command Reference
 ### create
 `toda create [--secp256r1 PUB_KEY_PATH] [--ed25519 PUB_KEY_PATH] [--shield SHIELD_SPEC] [--tether URL]  {--cargo CARGO_PATH | --empty | CARGO_SRC}`
 
@@ -121,13 +85,13 @@ $ toda create --empty --shield aabbcc
 ```
 
 ### append
-`toda append [--cargo CARGO_PATH] [--poptop URL]  [--secp256r1 PUB_KEY_PATH] [--ed25519 PUB_KEY_PATH] [--shield SHIELD_SPEC] [--tether URL] {--prev PREV_TWIST | PREV_SRC}`
+`toda append PREV [--poptop URL]  [--secp256r1 PUB_KEY_PATH] [--ed25519 PUB_KEY_PATH] [--shield SHIELD_SPEC] [--tether URL] {--cargo CARGO | --empty | CARGO_SRC}`
 
 Creates a successor to the specified PREV `*.toda` file and appends the bytes to that file, renaming it to the new hash. Verifies control against the `--poptop` (default `config.lineServer`) before appending. Defaults to `~/.toda/store/<hash>.toda`. 
 
 eg.
 ```
-$ toda append --prev 41fc9f5eb249400705724d97f2041a0e887f0ee5d9
+$ toda append 41fc9f5eb249400705724d97f2041a0e887f0ee5d9 --empty
 ```
 
 ### history

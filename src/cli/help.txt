@@ -2,12 +2,12 @@ TODA Command-Line Suite
 
 Usage:
   toda COMMAND      [--version, -v] [--identity, -i] [--human-readable, -h] [--out FILENAME] [--verbose] [--test] [--json]
-                    [--help] [-C [--list|--raw]] [--reset-defaults]
+                    [--help] [-C [--list|--raw]]
 
   toda create       [--secp256r1 PUBLIC_KEY_PATH] [--ed25519 PUBLIC_KEY_PATH] [--shield SHIELD_SPEC] [--tether URL]
                     {--cargo CARGO_PATH | --empty | CARGO_SRC}
-  toda append       [--secp256r1 PUBLIC_KEY_PATH] [--ed25519 PUBLIC_KEY_PATH] [--shield SHIELD_SPEC] [--tether URL]
-                    [--poptop URL] [--cargo CARGO_PATH] {--prev PREV_TWIST | PREV_SRC}
+  toda append       PREV [--secp256r1 PUBLIC_KEY_PATH] [--ed25519 PUBLIC_KEY_PATH] [--shield SHIELD_SPEC] [--tether URL]
+                    [--poptop URL] {--cargo CARGO_PATH | --empty | CARGO_SRC}
   toda history      [--twist HASH] [--line] FILE_SOURCE
   toda hoist        [--line-server URL] [--verify] FILE_SOURCE
   toda get-hoist    [--line-server URL] FILE_SOURCE
@@ -35,4 +35,3 @@ Options:
   --test                Writes the results to the console without creating any files
   --json                Outputs the results in JSON
   --help                Show this screen
-  --reset-defaults      Resets the CLI config to the default values specified in ./defaults.js
