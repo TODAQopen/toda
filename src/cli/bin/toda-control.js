@@ -6,7 +6,7 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, formatInputs, getFileOrInput, parseAbjectOrTwist, getDistinct, getAtomsFromPath, getLineURL, getConfig } = require("./util");
+const { getArgs, formatInputs, getFileOrInput, parseAbjectOrTwist, getDistinct, getAtomsFromPath, getLineURL } = require("./util");
 const { control, refresh } = require("./helpers/control");
 const { handleProcessException } = require("./helpers/process-exception");
 const { Abject } = require("../../abject/abject");
@@ -33,7 +33,6 @@ void async function () {
         }
 
         let pt = new Twist(await getAtomsFromPath(inputs.poptop));
-
         let poptop = Line.fromAtoms(pt.getAtoms()).first(pt.getHash());
         let refreshedAbject = await refresh(abject, poptop, args.refresh);
         status(chalk.white("Determining local control..."));

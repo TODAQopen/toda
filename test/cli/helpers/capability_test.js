@@ -14,21 +14,21 @@ const { generateKey } = require("../../../src/cli/lib/pki");
 const { capability, authorize } = require("../../../src/cli/bin/helpers/capability");
 const { Sha256 } = require("../../../src/core/hash");
 const { Shield } = require("../../../src/core/shield");
-const { getFileOrInput } = require("../../../src/cli/bin/util");
+const { getFileOrInput, setConfig } = require("../../../src/cli/bin/util");
 const { Abject } = require("../../../src/abject/abject");
 const assert = require("assert");
 const fs = require("fs-extra");
 const path = require("path");
-const yaml = require("yaml");
 
 describe("append capability", () => {
-    let linePath = path.resolve(__dirname, "./files/cap-line.toda");
+    let store = path.resolve(__dirname, "./files");
+    let linePath = path.resolve(store, "./cap-line.toda");
     let url = "http://test-url.com";
     let verbs = ["GET", "POST"];
     let expiry = new Date(1660591597);
     let shield = ByteArray.fromStr("foo");
 
-    beforeEach(() => process.env.config = yaml.stringify({ line: linePath, poptop: linePath }));
+    beforeEach(() => setConfig({ line: linePath, poptop: linePath, store: store }));
 
     it("should create a Capability with the correct properties", async () => {
         // Generate a local line

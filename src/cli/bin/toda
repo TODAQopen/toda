@@ -29,11 +29,8 @@ void async function () {
         throw new ProcessException(9, `The TODA CLI requires node version ${MIN_NODE_VERSION} or greater.`);
     }
 
-    initConfig();
-
     let args = getArgs();
-    setConfig(args["config"]);
-    await init(args["i"] || getConfig().privateKey);
+    await init(args["config"], args["i"]);
 
     let cmd = args["_"][0];
     let cmdPath = path.join(__dirname, `toda-${cmd}.js`);
@@ -69,11 +66,11 @@ void async function () {
 }()
 
 // Initializes secure keys, salt, and local line if any are missing
-async function init(identity) {
-  let config = getConfig();
-  await initKeys(config.publicKey, config.privateKey);
-  initSalt(config.salt);
-  await initLine(config.line, config.poptop, config.publicKey, await getPrivateKey(identity));
+async function init(cfgPath, identity) {
+    let config = initConfig(cfgPath);
+    await initKeys(config.publicKey, config.privateKey);
+    initSalt(config.salt);
+    await initLine(config.line, config.poptop, config.publicKey, await getPrivateKey(identity || config.privateKey));
 }
 
 // If the local line specified in the config file doesn't exist, generate a new one and update the pointer

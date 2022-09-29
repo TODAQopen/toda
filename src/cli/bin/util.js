@@ -153,39 +153,44 @@ function getVersion() {
 }
 
 function getDefaultConfigPath() {
-  let rawCfg = fs.readFileSync(path.resolve(__dirname, "../../../config.yml"), "utf8");
-  let cfg = yaml.parse(rawCfg).CLI;
-  return path.join(os.homedir(), cfg.configPath);
+    let rawCfg = fs.readFileSync(path.resolve(__dirname, "../../../config.yml"), "utf8");
+    let cfg = yaml.parse(rawCfg).CLI;
+    return path.join(os.homedir(), cfg.configPath);
 }
 
 /**
  * Checks that the default config.yaml exists and creates a new one if it doesn't.
+ * Retrieves the user config file at the specified path arg or uses the default.
+ * Any missing keys default to the values specified in defaults.js
+ * @params cfgPath <String?> An optional path to a user config file.
+ * @returns <Object> the parsed config object.
  */
-function initConfig() {
-  let defaultPath = getDefaultConfigPath();
-  let def = yaml.stringify(defaults);
-  if (!fs.existsSync(defaultPath)) {
-      fs.outputFileSync(defaultPath, def, { mode: 0o600 });
-  }
+function initConfig(cfgPath) {
+    let defaultPath = getDefaultConfigPath();
+    let def = yaml.stringify(defaults);
+    if (!fs.existsSync(defaultPath)) {
+        fs.outputFileSync(defaultPath, def, { mode: 0o600 });
+    }
+
+    let configFile = fs.readFileSync(cfgPath || defaultPath, "utf8");
+    let config = yaml.parse(configFile);
+    setConfig({...defaults, ...config});
+
+    return getConfig();
 }
 
 /** Sets the process.env.config object.
- * Retrieves the user config file at the specified path arg or uses the default.
- * Any missing keys default to the values specified in defaults.js
- * @param cfgPath <String?> The path to a custom config file to use
+ * @param cfg <Object> A json object representing the config options to set
  */
-function setConfig(cfgPath) {
-  let defaultPath = getDefaultConfigPath();
-  let configFile = fs.readFileSync(cfgPath || defaultPath, "utf8");
-  let config = yaml.parse(configFile);
-  process.env.config = yaml.stringify({...defaults, ...config});
+function setConfig(cfg) {
+    process.env.config = yaml.stringify(cfg);
 }
 
 /** Parses the config object set on the process
  * @returns <Object> A json object containing the config values
  */
 function getConfig() {
-  return yaml.parse(process.env.config);
+    return yaml.parse(process.env.config);
 }
 
 /** Checks that the default keys exist and creates them otherwise */
@@ -439,4 +444,3 @@ exports.generateShield = generateShield;
 exports.write = write;
 exports.writeToFile = writeToFile;
 exports.getLineURL = getLineURL;
-

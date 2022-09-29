@@ -110,7 +110,6 @@ async function append(abject, shield, req, tether, pk, setterFn = () => {}, carg
  */
 async function setFastFields(tether, tb, shield) {
     // Set the tether. It might be a hash, a path or a URL.
-
     try {
         let tetherHash = Hash.parse(new ByteArray(Buffer.from(tether, "hex")));
         tb.setTetherHash(tetherHash);

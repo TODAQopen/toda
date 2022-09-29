@@ -16,13 +16,12 @@ const { Shield } = require("../../../src/core/shield");
 const { create } = require("../../../src/cli/bin/helpers/twist");
 const { generateKey } = require("../../../src/cli/lib/pki");
 const { capability, authorize } = require("../../../src/cli/bin/helpers/capability");
-const { getFileOrInput } = require("../../../src/cli/bin/util");
+const { getFileOrInput, setConfig } = require("../../../src/cli/bin/util");
 const { SignatureRequirement } = require("../../../src/core/reqsat");
 const nock = require("nock");
 const assert = require("assert");
 const fs = require("fs-extra");
 const path = require("path");
-const yaml = require("yaml");
 
 const host = "https://localhost:8080";
 
@@ -192,10 +191,11 @@ describe("setRiggingTrie", () => {
 });
 
 describe("isValidAndControlled", async () => {
-    let linePath = path.resolve(__dirname, "./files/cap-line.toda");
+    let store = path.resolve(__dirname, "./files");
+    let linePath = path.resolve(store, "cap-line.toda");
     let keyPair, acTwist, poptop;
 
-    beforeEach(() => process.env.config = yaml.stringify({ line: linePath }));
+    beforeEach(() => setConfig({ line: linePath, store: store }));
 
     it("Should verify the integrity of the hoist line and that control belongs to the specified line", async () => {
         keyPair = await crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);

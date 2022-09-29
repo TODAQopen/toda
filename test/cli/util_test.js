@@ -6,7 +6,7 @@
 *************************************************************/
 
 const { defaults } = require("../../src/cli/defaults");
-const { getConfig, setConfig } = require("../../src/cli/bin/util");
+const { getConfig, initConfig } = require("../../src/cli/bin/util");
 const assert = require("assert");
 const fs = require("fs-extra");
 const yaml = require("yaml");
@@ -18,7 +18,7 @@ describe("getConfig", () => {
         let cfgPath = `${__dirname}/helpers/files/config.yml`;
         fs.outputFileSync(cfgPath, yaml.stringify(userCfg), { mode: 0o600 });
 
-        setConfig(cfgPath);
+        initConfig(cfgPath);
 
         let cfg = getConfig(cfgPath);
         assert.deepEqual(cfg, {...defaults, ...userCfg});

@@ -9,7 +9,7 @@ const { Twist } = require("../../../src/core/twist");
 const { ByteArray } = require("../../../src/core/byte-array");
 const { create, append } = require("../../../src/cli/bin/helpers/twist");
 const { getHoist, isValidAndControlled, getTetheredAtoms } = require("../../../src/cli/bin/helpers/rigging");
-const { getAtomsFromPath, generateShield } = require("../../../src/cli/bin/util");
+const { getAtomsFromPath, generateShield, setConfig } = require("../../../src/cli/bin/util");
 const { ArbitraryPacket } = require("../../../src/core/packet");
 const { NullHash, Hash, Sha256 } = require("../../../src/core/hash");
 const { Actionable, SimpleRigged } = require("../../../src/abject/actionable");
@@ -18,14 +18,13 @@ const { generateKey } = require("../../../src/cli/lib/pki");
 const assert = require("assert");
 const fs = require("fs-extra");
 const path = require("path");
-const yaml = require("yaml");
 
 describe("create", () => {
     let tether = path.resolve(__dirname, "./files/cap-line.toda");
     let shield = ByteArray.fromStr("foo");
     let salt = path.resolve(__dirname, "./files/salt");
 
-    beforeEach(() => process.env.config = yaml.stringify({ line: tether, salt: salt, store: '/' }));
+    beforeEach(() => setConfig({ line: tether, salt: salt, store: "/" }));
 
     it("should create a Twist with the correct properties", async () => {
         let keyPair = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" },
@@ -82,7 +81,7 @@ describe("append", () => {
     let tetherA = path.resolve(__dirname, "./files/cap-line.toda");
     let salt = path.resolve(__dirname, "./files/salt");
 
-    beforeEach(() => process.env.config = yaml.stringify({ line: tetherA, salt: salt, store: '/' }));
+    beforeEach(() => setConfig({ line: tetherA, salt: salt, store: "/", poptop: tetherA }));
 
     it("should append to a twist with the correct properties", async () => {
         // Generate a local line
