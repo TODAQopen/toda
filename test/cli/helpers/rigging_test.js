@@ -212,7 +212,6 @@ describe("isValidAndControlled", async () => {
         let ac = await authorize(cap, "http://localhost", "POST", null, null, linePath, keyPair.privateKey);
         let lt = new Twist(Atoms.fromBytes(await getFileOrInput(linePath)));
 
-        // Should really be the Line.firstFast(), but we don't support tethering between multiple local lines at the moment
         poptop = lt.getHash();
 
         let refreshedAtoms = await getTetheredAtoms(ac, poptop);

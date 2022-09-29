@@ -1,3 +1,10 @@
+/*************************************************************
+ * TODAQ Open: TODA File Implementation
+ * Toronto 2022
+ *
+ * Apache License 2.0
+ *************************************************************/
+
 const fs = require("fs/promises");
 const util = require("node:util");
 const exec = util.promisify(require("node:child_process").exec);

@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -107,24 +107,24 @@ class Packet {
 
 
     getShapedValue() {
-        throw new Exception("abstract method not implemented in class Packet");
+        throw new Error("abstract method not implemented in class Packet");
     }
 
     /**
      * @returns <Array.<Hash>> All hashes inside this packet
      */
     getContainedHashes() {
-        throw new Exception("abstract method not implemented in class Packet");
+        throw new Error("abstract method not implemented in class Packet");
     }
 
-    /**
-     * Returns a map of Hashes and Packets which represent a given object.
-     * Assumes the top-level is a trie.
-     * @returns <Map.<Hash:Packet>>
-     */
-    fromObject(obj) {
-        // TODO(acg)
-    }
+    // /**
+    //  * Returns a map of Hashes and Packets which represent a given object.
+    //  * Assumes the top-level is a trie.
+    //  * @returns <Map.<Hash:Packet>>
+    //  */
+    // fromObject(obj) {
+    //     // TODO(acg)
+    // }
 
     isTwist(){
         return this instanceof BasicTwistPacket;

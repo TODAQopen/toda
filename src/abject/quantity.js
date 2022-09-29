@@ -1,14 +1,14 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
 const {Hash} = require("../core/hash");
 const {Abject} = require("./abject");
 const {DelegableActionable} = require("./actionable");
-const {P1String, P1Float} = require("./primitive");
+const {P1Float} = require("./primitive");
 const {DI, DIAssetClassClass, AssetClassField} = require("./di");
 
 

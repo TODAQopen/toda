@@ -1,11 +1,10 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
-const {Sha256} = require("../../src/core/hash");
 const {HashMap} = require("../../src/core/map");
 const assert = require("assert");
 

@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -219,7 +219,7 @@ class SerialStore extends InMemoryPacketStore {
      */
     readBytes(bytes, num) {
         if (bytes.length < num) {
-	    throw new Error("could not parse file; reading off end");
+            throw new Error("could not parse file; reading off end");
         }
         return bytes.slice(0, num);
     }
@@ -262,22 +262,22 @@ class SyncPacketStore {
     }
 
     verify(hash, packet) {
-	      return hash.assertVerifiesPacket(packet);
+        return hash.assertVerifiesPacket(packet);
     }
 
     put(hash, packet) {
-	      this.verify(hash, packet);
+        this.verify(hash, packet);
     }
 }
 
 class MemorySyncPacketStore extends PacketStore {
 
     constructor() {
-	      super();
+        super();
 
-	      this.atoms = new Atoms();
-	      this.parents = new HashMap();
-	      this.successors = new HashMap();
+        this.atoms = new Atoms();
+        this.parents = new HashMap();
+        this.successors = new HashMap();
     }
 
     getPairs() {
@@ -293,73 +293,73 @@ class MemorySyncPacketStore extends PacketStore {
     }
 
     get(hash) {
-	      return this.atoms.get(hash);
+        return this.atoms.get(hash);
     }
 
     _addChildHash(parentHash, childHash) {
-	      if (this.parents.get(childHash)) {
-	          this.parents.get(childHash).push(parentHash);
-	      } else {
-	          this.parents.set(childHash, [parentHash]);
-	      }
+        if (this.parents.get(childHash)) {
+            this.parents.get(childHash).push(parentHash);
+        } else {
+            this.parents.set(childHash, [parentHash]);
+        }
     }
 
     _throwConflictingSuccessor(existing, conflicting) {
-	      throw new Error("Conflicting successors.  This packet store does not support conflicting successors: " + existing.toString() + " vs " + conflicting.toString());
+        throw new Error("Conflicting successors.  This packet store does not support conflicting successors: " + existing.toString() + " vs " + conflicting.toString());
     }
 
     // returns a HASH (change from async)
     successor(hash) {
-	      return this.successors.get(hash);
+        return this.successors.get(hash);
     }
 
     put(hash, packet) {
-	      super.put(hash, packet);
-	      this.atoms.set(hash, packet);
-	      packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
+        super.put(hash, packet);
+        this.atoms.set(hash, packet);
+        packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
 
-	      if (packet instanceof BasicTwistPacket) {
-	          let body = this.get(packet.getBodyHash());
-	          if (body) {
-		            let prev = body.getPrevHash();
-		            let existingSuccessor = this.successors.get(prev);
-		            if (existingSuccessor) {
-		                if (existingSuccessor.equals(hash)) {
-			                  return;
-		                }
-		                this._throwConflictingSuccessor(existingSuccessor, hash);
-		            }
-                if (!prev.isNull()) {
-		                this.successors.set(prev, hash);
+        if (packet instanceof BasicTwistPacket) {
+            let body = this.get(packet.getBodyHash());
+            if (body) {
+                let prev = body.getPrevHash();
+                let existingSuccessor = this.successors.get(prev);
+                if (existingSuccessor) {
+                    if (existingSuccessor.equals(hash)) {
+                        return;
+                    }
+                    this._throwConflictingSuccessor(existingSuccessor, hash);
                 }
-	          }
-	          // else we don't have the body (yet) - may have been added
-	          // out-of-order
-	      }
+                if (!prev.isNull()) {
+                    this.successors.set(prev, hash);
+                }
+            }
+            // else we don't have the body (yet) - may have been added
+            // out-of-order
+        }
 
-	      if (packet instanceof BasicBodyPacket) {
-	          let parentHashes = this.parents.get(hash);
+        if (packet instanceof BasicBodyPacket) {
+            let parentHashes = this.parents.get(hash);
             let twistHash = parentHashes ? parentHashes[0] : null;
-	          if (twistHash) {
-		            let prev = packet.getPrevHash();
-		            let existingSuccessor = this.successors.get(prev);
-		            if (existingSuccessor) {
-		                if (existingSuccessor.equals(twistHash)) {
-			                  return;
-		                }
-		                this._throwConflictingSuccessor(existingSuccessor, twistHash);
-		            }
-                if (!prev.isNull()) {
-		                this.successors.set(prev, twistHash);
+            if (twistHash) {
+                let prev = packet.getPrevHash();
+                let existingSuccessor = this.successors.get(prev);
+                if (existingSuccessor) {
+                    if (existingSuccessor.equals(twistHash)) {
+                        return;
+                    }
+                    this._throwConflictingSuccessor(existingSuccessor, twistHash);
                 }
-	          }
-	          // else we dont have the twist(yet)
-	      }
+                if (!prev.isNull()) {
+                    this.successors.set(prev, twistHash);
+                }
+            }
+            // else we dont have the twist(yet)
+        }
 
     }
 
     copyInto(store) {
-	      this.atoms.forEach( (packet, hash) => store.put(hash, packet));
+        this.atoms.forEach( (packet, hash) => store.put(hash, packet));
     }
 
 }

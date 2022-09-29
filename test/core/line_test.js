@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -9,7 +9,7 @@ const assert = require("assert");
 const { Sha256 } = require("../../src/core/hash");
 const { Atoms } = require("../../src/core/atoms");
 const { Twist, TwistBuilder } = require("../../src/core/twist");
-const { Line, PersistentLine } = require("../../src/core/line");
+const { Line } = require("../../src/core/line");
 const { ArbitraryPacket } = require("../../src/core/packet");
 const { sbh, bafs } = require("../util");
 

@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -10,7 +10,6 @@ const { Atoms } = require("./atoms");
 const { HashMap } = require("./map");
 const { BasicTwistPacket, BasicBodyPacket } = require("./packet");
 const { ByteArray } = require("./byte-array");
-const { Hash } = require("./hash");
 const { Twist, MissingHashPacketError } = require("./twist");
 
 class Line {
@@ -185,23 +184,6 @@ class Line {
         let line = this.completeHistory(hash);
         while (line.length > 0) {
             let h = line.pop();
-            let twist = this.twist(h);
-            if (twist && twist.isTethered()) {
-                return h;
-            }
-        }
-    }
-
-    /**
-   * Returns the first tethered twist hash or null if none are tethered.
-   * Returns null if input hash is not found in store.
-   * @param {Hash} hash
-   * @returns {Hash}
-   */
-    firstFast(hash) {
-        let line = this.completeHistory(hash);
-        while (line.length > 0) {
-            let h = line.shift();
             let twist = this.twist(h);
             if (twist && twist.isTethered()) {
                 return h;

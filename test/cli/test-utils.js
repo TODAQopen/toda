@@ -1,3 +1,10 @@
+/*************************************************************
+ * TODAQ Open: TODA File Implementation
+ * Toronto 2022
+ *
+ * Apache License 2.0
+ *************************************************************/
+
 const { create } = require("../../src/cli/bin/helpers/twist");
 const fs = require("fs-extra");
 const path = require("path");

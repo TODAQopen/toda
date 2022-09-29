@@ -1,12 +1,12 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
 const {ByteArray} = require("../src/core/byte-array");
-const {Sha256, NullHash} = require("../src/core/hash");
+const {Sha256} = require("../src/core/hash");
 const assert = require("assert");
 
 // string-bytes-hash

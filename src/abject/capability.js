@@ -1,16 +1,15 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
 const {Hash} = require("../core/hash");
-const {ByteArray} = require("../core/byte-array");
 const {Abject, AbjectError} = require("./abject");
 const {DelegableActionable} = require("./actionable");
 const {DI, DIAssetClassClass, AssetClassField} = require("./di");
-const {P1Date, P1String} = require("./primitive");
+const {P1String} = require("./primitive");
 
 class CapabilityError extends AbjectError {
     constructor(cap, msg) {
@@ -24,7 +23,7 @@ class Capability extends DelegableActionable {
     static interpreter = Hash.fromHex("22eeb6569f77ff73f9ebc1583bddc8308cef7d23ebf41ac29f12d4ad7507f028af");
 
     static fieldSyms = {
-	      authorize: Hash.fromHex("222564ba77745b564eada13dc236aef5967969d8e459160c1a02e8846b530798b3"),
+        authorize: Hash.fromHex("222564ba77745b564eada13dc236aef5967969d8e459160c1a02e8846b530798b3"),
     };
 
     constructor() {

@@ -1,4 +1,4 @@
-const { app } = require('../src/server')
+const { app } = require("../src/server");
 
 exports.app = app;
 

@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -30,7 +30,7 @@ describe("P1String", () => {
         assert.equal(triePacket.size, 2);
 
         assert.equal(Buffer.from(atoms.get(keys[0]).getShapedValue()).toString(),
-		     "introduction to the calculus of variations");
+            "introduction to the calculus of variations");
     });
 
     it("can be read", () => {
@@ -42,7 +42,7 @@ describe("P1String", () => {
 });
 
 describe("P1Float", () => {
-    
+
     it("integers work", () => {
         let p1n = new P1Float(42);
         let atoms = p1n.serialize(Sha256);
@@ -63,7 +63,7 @@ describe("P1Float", () => {
 
         atoms = new P1Float(-42).serialize(Sha256);
         assert.equal(Abject.parse(atoms), -42);
-	
+
     });
 
     it("handles floats", () => {
@@ -73,7 +73,7 @@ describe("P1Float", () => {
         atoms = new P1Float(6.023e-23).serialize(Sha256);
         assert.equal(Abject.parse(atoms), 6.023e-23);
     });
-    
+
 });
 
 describe("P1Date", () => {
@@ -86,7 +86,7 @@ describe("P1Date", () => {
 
         assert.equal(Abject.parse(atoms).getTime(), now.getTime());
     });
-    
+
 });
 
 describe("P1Boolean", () => {

@@ -6,7 +6,7 @@
 *************************************************************/
 
 const { ByteArray } = require("./byte-array");
-const { Hash, Symbol, Sha256 } = require("./hash");
+const { Symbol, Sha256 } = require("./hash");
 const { MemorySyncPacketStore } = require("./store");
 const { PairTriePacket, ArbitraryPacket, HashPacket } = require("./packet");
 const { Twist } = require("./twist");
@@ -249,7 +249,7 @@ class UnsupportedRequirementError extends ReqSatError {}
 function satisfies(reqHash, bodyHash, reqPacket, satPacket) {
     // just implement secp256r1 for now
     if (!reqHash.equals(SignatureRequirement.REQ_SECP256r1)) {
-        throw new UnsupportedRequirementError(reqHash, reqPacket, satPacket, REQ_SECP256r1.toString());
+        throw new UnsupportedRequirementError(reqHash, reqPacket, satPacket, SignatureRequirement.REQ_SECP256r1.toString());
     }
     return todaCrypto.Secp256r1.verify(reqPacket.getShapedValue(),
         satPacket.getShapedValue(),

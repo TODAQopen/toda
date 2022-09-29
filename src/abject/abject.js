@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -33,15 +33,15 @@ class Abject {
 
     constructor() {
 
-	      this.preferredHashImp = Sha256;
+        this.preferredHashImp = Sha256;
 
-	      // supporting atoms
-	      this.atoms = new Atoms();
+        // supporting atoms
+        this.atoms = new Atoms();
 
-	      // top-level data map
-	      this.data = new HashMap();
+        // top-level data map
+        this.data = new HashMap();
 
-	      this.setInterpreter(this.constructor.interpreter);
+        this.setInterpreter(this.constructor.interpreter);
     }
 
     getAtoms() {
@@ -54,10 +54,10 @@ class Abject {
      * @param val <Hash>
      */
     setFieldHash(field, val) {
-	      if (!field || !val) {
-	          throw new AbjectError(this.atoms, "both params required setting a field value");
-	      }
-	      this.data.set(field, val);
+        if (!field || !val) {
+            throw new AbjectError(this.atoms, "both params required setting a field value");
+        }
+        this.data.set(field, val);
     }
 
     /**
@@ -66,8 +66,8 @@ class Abject {
      * @param valPacket <Packet>
      */
     setFieldAtom(field, valHash, valPacket) {
-	      this.addAtom(valHash, valPacket);
-	      this.setFieldHash(field, valHash);
+        this.addAtom(valHash, valPacket);
+        this.setFieldHash(field, valHash);
     }
 
     /**
@@ -77,8 +77,8 @@ class Abject {
      * @param valPacket <Packet>
      */
     setField(field, valPacket) {
-	      // xxx(acg): maybe add an optional param to supply a hasher?
-	      this.setFieldAtom(field, this.hashPacket(valPacket), valPacket);
+        // xxx(acg): maybe add an optional param to supply a hasher?
+        this.setFieldAtom(field, this.hashPacket(valPacket), valPacket);
     }
 
     /**
@@ -88,8 +88,8 @@ class Abject {
      */
     setFieldAbject(field, abject, hashImp) {
         let atoms = abject.serialize(hashImp);
-	      this.atoms.merge(atoms);
-	      this.setFieldHash(field, atoms.lastAtomHash());
+        this.atoms.merge(atoms);
+        this.setFieldHash(field, atoms.lastAtomHash());
     }
 
     /**
@@ -114,10 +114,10 @@ class Abject {
      * @param interpreter <Hash>
      */
     setInterpreter(interpreter) {
-	      if (!interpreter) {
-	          throw new AbjectError(this.atoms, "interpreter required");
-	      }
-	      this.setFieldHash(NULL, interpreter);
+        if (!interpreter) {
+            throw new AbjectError(this.atoms, "interpreter required");
+        }
+        this.setFieldHash(NULL, interpreter);
     }
 
     /**
@@ -126,7 +126,7 @@ class Abject {
      * @param p <Packet>
      */
     addAtom(h, p) {
-	      this.atoms.set(h, p);
+        this.atoms.set(h, p);
     }
 
     addAtoms(atoms) {
@@ -137,8 +137,8 @@ class Abject {
      * @returns [<Hash>,<Packet>]
      */
     dataAtom(hashImp) {
-	      let packet = PairTriePacket.createFromUnsorted(this.data);
-	      return [(hashImp || this.preferredHashImp).fromPacket(packet), packet];
+        let packet = PairTriePacket.createFromUnsorted(this.data);
+        return [(hashImp || this.preferredHashImp).fromPacket(packet), packet];
     }
 
     /**
@@ -153,7 +153,7 @@ class Abject {
      * @returns <Hash>
      */
     getHash(hashImp) {
-	      return this.topAtom(hashImp || this.preferredHashImp)[0];
+        return this.topAtom(hashImp || this.preferredHashImp)[0];
     }
 
     /**
@@ -163,27 +163,27 @@ class Abject {
      * @return <Atoms>
      */
     serialize(hashImp) {
-	      let [h,p] = this.dataAtom(hashImp);
-	      return this.atoms.clone().set(h,p);
+        let [h,p] = this.dataAtom(hashImp);
+        return this.atoms.clone().set(h,p);
     }
 
     /**
      * FIXME(acg): naming, etc. etc.....
      */
-    serializeToBytes(hashImp) {
-	      //todo(acg): initialize with the actual num of bytes we'll need
-	      let byteBuffer = new ByteArray();
-	      for (const [hash,packet] in this.atoms) {
-	          byteBuffer = byteBuffer.concat(hash.serialize().concat(packet.serialize()));
-	      }
-	      return byteBuffer.concat(dataHash.serialize().concat(dataPacket.serialize()));
-    }
+    // serializeToBytes(hashImp) {
+    //     //todo(acg): initialize with the actual num of bytes we'll need
+    //     let byteBuffer = new ByteArray();
+    //     for (const [hash,packet] in this.atoms) {
+    //         byteBuffer = byteBuffer.concat(hash.serialize().concat(packet.serialize()));
+    //     }
+    //     return byteBuffer.concat(dataHash.serialize().concat(dataPacket.serialize()));
+    // }
 
     /**
      * @return <Class.<Hash>>
      */
     getPreferredHashImp() {
-	      return this.preferredHashImp;
+        return this.preferredHashImp;
     }
 
     /**
@@ -191,14 +191,14 @@ class Abject {
      * @return <Hash>
      */
     hashPacket(packet) {
-	      return this.getPreferredHashImp().fromPacket(packet);
+        return this.getPreferredHashImp().fromPacket(packet);
     }
 
     /**
      * @param interpreterCls <Class.<Abject>>
      */
     static registerInterpreter(interpreterCls) {
-	      this.interpreters.set(interpreterCls.interpreter, interpreterCls);
+        this.interpreters.set(interpreterCls.interpreter, interpreterCls);
     }
 
     /**
@@ -206,7 +206,7 @@ class Abject {
      * @return <Class.<Abject>?>
      */
     static classForInterpreter(interpreterHash) {
-	      return this.interpreters.get(interpreterHash);
+        return this.interpreters.get(interpreterHash);
     }
 
 
@@ -247,7 +247,7 @@ class Abject {
         if (focusHash) {
             focus = atoms.get(focusHash);
         } else {
-	          focus = atoms.lastPacket();
+            focus = atoms.lastPacket();
         }
 
         // deal with reference to lists
@@ -255,35 +255,35 @@ class Abject {
             return focus.shapedVal.map(h => Abject.parse(atoms, h));
         }
 
-	      let body = null;
+        let body = null;
         let cargo = null;
-	      let cargoHash = undefined;
+        let cargoHash = undefined;
 
-	      if (focus instanceof BasicTwistPacket) {
-	          // TODO(acg): push this logic down into the forthcoming Twist class
-	          body = atoms.get(focus.getBodyHash());
-	          if (!body) {
-		            throw new AbjectMissingBodyPacket(atoms);
-	          }
-		        cargoHash = body.getCargoHash();
-	          cargo = atoms.get(cargoHash);
+        if (focus instanceof BasicTwistPacket) {
+            // TODO(acg): push this logic down into the forthcoming Twist class
+            body = atoms.get(focus.getBodyHash());
+            if (!body) {
+                throw new AbjectMissingBodyPacket(atoms);
+            }
+            cargoHash = body.getCargoHash();
+            cargo = atoms.get(cargoHash);
 
-	          if (!cargo) {
-		            throw new AbjectMissingCargoPacket(atoms);
-	          }
-	      }
+            if (!cargo) {
+                throw new AbjectMissingCargoPacket(atoms);
+            }
+        }
 
-	      let interpreterHash = cargo ? cargo.get(NULL) : focus.get(NULL); //urg
-	      if (!interpreterHash) {
-	          throw new AbjectMissingInterpreterFieldError(atoms);
-	      }
+        let interpreterHash = cargo ? cargo.get(NULL) : focus.get(NULL); //urg
+        if (!interpreterHash) {
+            throw new AbjectMissingInterpreterFieldError(atoms);
+        }
 
-	      let interpreter = this.classForInterpreter(interpreterHash, focusHash);
-	      if (!interpreter) {
-	          throw new AbjectMissingInterpreterError(atoms, interpreterHash);
-	      }
+        let interpreter = this.classForInterpreter(interpreterHash, focusHash);
+        if (!interpreter) {
+            throw new AbjectMissingInterpreterError(atoms, interpreterHash);
+        }
 
-	      return interpreter.parse(atoms, focusHash, cargoHash);
+        return interpreter.parse(atoms, focusHash, cargoHash);
     }
 
     /**
@@ -293,14 +293,14 @@ class Abject {
      */
     static gensym(seed) {
 
-	      const prefix = "adotsym:/";
-	      let sym = prefix;
-	      if (this.interpreter) {
-	          sym += this.interpreter + "/";
-	      }
-	      sym += seed;
+        const prefix = "adotsym:/";
+        let sym = prefix;
+        if (this.interpreter) {
+            sym += this.interpreter + "/";
+        }
+        sym += seed;
 
-	      return new Symbol(Sha256.hash(new ByteArray(Buffer.from(sym))));
+        return new Symbol(Sha256.hash(new ByteArray(Buffer.from(sym))));
     }
 
     /**
@@ -319,13 +319,13 @@ class AbjectError extends Error {
 
     constructor(abjectAtoms) {
         super();
-	      if (abjectAtoms) {
-	          this.abjectHash = abjectAtoms.lastAtomHash();
+        if (abjectAtoms) {
+            this.abjectHash = abjectAtoms.lastAtomHash();
 
-	          if (this.verbose) {
-		            this.abjectAtoms = abjectAtoms;
-	          }
-	      }
+            if (this.verbose) {
+                this.abjectAtoms = abjectAtoms;
+            }
+        }
     }
 }
 
@@ -335,17 +335,17 @@ class AbjectAtomMissingError extends AbjectError {
      * @param pathIfKnown <Array.<Hash>> path from root cargo to the key referencing the hash we can't follow
      */
     constructor(atoms, missingHash, pathIfKnown) {
-	      super(atoms);
-	      this.missingHash = missingHash;
-	      this.pathIfKnown = pathIfKnown;
+        super(atoms);
+        this.missingHash = missingHash;
+        this.pathIfKnown = pathIfKnown;
     }
 }
 class AbjectMissingInterpreterFieldError extends AbjectError {}
 
 class AbjectMissingInterpreterError extends AbjectError {
     constructor(atoms, abjectInterpreterHash) {
-	      super(atoms);
-	      this.abjectInterpreterHash = abjectInterpreterHash;
+        super(atoms);
+        this.abjectInterpreterHash = abjectInterpreterHash;
     }
 }
 
@@ -356,3 +356,4 @@ class AbjectMissingCargoPacket extends AbjectError {}
 
 exports.Abject = Abject;
 exports.AbjectError = AbjectError;
+exports.AbjectAtomMissingError = AbjectAtomMissingError;

@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -13,7 +13,7 @@ const { Atoms } = require("./atoms");
 class MissingHashPacketError {
     constructor(hash, message) {
         this.hash = hash.toString();
-	      this.message = message;
+        this.message = message;
     }
 }
 class ShapeError {
@@ -264,107 +264,107 @@ class Twist {
     }
 
     get(hash) {
-	      return this.atoms.get(hash);
+        return this.atoms.get(hash);
     }
 
     isTethered() {
-	      return !this.body.getTetherHash().isNull();
+        return !this.body.getTetherHash().isNull();
     }
 
     prev() {
-	      let ph = this.body.getPrevHash();
-	      if (ph.isNull()) {
-	          return null;
-	      }
-	      return new Twist(this.atoms, ph);
+        let ph = this.body.getPrevHash();
+        if (ph.isNull()) {
+            return null;
+        }
+        return new Twist(this.atoms, ph);
     }
 
     rig(hash) {
-	      let riggingHash = this.body.getRiggingHash();
-	      if (riggingHash.isNull()) {
-	          return null;
-	      }
-	      let rigging =  this.get(riggingHash);
+        let riggingHash = this.body.getRiggingHash();
+        if (riggingHash.isNull()) {
+            return null;
+        }
+        let rigging =  this.get(riggingHash);
         if (!rigging) {
             throw new MissingHashPacketError(riggingHash);
         }
-	      if (!(rigging instanceof PairTriePacket)) {
-	          throw new ShapeError(this.body.getRiggingHash(), "Rigging must be pairtrie");
-	      }
-	      return rigging.get(hash);
+        if (!(rigging instanceof PairTriePacket)) {
+            throw new ShapeError(this.body.getRiggingHash(), "Rigging must be pairtrie");
+        }
+        return rigging.get(hash);
     }
 
     /**
      * @returns <ArbitraryPacket>
      */
     shield() {
-	      return this.get(this.body.getShieldHash());
+        return this.get(this.body.getShieldHash());
     }
 
     tether() {
-	      if (this.isTethered()) {
-	          return new Twist(this.atoms, this.body.getTetherHash());
-	      }
-	      return null;
+        if (this.isTethered()) {
+            return new Twist(this.atoms, this.body.getTetherHash());
+        }
+        return null;
     }
 
     /**
      * if param 'key' provided, does a lookup, otherwise returns trie.
      */
     reqs(key) {
-	      let reqHash = this.body.getReqsHash();
-	      if (reqHash.isNull()) {
-	          return null;
-	      }
-	      let reqs = this.get(reqHash);
-	      if (!reqs) {
-	          throw new MissingHashPacketError(reqHash, "Requirements packet missing");
-	      }
-	      if (key) {
-	          return reqs.get(key);
-	      }
-	      return reqs;
+        let reqHash = this.body.getReqsHash();
+        if (reqHash.isNull()) {
+            return null;
+        }
+        let reqs = this.get(reqHash);
+        if (!reqs) {
+            throw new MissingHashPacketError(reqHash, "Requirements packet missing");
+        }
+        if (key) {
+            return reqs.get(key);
+        }
+        return reqs;
     }
 
     /**
      * if param 'key' provided, does a lookup, otherwise returns trie.
      */
     sats(key) {
-	      let satHash = this.packet.getSatsHash();
-	      if (satHash.isNull()) {
-	          return null;
-	      }
-	      let sats = this.get(satHash);
-	      if (!sats) {
-	          throw new MissingHashPacketError(satHash, "Sats packet missing");
-	      }
-	      if (key) {
-	          return sats.get(key);
-	      }
-	      return sats;
+        let satHash = this.packet.getSatsHash();
+        if (satHash.isNull()) {
+            return null;
+        }
+        let sats = this.get(satHash);
+        if (!sats) {
+            throw new MissingHashPacketError(satHash, "Sats packet missing");
+        }
+        if (key) {
+            return sats.get(key);
+        }
+        return sats;
     }
 
     cargo(key) {
-	      let cargoHash = this.body.getCargoHash();
-	      if (cargoHash.isNull()) {
-	          return null;
-	      }
-	      let cargo = this.get(cargoHash);
-	      if (!cargo) {
-	          throw new MissingHashPacketError(cargoHash, "Cargo packet missing");
-	      }
-	      if (key) {
-	          return cargo.get(key);
-	      }
-	      return cargo;
+        let cargoHash = this.body.getCargoHash();
+        if (cargoHash.isNull()) {
+            return null;
+        }
+        let cargo = this.get(cargoHash);
+        if (!cargo) {
+            throw new MissingHashPacketError(cargoHash, "Cargo packet missing");
+        }
+        if (key) {
+            return cargo.get(key);
+        }
+        return cargo;
     }
 
     hasRigKey(hash) {
-	      return !!this.rig(hash);
+        return !!this.rig(hash);
     }
 
     equals(twist) {
-	      return this.hash.equals(twist.hash);
+        return this.hash.equals(twist.hash);
     }
 
     //THINK(mje): Add a tether arg, could setTether and setRiggingTrie here for convenience

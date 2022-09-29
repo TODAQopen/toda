@@ -1,14 +1,14 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
 const {DI} = require("../../src/abject/di");
 const {Actionable} = require("../../src/abject/actionable");
 const {Capability} = require("../../src/abject/capability");
-const {Primitive, P1String, P1Float, P1Integer, P1Date, P1Boolean} = require("../../src/abject/primitive");
+const {P1String, P1Date} = require("../../src/abject/primitive");
 const {Abject} = require("../../src/abject/abject");
 const {Sha256} = require("../../src/core/hash");
 
@@ -107,7 +107,7 @@ describe("Cap creation", () => {
         masterNext.addAtoms(topNext.serialize());
         await masterNext.checkAllRigs();
 
-	
+
 
     });
 
@@ -175,7 +175,7 @@ describe("Cap creation", () => {
 
         masterNext.addAtoms(topNext.serialize());
 
-        await masterNext.getCheckedAuthorization().then((res) => {
+        await masterNext.getCheckedAuthorization().then(() => {
             assert(false, "Expected exception");
         }, (rej) => {
             if (rej.msg && rej.msg == "Capability cannot grant authorized HTTP resource") {
@@ -207,7 +207,7 @@ describe("Cap creation", () => {
 
         masterNext.addAtoms(topNext.serialize());
 
-        await masterNext.getCheckedAuthorization().then((res) => {
+        await masterNext.getCheckedAuthorization().then(() => {
             assert(false, "Expected exception");
         }, (rej) => {
             if (rej.msg && rej.msg == "Capability insufficient to grant authorized HTTP method") {

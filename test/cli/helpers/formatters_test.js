@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -11,8 +11,7 @@ const { stringifyValues,
     hydrateHash,
     formatReqSats,
     formatBodyPacket,
-    formatTwistPacket,
-    formatTabDelimited } = require("../../../src/cli/bin/helpers/formatters");
+    formatTwistPacket } = require("../../../src/cli/bin/helpers/formatters");
 const { Sha256, NullHash, Hash } = require("../../../src/core/hash");
 const { Twist } = require("../../../src/core/twist");
 const { Atoms } = require("../../../src/core/atoms");

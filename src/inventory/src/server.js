@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -65,7 +65,7 @@ function app(invPath=__dirname, config={}) {
             }, next);
     });
 
-    expressapp.use((err, req, res, next) => {
+    expressapp.use((err, req, res) => {
         if (err.constructor.name == "PayloadTooLargeError") {
             return res.status(413).send(err.message);
         }

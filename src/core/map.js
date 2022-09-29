@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -19,7 +19,7 @@ class HashMap extends Map {
     constructor(iterable) {
         super(iterable);
         if (this.hashes === undefined) {
-	    this.hashes = {}; /** @type Object.<String,Hash> */
+            this.hashes = {}; /** @type Object.<String,Hash> */
         }
     }
 
@@ -27,7 +27,7 @@ class HashMap extends Map {
         this.hashes = {};
         return super.clear();
     }
-    
+
     delete(key) {
         let res = super.delete(this.hashes[key]);
         delete this.hashes[key];
@@ -47,11 +47,11 @@ class HashMap extends Map {
 
         // XXX(acg): hack - if args are passed to super(), 'set' will otherwise fail
         if(this.hashes === undefined) {
-	    this.hashes = {};
+            this.hashes = {};
         }
-	
+
         if (!this.hashes[key]) {
-	    this.hashes[key] = key;
+            this.hashes[key] = key;
         }
         return super.set(this.hashes[key], value);
     }

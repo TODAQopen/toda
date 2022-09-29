@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -48,7 +48,7 @@ class Interpreter {
     }
 
     twist(hash) {
-	    return new Twist(this.line.getAtoms(), hash);
+        return new Twist(this.line.getAtoms(), hash);
     }
 
     /**
@@ -203,7 +203,7 @@ class Interpreter {
             return null;
         }
 
-	      if (twist.hasRigKey(rigKeyHash)) {
+        if (twist.hasRigKey(rigKeyHash)) {
             return twist;
         }
         return this.nextRigEntryTwist(twist.hash, rigKeyHash);
@@ -214,10 +214,10 @@ class Interpreter {
      * @returns <Twist>
      */
     hitchHoist(hash) {
-	      let twist = this.twist(hash);
+        let twist = this.twist(hash);
         let shield = Shield.shield(hash, hash, twist.shield());
 
-	      return this.nextRigEntryTwist(twist.tether().hash, shield);
+        return this.nextRigEntryTwist(twist.tether().hash, shield);
 
     }
 

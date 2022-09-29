@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -17,13 +17,13 @@ const {Line} = require("../core/line");
 class Actionable extends Abject {
 
     static fieldSyms = {
-	      popTop: Hash.parse(new ByteArray(Buffer.from("22c70173874680c58e5c1d32854bd10486aac6f1aa821b56e3d512fd72e45ac72e","hex"))),
+        popTop: Hash.parse(new ByteArray(Buffer.from("22c70173874680c58e5c1d32854bd10486aac6f1aa821b56e3d512fd72e45ac72e","hex"))),
         context : Actionable.gensym("field/context")
     };
 
     constructor() {
         super();
-	      this.twistHash = null;
+        this.twistHash = null;
         this.twistBuilder = new TwistBuilder();
     }
 
@@ -63,10 +63,10 @@ class Actionable extends Abject {
 
     // These may be factored out into a twisty mixin or something:
     static parse(atoms, focusHash, cargoHash) {
-	      let x = new this();
-	      x.atoms = atoms;
-	      x.data = new HashMap(atoms.get(cargoHash).getShapedValue()); // does htis work?
-	      x.twistHash = focusHash || atoms.lastAtomHash();
+        let x = new this();
+        x.atoms = atoms;
+        x.data = new HashMap(atoms.get(cargoHash).getShapedValue()); // does htis work?
+        x.twistHash = focusHash || atoms.lastAtomHash();
         return x;
     }
 
@@ -78,23 +78,23 @@ class Actionable extends Abject {
     }
 
     prev() {
-	      let prevHash = this.prevHash();
-	      if (prevHash && !prevHash.isNull()) {
-	          return this.getAbject(prevHash);
-	      }
-	      return null;
+        let prevHash = this.prevHash();
+        if (prevHash && !prevHash.isNull()) {
+            return this.getAbject(prevHash);
+        }
+        return null;
     }
 
     isFirst() {
-	      return !this.prevHash() || this.prevHash().isNull();
+        return !this.prevHash() || this.prevHash().isNull();
     }
 
     first() {
-	      if (this.isFirst()) {
-	          return this;
-	      }
+        if (this.isFirst()) {
+            return this;
+        }
 
-	      let p = this.prev();
+        let p = this.prev();
         return p.first();
     }
 
@@ -137,9 +137,9 @@ class Actionable extends Abject {
 
 class DelegableActionable extends Actionable {
     static fieldSyms = {
-	      delegateInitiate: Hash.parse(new ByteArray(Buffer.from("22251dbe656f28f8fd46de35a13c1d74921cb73c1c198800b77eb2417f09435a82","hex"))),
-	      delegateConfirm: Hash.parse(new ByteArray(Buffer.from("2246de612f227162a3d60819c45d88ba2d88d74aa86d64f865bf371be5ec8c52f0","hex"))),
-	      delegateComplete: Hash.parse(new ByteArray(Buffer.from("229b2a6d33408bc08d1af4ec63f0fb8e627d6e3b4d3f208e90390c3d8df789de34","hex"))),
+        delegateInitiate: Hash.parse(new ByteArray(Buffer.from("22251dbe656f28f8fd46de35a13c1d74921cb73c1c198800b77eb2417f09435a82","hex"))),
+        delegateConfirm: Hash.parse(new ByteArray(Buffer.from("2246de612f227162a3d60819c45d88ba2d88d74aa86d64f865bf371be5ec8c52f0","hex"))),
+        delegateComplete: Hash.parse(new ByteArray(Buffer.from("229b2a6d33408bc08d1af4ec63f0fb8e627d6e3b4d3f208e90390c3d8df789de34","hex"))),
     };
 
     createDelegate() {
@@ -183,14 +183,14 @@ class DelegableActionable extends Actionable {
      */
     delegateComplete() {
         let dc = this.getFieldAbject(DelegableActionable.fieldSyms.delegateComplete);
-	      if (dc) {
-	          return dc;
-	      }
-	      let prev = this.prev();
-	      if (prev) {
-	          return prev.delegateComplete();
-	      }
-	      return null;
+        if (dc) {
+            return dc;
+        }
+        let prev = this.prev();
+        if (prev) {
+            return prev.delegateComplete();
+        }
+        return null;
     }
 
     /**
@@ -239,20 +239,20 @@ class DelegableActionable extends Actionable {
      * @return <Array.<DelegableActionable>>
      */
     delegationChain() {
-	      if (!this.delegateInitiate()) {
-	          return [this];
-	      }
+        if (!this.delegateInitiate()) {
+            return [this];
+        }
         if (!this.delegateOf()) {
             return [this]; //xxx(acg): maybe throw something instead of silent
         }
-	      return [...this.delegateOf().delegationChain(), this];
+        return [...this.delegateOf().delegationChain(), this];
     }
 
     async checkAllRigs() {
         let chain = this.delegationChain();
-	      for (let di of chain) {
-	          await di.checkRig();
-	      }
+        for (let di of chain) {
+            await di.checkRig();
+        }
     }
 
     root() {

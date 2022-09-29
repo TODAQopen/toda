@@ -6,6 +6,7 @@ const { handleProcessException, ProcessException } = require("./helpers/process-
 const { getArgs, formatInputs } = require("./util");
 const { Hash } = require("../../core/hash");
 const { Atoms } = require("../../core/atoms");
+const path = require("path");
 
 void async function () {
     try {

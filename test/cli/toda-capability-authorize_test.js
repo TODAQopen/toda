@@ -1,3 +1,10 @@
+/*************************************************************
+ * TODAQ Open: TODA File Implementation
+ * Toronto 2022
+ *
+ * Apache License 2.0
+ *************************************************************/
+
 const { Abject } = require("../../src/abject/abject");
 const { Capability } = require("../../src/abject/capability");
 const { getAtomsFromPath } = require("../../src/cli/bin/util");

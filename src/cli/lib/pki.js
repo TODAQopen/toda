@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -41,7 +41,6 @@ async function generateKey() {
     }  else {
         throw new Error("Error creating key pair");
     }
-    return null;
 }
 
 const KeyConfig = {

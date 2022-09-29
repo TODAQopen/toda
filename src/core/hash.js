@@ -1,18 +1,12 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
 const sjcl = require("./sjcl");
 const {ByteArray} = require("./byte-array");
-// const {isNode} = require("./util");
-// let blake3;
-
-// if (isNode()) {
-//   blake3 = require('blake3');
-// }
 
 class Hash {
     /**
@@ -34,7 +28,7 @@ class Hash {
         this.serializedValue.set(this.hashValue, 1);
     }
 
-    static hash(data) {
+    static hash() {
         throw new Error("abstract method not implemented in base class Hash");
     }
 
@@ -188,10 +182,10 @@ class NullHash extends Hash {
     static DESCRIPTION = "Represents an empty hash";
 
     constructor() {
-        return super(new ByteArray());
+        super(new ByteArray());
     }
 
-    static hash(data) {
+    static hash() {
         throw new Error("cannot hash data with null algo");
     }
 
@@ -199,7 +193,7 @@ class NullHash extends Hash {
         return 0;
     }
 
-    static parse(raw) {
+    static parse() {
         return new this();
     }
 
@@ -256,14 +250,14 @@ class Symbol extends Hash {
 
     static FIXED_HASH_VALUE_LENGTH = 32;
 
-    static hash(data) {
+    static hash() {
         throw new Error("this implementation should not be used to hash data");
     }
 
 
     // TODO(acg): What is this used for; seems similar to base class?
     /**
-   * @param <ByteArray> raw bytes hopefully starting with this algoCode
+   * @param raw <ByteArray> raw bytes hopefully starting with this algoCode
    * @returns <Sha256> parsed implementation of this class
    */
     static parse(raw) {

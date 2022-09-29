@@ -46,7 +46,7 @@ void async function () {
 
         status(chalk.white("Posting to the inventory server..."));
 
-        let response = await axios({
+        await axios({
             method: "POST",
             url: `${inventoryServer}/files`,
             headers: { "Content-Type": "application/octet-stream" },

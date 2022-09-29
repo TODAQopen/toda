@@ -1,13 +1,11 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
 const {DQ} = require("../../src/abject/quantity");
-const {Actionable} = require("../../src/abject/actionable");
-const {Abject} = require("../../src/abject/abject");
 const {Sha256} = require("../../src/core/hash");
 
 const {TwistBuilder} = require("../../src/core/twist");
