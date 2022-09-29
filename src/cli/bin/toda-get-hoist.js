@@ -21,7 +21,7 @@ void async function () {
 
         let bytes = await getFileOrInput(args["_"][0]);
         let twist = new Twist(Atoms.fromBytes(bytes));
-        let lead = getLead(twist);
+        let lead = await getLead(twist);
         let hh = await getHoist(lead, args["line-server"] || config.poptop);
 
         if (hh) {

@@ -79,15 +79,15 @@ async function getHoist(lead, url) {
  * @param meet <Twist> A meet whose lead we need to find.
  * @returns <Twist|ProcessException> The lead twist or an error
  */
-function getLead(meet) {
+async function getLead(meet) {
     if (!meet.isTethered()) {
-        throw new ProcessException(3, "The specified twist does not have a tether.");
+        return Promise.reject(new ProcessException(3, "The specified twist does not have a tether."));
     }
 
     let line = Line.fromAtoms(meet.getAtoms());
     let leadHash = line.lastFastBeforeHash(meet.getHash());
     if (!leadHash) {
-        throw new ProcessException(4, "The specified twist does not have a last fast twist.");
+        return Promise.reject(new ProcessException(4, "The specified twist does not have a last fast twist."));
     }
 
     return line.twist(leadHash);
@@ -113,7 +113,7 @@ async function setRiggingTrie(tb, url) {
             let lead = line.twist(leadHash);
             return getHoist(lead, url).then(hh => {
                 if (!hh) {
-                    throw new ProcessException(5, `No hitch hoist found for lead ${lead.getHash()}`);
+                    return Promise.reject(new ProcessException(5, `No hitch hoist found for lead ${lead.getHash()}`));
                 }
 
                 tb.addRigging(lead.getHash(), hh.getHash());
@@ -135,14 +135,14 @@ async function isValidAndControlled(abject, poptop, pk) {
         let i = new Interpreter(Line.fromAtoms(atoms), poptop);
         await i.verifyHitchLine(abject.getHash());
     } catch(e) {
-        throw new ProcessException(6, "Unable to establish local control of this file (verifying hitch line)");
+        return Promise.reject(new ProcessException(6, "Unable to establish local control of this file (verifying hitch line)"));
     }
 
     try {
         let twist = abject instanceof Twist ? abject : new Twist(abject.serialize(), abject.getHash());
         return await isControlled(twist, pk);
     } catch(e) {
-        throw new ProcessException(7, "Unable to establish local control of this file (verifying controller)");
+        return Promise.reject(new ProcessException(7, "Unable to establish local control of this file (verifying controller)"));
     }
 }
 

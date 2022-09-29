@@ -22,7 +22,7 @@ void async function () {
 
         let bytes = await getFileOrInput(args["_"][0]);
         let meet = new Twist(Atoms.fromBytes(bytes));
-        let lead = getLead(meet);
+        let lead = await getLead(meet);
 
         if (args["verify"]) {
             let hh = await getHoist(lead, config.poptop);

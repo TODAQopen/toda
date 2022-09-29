@@ -61,7 +61,7 @@ async function create(shield, req, tether, pk, cargo) {
  */
 async function append(abject, shield, req, tether, pk, setterFn = () => {}, cargo) {
     if (getSuccessor(abject)) {
-        throw new ProcessException(6, `The twist ${abject.getHash()} already has a successor.`);
+        return Promise.reject(new ProcessException(6, `The twist ${abject.getHash()} already has a successor.`));
     }
 
     //THINK(mje): Kinda hacky that this supports both a Twist and an Abject

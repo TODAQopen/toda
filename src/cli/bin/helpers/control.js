@@ -30,7 +30,7 @@ async function control(abject, poptop, pk) {
 
         if (lastFastHash) {
             if (!await isValidAndControlled(twist, poptop, pk)) {
-                throw new ProcessException(7, "Unable to establish local control of this file (verifying controller)");
+                return Promise.reject(new ProcessException(7, "Unable to establish local control of this file (verifying controller)"));
             }
             await isValidAndControlled(twist, poptop, pk);
 
@@ -39,7 +39,7 @@ async function control(abject, poptop, pk) {
             return await isControlled(twist, pk);
         }
     } catch (e) {
-        throw new ProcessException(8, "Unable to establish local control of this file (verifying controller)");
+        return Promise.reject(new ProcessException(8, "Unable to establish local control of this file (verifying controller)"));
     }
 }
 

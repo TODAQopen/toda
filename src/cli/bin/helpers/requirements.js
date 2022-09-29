@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -17,7 +17,7 @@ const { ByteArray } = require("../../../core/byte-array");
 async function setRequirements(tb, privateKey, reqs) {
     let verified = await keysPaired(privateKey, reqs.key);
     if (!verified) {
-        throw new ProcessException(1, "WARN: The specified identity does not satisfy the specified requirements.");
+        return Promise.reject(new ProcessException(1, "WARN: The specified identity does not satisfy the specified requirements."));
     }
 
     let pubKeyBuffer = await crypto.subtle.exportKey("spki", reqs.key);

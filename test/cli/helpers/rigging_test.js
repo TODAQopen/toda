@@ -67,11 +67,11 @@ describe("getLine", () => {
 });
 
 describe("getHoist", () => {
-    it("should verify that a hoist hitch exists for the provided lead on the specified line server", () => {
+    it("should verify that a hoist hitch exists for the provided lead on the specified line server", async () => {
         let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/test.toda")));
 
         let twist = new Twist(Atoms.fromBytes(bytes));
-        let lead = getLead(twist);
+        let lead = await getLead(twist);
 
         let lineBytes = fs.readFileSync(path.resolve(__dirname, "./files/line.toda"));
 
@@ -86,22 +86,22 @@ describe("getHoist", () => {
 });
 
 describe("getLead", () => {
-    it("should retrieve the lead for a given meet", () => {
+    it("should retrieve the lead for a given meet", async () => {
         let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/test.toda")));
 
         let twist = new Twist(Atoms.fromBytes(bytes));
+        let lead = await getLead(twist);
 
         let expected = Hash.parse(new ByteArray(Buffer.from("4137fdea890ef4733175e7a8fa29da709267ac33090b3323b12aad986f52d20817", "hex")));
-        assert.deepEqual(getLead(twist).getHash(), expected);
+        assert.deepEqual(lead.getHash(), expected);
     });
 
-    it("should throw an error if the specified twist is not tethered", () => {
+    it("should reject if the specified twist is not tethered", async () => {
         let twist = new Twist(new TwistBuilder().serialize());
-
-        assert.throws(() => getLead(twist), ProcessException);
+        await assert.rejects(getLead(twist), new ProcessException(3, "The specified twist does not have a tether."));
     });
 
-    it("should throw an error if the specified twist does not have a last fast twist", () => {
+    it("should reject if the specified twist does not have a last fast twist", async () => {
         let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/line.toda")));
         let line = new Twist(Atoms.fromBytes(bytes));
 
@@ -110,8 +110,7 @@ describe("getLead", () => {
         let tb = twist.createSuccessor();
         tb.setTether(line);
         let successor = new Twist(tb.serialize());
-
-        assert.throws(() => getLead(successor), ProcessException);
+        await assert.rejects(getLead(successor), new ProcessException(4, "The specified twist does not have a last fast twist."));
     });
 });
 
@@ -225,12 +224,8 @@ describe("isValidAndControlled", async () => {
         // Verify that a different key does not have control
         let keyPair2 = await generateKey();
         await assert.rejects(
-            async () => isValidAndControlled(acTwist, poptop, keyPair2.privateKey),
-            (err) => {
-                assert.equal(err.exitCode, 7);
-                assert.equal(err.reason, "Unable to establish local control of this file (verifying controller)");
-                return true;
-            });
+            isValidAndControlled(acTwist, poptop, keyPair2.privateKey),
+            new ProcessException(7, "Unable to establish local control of this file (verifying controller)"));
     });
 
     it("Should fail to verify a hitch line with a different poptop", async () => {
@@ -240,11 +235,8 @@ describe("isValidAndControlled", async () => {
         let poptop2 = lt2.getHash();
 
         //assert throws error
-        await assert.rejects(isValidAndControlled(acTwist, poptop2, keyPair.privateKey),
-            (err) => {
-                assert.equal(err.exitCode, 6);
-                assert.equal(err.reason, "Unable to establish local control of this file (verifying hitch line)");
-                return true;
-            });
+        await assert.rejects(
+            isValidAndControlled(acTwist, poptop2, keyPair.privateKey),
+            new ProcessException(6, "Unable to establish local control of this file (verifying hitch line)"));
     });
 });

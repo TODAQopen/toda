@@ -26,7 +26,7 @@ const MIN_NODE_VERSION = 16;
 void async function () {
   try {
     if (process.versions.node.split(".")[0] < MIN_NODE_VERSION) {
-      throw new ProcessException(9, `The TODA CLI requires node version ${MIN_NODE_VERSION} or greater.`)
+        throw new ProcessException(9, `The TODA CLI requires node version ${MIN_NODE_VERSION} or greater.`);
     }
 
     initConfig();
@@ -39,7 +39,7 @@ void async function () {
     let cmdPath = path.join(__dirname, `toda-${cmd}.js`);
 
     if (args["version"]) {
-      return showVersion(args);
+        return showVersion(args);
     }
 
     if (args["help"] || !cmd) {

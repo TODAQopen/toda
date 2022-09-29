@@ -1,7 +1,7 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
@@ -84,7 +84,7 @@ function hydrateHash(hash, twist) {
 
         return res;
     } else {
-        throw new ProcessException(1, `Unknown packet type for hash ${hash}`);
+        return Promise.reject(new ProcessException(1, `Unknown packet type for hash ${hash}`));
     }
 }
 
