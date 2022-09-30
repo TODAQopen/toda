@@ -6,6 +6,7 @@
  *************************************************************/
 
 const { create } = require("../../src/cli/bin/helpers/twist");
+const { setConfig } = require("../../src/cli/bin/util");
 const fs = require("fs-extra");
 const path = require("path");
 const yaml = require("yaml");
@@ -33,6 +34,7 @@ function getConfig() {
 }
 
 async function initTestEnv() {
+    setConfig(yaml.parse(fs.readFileSync(getConfigPath(), "utf8")));
     return initPoptop(getConfig().poptop);
 }
 

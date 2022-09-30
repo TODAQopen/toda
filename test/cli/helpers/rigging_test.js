@@ -8,8 +8,7 @@
 const { Atoms } = require("../../../src/core/atoms");
 const { Twist, TwistBuilder } = require("../../../src/core/twist");
 const { ByteArray } = require("../../../src/core/byte-array");
-const { hoist, submitHoist, getLine, getHoist, getLead, setRiggingTrie,
-    isValidAndControlled, getTetheredAtoms } = require("../../../src/cli/bin/helpers/rigging");
+const { hoist, submitHoist, getLine, getHoist, getLead, isValidAndControlled, getTetheredAtoms } = require("../../../src/cli/bin/helpers/rigging");
 const { ProcessException } = require("../../../src/cli/bin/helpers/process-exception");
 const { Hash, Sha256 } = require("../../../src/core/hash");
 const { Shield } = require("../../../src/core/shield");
@@ -110,83 +109,6 @@ describe("getLead", () => {
         tb.setTether(line);
         let successor = new Twist(tb.serialize());
         await assert.rejects(getLead(successor), new ProcessException(4, "The specified twist does not have a last fast twist."));
-    });
-});
-
-
-describe("setRiggingTrie", () => {
-    it("should set the requirements trie on the twistbuilder", async () => {
-        let lineBytes = fs.readFileSync(path.resolve(__dirname, "./files/line.toda"));
-        let scope = nock(host).get("/line");
-        scope.reply(200, lineBytes);
-
-        let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/test.toda")));
-        let prev = new Twist(Atoms.fromBytes(bytes));
-
-        let tb = prev.createSuccessor();
-        await setRiggingTrie(tb, host);
-        let twist = new Twist(tb.serialize());
-
-        scope = nock(host).get("/line");
-        scope.reply(200, lineBytes);
-
-        let expected = await getHoist(prev, host);
-        assert.deepEqual(twist.rig(prev), expected);
-    });
-
-    it("should do nothing if the twist is not tethered or has no lead or meet", async () => {
-        let lineBytes = fs.readFileSync(path.resolve(__dirname, "./files/line.toda"));
-        let scope = nock(host).get("/line");
-        scope.reply(200, lineBytes);
-
-        let line = new Twist(Atoms.fromBytes(new ByteArray(lineBytes)));
-
-        let meetBytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/test.toda")));
-        let meet = new Twist(Atoms.fromBytes(meetBytes));
-
-        // tether, no prev
-        let tbTether = new TwistBuilder();
-        tbTether.setTether(line);
-        await setRiggingTrie(tbTether, host);
-        let twistTether = new Twist(tbTether.serialize());
-
-        assert.equal(twistTether.rig(), null);
-
-        // prev, no tether
-        scope = nock(host).get("/line");
-        scope.reply(200, lineBytes);
-
-        let tbSuccessor = meet.createSuccessor();
-        await setRiggingTrie(tbSuccessor, host);
-        let twistSuccessor = new Twist(tbSuccessor.serialize());
-
-        assert.equal(twistSuccessor.rig(), null);
-    });
-
-    it("should throw an exception if the lead has no hoist hitch", async () => {
-        let lineBytes = fs.readFileSync(path.resolve(__dirname, "./files/line.toda"));
-        let scope = nock(host).get("/line");
-        scope.reply(200, lineBytes);
-
-        let line = new Twist(Atoms.fromBytes(new ByteArray(lineBytes)));
-
-        let leadTb = new TwistBuilder();
-        leadTb.setTether(line);
-        let lead = new Twist(leadTb.serialize());
-
-        let meetTb = lead.createSuccessor();
-        meetTb.setTether(line);
-        let meet = new Twist(meetTb.serialize());
-
-        let tb = meet.createSuccessor();
-        tb.setTether(line);
-        await assert.rejects(
-            async () => setRiggingTrie(tb, host),
-            (err) => {
-                assert.equal(err.exitCode, 5);
-                assert.equal(err.reason, "No hitch hoist found for lead 419c042628d59acf225ea4e25914ad801f7d3bf427fb5e6b59445f3813a4022de4");
-                return true;
-            });
     });
 });
 

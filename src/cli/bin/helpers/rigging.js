@@ -93,35 +93,6 @@ async function getLead(meet) {
     return line.twist(leadHash);
 }
 
-/** Verifies whether this twist requires a rigging trie and attempts to satisfy it
- * @param tb <TwistBuilder> the twist builder to set the requirements on. Gets modified.
- * @param url <String> the line server
- * @returns <Promise|ProcessException> a promise that is resolved when the twist's rigging trie has been set, or throws
- * a ProcessException if that required hitch hoist cannot be found
- */
-async function setRiggingTrie(tb, url) {
-    let prev = new Twist(tb.serialize()).prev();
-    if (!tb.isTethered() || !prev) {
-        return;
-    }
-
-    let line = Line.fromAtoms(prev.getAtoms());
-    let meetHash = prev.isTethered() ? prev.getHash() : line.lastFastBeforeHash(prev.getHash());
-    if (meetHash) {
-        let leadHash = line.lastFastBeforeHash(meetHash);
-        if (leadHash) {
-            let lead = line.twist(leadHash);
-            return getHoist(lead, url).then(hh => {
-                if (!hh) {
-                    return Promise.reject(new ProcessException(5, `No hitch hoist found for lead ${lead.getHash()}`));
-                }
-
-                tb.addRigging(lead.getHash(), hh.getHash());
-            });
-        }
-    }
-}
-
 /** Verifies whether this twist has a valid hitch line and is controllable with the specified key
  * @param abject <Abject|Twist> the twist to verify control over.
  * @param poptop <Hash> the poptop of the twist
@@ -229,7 +200,6 @@ exports.hoist = hoist;
 exports.getHoist = getHoist;
 exports.getLead = getLead;
 exports.submitHoist = submitHoist;
-exports.setRiggingTrie = setRiggingTrie;
 exports.isValidAndControlled = isValidAndControlled;
 exports.getTetheredAtoms = getTetheredAtoms;
 exports.getTetherUrl = getTetherUrl;

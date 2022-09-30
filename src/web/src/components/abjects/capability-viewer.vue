@@ -72,9 +72,8 @@
     </div>
 
     <div v-for="actionable in this.abject.delegationChain()" class="mono">
-      <div v-if="this.isVisible(actionable)">
-        <!--todo(mje): The first item in the delegation chain seems to be be the capability, not a simplehistoric -->
-        <LineDetails :abject="this.getLine(actionable)"/>
+      <div v-if="this.isVisible(actionable) && this.lines[actionable.getHash()]">
+        <LineDetails :abject="this.lines[actionable.getHash()]"/>
       </div>
     </div>
   </div>
@@ -98,7 +97,8 @@ export default {
   },
   data: function() {
     return {
-      visibleDelegator: new NullHash()
+      visibleDelegator: new NullHash(),
+      lines: {}
     }
   },
   props: {
@@ -106,9 +106,13 @@ export default {
   },
   methods: {
     getLine(actionable) {
-      return new Twist(actionable.getAtoms())
+      if (this.lines[actionable.getHash()]) {
+        return;
+      }
+      this.lines[actionable.getHash()] = new Twist(actionable.getAtoms(), actionable.getHash());
     },
     toggleDelegator(actionable) {
+      this.getLine(actionable);
       this.visibleDelegator = actionable.getHash().equals(this.visibleDelegator) ? new NullHash() : actionable.getHash();
     },
     isVisible(actionable) {
@@ -121,7 +125,7 @@ export default {
       if (!auths) {
         return [];
       }
-      
+
       return {
         URL: auths.getFieldAbject(Capability.simpleRequestAC.fieldSyms.fUrl),
         VERB: auths.getFieldAbject(Capability.simpleRequestAC.fieldSyms.fHttpVerb),

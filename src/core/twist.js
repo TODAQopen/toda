@@ -367,7 +367,6 @@ class Twist {
         return this.hash.equals(twist.hash);
     }
 
-    //THINK(mje): Add a tether arg, could setTether and setRiggingTrie here for convenience
     createSuccessor() {
         let tb = new TwistBuilder(this.atoms);
         tb.setPrevHash(this.hash);

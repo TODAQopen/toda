@@ -11,10 +11,10 @@ const { Twist } = require("../../../src/core/twist");
 const { ByteArray } = require("../../../src/core/byte-array");
 const { create } = require("../../../src/cli/bin/helpers/twist");
 const { generateKey } = require("../../../src/cli/lib/pki");
-const { capability, authorize } = require("../../../src/cli/bin/helpers/capability");
+const { capability, authorize, delegate } = require("../../../src/cli/bin/helpers/capability");
 const { Sha256 } = require("../../../src/core/hash");
 const { Shield } = require("../../../src/core/shield");
-const { getFileOrInput, setConfig } = require("../../../src/cli/bin/util");
+const { getFileOrInput, getAtomsFromPath, setConfig } = require("../../../src/cli/bin/util");
 const { Abject } = require("../../../src/abject/abject");
 const assert = require("assert");
 const fs = require("fs-extra");
@@ -111,5 +111,48 @@ describe("append capability", () => {
 
         assert(authCapNextTwist.tether().getHash().equals(lineTwist.getHash()));
         assert(authCapNextTwist.rig(capTwist.getHash()).equals(lineTwist.getHash()));
+    });
+});
+
+describe("delegate capability", () => {
+    let store = path.resolve(__dirname, "./files");
+    let linePath = path.resolve(__dirname, "./files/cap-line.toda");
+    let url = "http://test-url.com";
+    let verbs = ["GET", "POST"];
+    let expiry = new Date(1660591597);
+    let shield = ByteArray.fromStr("foo");
+
+    beforeEach(() => setConfig({ line: linePath, poptop: linePath, store: store }));
+
+    it("should create a Capability delegate correctly", async () => {
+    // Generate a local line
+        let keyPair = await generateKey();
+        let tb = await create(null, null, null, keyPair.privateKey, null);
+        fs.outputFileSync(linePath, tb.serialize().toBytes());
+
+        // Generate a Capability
+        let cap = await capability(url, verbs, expiry, shield, linePath, linePath);
+
+        // Create a delegate
+        let delUrl = "http://test-url.com/authlink";
+        let delVerbs = ["GET"];
+        let delExpiry = new Date(1662225927000);
+        let [_, da] = await delegate(cap, delUrl, delVerbs, delExpiry, shield, linePath, keyPair.privateKey);
+        let del = Abject.parse(da.serialize());
+        let delTwist = new Twist(da.serialize());
+
+        assert.equal(del.url(), url);
+        assert.deepEqual(del.methods(), ["POST"]);
+        assert.deepEqual(del.expiry().map(d => new Date(d)), [expiry, delExpiry]);
+        assert(del.popTop().equals(cap.popTop()));
+
+        let lineTwist = await getAtomsFromPath(linePath).then(atoms => new Twist(atoms));
+        assert(delTwist.tether().getHash().equals(lineTwist.prev().getHash()));
+        assert(ByteArray.isEqual(delTwist.shield().getShapedValue(), shield));
+
+        // Verify delegationChain
+        assert(del.delegateComplete().first().getHash().equals(cap.getHash()));
+        assert.deepEqual(del.delegationChain()[0], del.delegateOf());
+        assert(del.prev().delegateInitiate().getHash().equals(cap.getHash()));
     });
 });

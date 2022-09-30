@@ -19,6 +19,9 @@ Usage:
                     [--pop-top URL|FILE_PATH] [--tether URL|FILE_PATH]
   toda capability-authorize
                     [--url URL] [--verb HTTP_VERB] [--nonce STRING] [--shield HEX] {--capability CAP_PATH | CAP_SRC}
+  toda capability-delegate
+                    [--url URL] [--verbs HTTP_VERBS] [--expiry EPOCH_TIMESTAMP_MS]
+                    [--shield HEX] [--tether URL|FILE_PATH] {--capability CAP_PATH | CAP_SRC}
   toda control      [FILE_PATH] [--poptop PATH] [--refresh]
   toda request      [--capability CAP_PATH] [--url URL] [--verb HTTP_VERB] [--nonce STRING] [--data HEX]
 

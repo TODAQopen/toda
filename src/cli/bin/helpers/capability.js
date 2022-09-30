@@ -5,6 +5,7 @@
 * Apache License 2.0
 *************************************************************/
 
+const { Abject } = require("../../../abject/abject");
 const { Capability } = require("../../../abject/capability");
 const { append, setFastFields } = require("./twist");
 const { getAtomsFromPath } = require("../util");
@@ -48,9 +49,45 @@ async function capability(url, verbs, expiry, shield, poptop, tether) {
  */
 
 async function authorize(cap, url, verb, nonce, shield, tether, pk) {
-    let setterFn = (tb, abj) => { abj.authorize(url, verb, nonce); };
+    let setterFn = (abj) => { abj.authorize(url, verb, nonce); };
     return append(cap, shield, null, tether, pk, setterFn, null);
+}
+
+/**
+ * Creates a Capability Delegate
+ * @param capability <Capability> The capability to authorize
+ * @param url <String> The url to authorize for
+ * @param verbs <Array[String]> The http verbs that are authorized
+ * @param expiry <Date> Expiry date
+ * @param shield <ByteArray> A set of bytes to act as the shield.
+ * @param tether <String> The path to the tethered line
+ * @param pk <CryptoKey> The private key for satisfying requirements
+ * @param config <Object> A config object containing the local line and default line server paths
+ * @returns <[Capability, Capability]> The updated Delegator and the Delegate
+ */
+async function delegate(capability, url, verbs, expiry, shield, tether, pk, config) {
+    let del = capability.createDelegate();
+    del.restrict(url, verbs, expiry);
+
+    if (tether) {
+        await setFastFields(tether, del.twistBuilder, config, shield);
+    }
+
+    // Append to delegator for CONFIRM
+    let capNextTb = await append(capability, null, null, tether, pk, (abj) => {
+        abj.confirmDelegate(del);
+    }, null, config);
+    let capabilityNext = Abject.parse(capNextTb.serialize());
+
+    // Append to delegate for COMPLETE
+    let delTb = await append(del, shield, null, tether, pk, (abj) => {
+        abj.completeDelegate(capabilityNext);
+    }, null, config);
+    let delegate = Abject.parse(delTb.serialize());
+
+    return [capabilityNext, delegate];
 }
 
 exports.capability = capability;
 exports.authorize = authorize;
+exports.delegate = delegate;

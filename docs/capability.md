@@ -123,3 +123,12 @@ Appends an Authorization to the specified Capability and handles the hoisting. A
 ```
 $ toda capability-authorize --url http://test-url.com/path --verb GET <~/.toda/store/4196c191e12eb809f621b331ded008bb9f33b8098543c89008432f57cf0c8088a9.toda
 ```
+
+### capability-delegate
+`$ toda capability-delegate [--capability CAP_PATH] [--url URL] [--verbs HTTP_VERBS] [--expiry EPOCH_TIMESTAMP_MS] [--shield HEX] [--tether URL|FILE_PATH] [CAP_SOURCE]`
+
+Creates a new Capability delegate of the specified Capability. Timestamp can be generated inline using a command like `date -v +1d +%s000`.
+
+```
+$ toda capability-delegate --url http://test-url.com/path --verbs GET,PUT --expiry `date -v +1d +%s000` <~/.toda/store/410318adab8a9980434fc98fec04e0e4924f0f32b5aee560c9dd8cd9e98bbe1d8f.toda
+```

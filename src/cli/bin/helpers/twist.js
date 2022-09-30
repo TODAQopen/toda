@@ -55,7 +55,7 @@ async function create(shield, req, tether, pk, cargo) {
  * @param req <Object|null> an object containing a requirement type and a public key
  * @param tether <string|null> the url for a line server or path to a line
  * @param pk <CryptoKey> A private key
- * @param setterFn <Function> A function to mutate the successor before signing and hoisting it
+ * @param setterFn <Function(Abject)> A function to mutate the successor before signing and hoisting it
  * @param cargo <Atoms|null> A set of Atoms to use as the cargo
  * @returns <TwistBuilder> a TwistBuilder object that can be used to generate the Twist
  */
@@ -82,7 +82,7 @@ async function append(abject, shield, req, tether, pk, setterFn = () => {}, carg
     }
 
     // Setter fn to perform any field modifications before signing and hoisting
-    setterFn(tb, abj);
+    setterFn(abj);
 
     // Any changes to the Abject must be merged into its underlying TwistBuilder, eg. for signing and shielding
     if (abj.buildTwist) {
@@ -156,7 +156,8 @@ async function hoistLocal(lead, meetHash, path, pk) {
     let tether = new Twist(Atoms.fromBytes(new ByteArray(fs.readFileSync(path))));
     let rigging = Shield.rigForHoist(lead.getHash(), meetHash, lead.shield());
 
-    let setterFn = (tb) => {
+    let setterFn = (abj) => {
+        let tb = abj.addRigging ? abj : abj.buildTwist();
         for (let [k, v] of Array.from(rigging.getShapedValue())) {
             tb.addRigging(k, v);
         }

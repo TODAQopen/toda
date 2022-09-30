@@ -5,9 +5,9 @@
 * Apache License 2.0
 *************************************************************/
 
-const { Twist } = require("../../../src/core/twist");
+const { Twist, TwistBuilder } = require("../../../src/core/twist");
 const { ByteArray } = require("../../../src/core/byte-array");
-const { create, append } = require("../../../src/cli/bin/helpers/twist");
+const { create, append, setFastFields } = require("../../../src/cli/bin/helpers/twist");
 const { getHoist, isValidAndControlled, getTetheredAtoms } = require("../../../src/cli/bin/helpers/rigging");
 const { getAtomsFromPath, generateShield, setConfig } = require("../../../src/cli/bin/util");
 const { ArbitraryPacket } = require("../../../src/core/packet");
@@ -129,5 +129,66 @@ describe("append", () => {
                 assert.equal(err.reason, "Unable to establish local control of this file (verifying hitch line)");
                 return true;
             });
+    });
+});
+
+describe("setFastFields", () => {
+    let tether = `${__dirname}/files/line.toda`;
+    let salt = `${__dirname}/files/salt`;
+    beforeEach(() => setConfig({ line: tether, salt: salt, store: "/", poptop: tether }));
+
+    it("should set the requirements trie on the twistbuilder", async () => {
+        let atoms = await getAtomsFromPath(`${__dirname}/files/test.toda`);
+        let prev = new Twist(atoms);
+
+        let tb = prev.createSuccessor();
+        await setFastFields(tether, tb);
+        let twist = new Twist(tb.serialize());
+
+        let expected = await getHoist(prev, tether);
+        assert.deepEqual(twist.rig(prev), expected);
+    });
+
+    it("should do nothing if the twist is not tethered or has no lead or meet", async () => {
+        let atoms = await getAtomsFromPath(tether);
+        let line = new Twist(atoms);
+
+        let meetAtoms = await getAtomsFromPath(`${__dirname}/files/test.toda`);
+        let meet = new Twist(meetAtoms);
+
+        // tether, no prev
+        let tbTether = new TwistBuilder();
+        tbTether.setTether(line);
+        await setFastFields(tether, tbTether);
+        let twistTether = new Twist(tbTether.serialize());
+
+        assert.equal(twistTether.rig(), null);
+
+        // prev, no tether
+        let tbSuccessor = meet.createSuccessor();
+        await setFastFields(tether, tbSuccessor);
+        let twistSuccessor = new Twist(tbSuccessor.serialize());
+
+        assert.equal(twistSuccessor.rig(), null);
+    });
+
+    it("should do nothing if the lead has no hoist hitch", async () => {
+        let atoms = await getAtomsFromPath(tether);
+        let line = new Twist(atoms);
+
+        let leadTb = new TwistBuilder();
+        leadTb.setTether(line);
+        let lead = new Twist(leadTb.serialize());
+
+        let meetTb = lead.createSuccessor();
+        meetTb.setTether(line);
+        let meet = new Twist(meetTb.serialize());
+
+        let tb = meet.createSuccessor();
+        tb.setTether(line);
+        await setFastFields(tether, tb);
+        let tbTwist = new Twist(tb.serialize());
+
+        assert.equal(tbTwist.rig(), null);
     });
 });

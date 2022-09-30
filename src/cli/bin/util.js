@@ -393,7 +393,7 @@ function write(abject) {
  * @param out <String?> The output file name
  */
 function writeToFile(abject, out) {
-    let prev = abject.getPrevHash ? abject.getPrevHash() : abject.buildTwist().getPrevHash();
+    let prev = abject.getPrevHash ? abject.getPrevHash() : abject.prevHash();
     let filePath = filePathForHash(prev);
     fs.outputFileSync(out || filePath, abject.serialize().toBytes());
 
