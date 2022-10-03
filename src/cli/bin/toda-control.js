@@ -6,7 +6,7 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, formatInputs, getFileOrInput, parseAbjectOrTwist, getDistinct, getAtomsFromPath, getLineURL } = require("./util");
+const { getArgs, formatInputs, getFileOrInput, parseAbjectOrTwist, getDistinct, getAtomsFromPath, getPoptopURL } = require("./util");
 const { control, refresh } = require("./helpers/control");
 const { handleProcessException } = require("./helpers/process-exception");
 const { Abject } = require("../../abject/abject");
@@ -28,10 +28,7 @@ void async function () {
         let status = console.draft();
         status(chalk.white("Pulling latest proof information..."));
 
-        if (abject.popTop) {
-            inputs.poptop = getLineURL(abject.getAbject(abject.popTop()).thisUrl());
-        }
-
+        inputs.poptop = await getPoptopURL(abject);
         let pt = new Twist(await getAtomsFromPath(inputs.poptop));
         let poptop = Line.fromAtoms(pt.getAtoms()).first(pt.getHash());
         let refreshedAbject = await refresh(abject, poptop, args.refresh);

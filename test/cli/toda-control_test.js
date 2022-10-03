@@ -18,7 +18,7 @@ describe("toda-control", async() => {
     beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 
-    it("Should validate a file is controlled", async() => {
+    it("Should validate a twist is controlled", async() => {
         let out = path.resolve(getConfig().store, "toda-control.toda");
 
         try {
@@ -33,7 +33,23 @@ describe("toda-control", async() => {
         }
     });
 
-    it("Should validate a file is not controlled", async() => {
+    it("Should validate a capability is controlled", async() => {
+        let out = path.resolve(getConfig().store, "toda-control.toda");
+
+        try {
+            const url = "http://localhost:0001";
+            const verbs = "GET,PUT";
+            const expiry = 1660591597;
+            execSync(`${getTodaPath()}/toda capability --url ${url} --verbs ${verbs} --expiry ${expiry} --config ${getConfigPath()} --out ${out}`);
+
+            let r = execSync(`${getTodaPath()}/toda control ${out} --config ${getConfigPath()}`);
+            assert(r.toString().indexOf("The Local Line integrity has been verified. This system has control of this file as of") > -1);
+        } catch (err) {
+            assert.fail(err);
+        }
+    });
+
+    it("Should validate a twist is not controlled", async() => {
         let out = path.resolve(getConfig().store, "toda-control.toda");
 
         try {

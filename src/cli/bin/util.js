@@ -412,6 +412,41 @@ function getLineURL(path) {
     }
 }
 
+/**
+ * Given a Hash, iterates through the *.toda files in config.store and returns the path to the first one whose twist line
+ * contains that hash.
+ * @param hash <Hash> A Twist's Hash
+ * @returns <String> the path to the file
+ */
+async function getFileNameForTwistHash(hash) {
+    let files = fs.readdirSync(path.resolve(getConfig().store));
+    for (let file of files.filter(f => path.extname(f) === ".toda")) {
+        let p = path.resolve(getConfig().store, file);
+        let l = Line.fromAtoms(await getAtomsFromPath(p));
+        if (l.twistList().find(h => h.equals(hash))) {
+            return p;
+        }
+    }
+}
+
+/**
+ * Abjects can have a poptop set to a local line that isn't a SimpleHistoric. This is a getter fn to handle that.
+ * If this is a Twist then we assume the configured poptop.
+ * @param abject <Abject|Twist>
+ * @returns <String> The Line URL of the abject's poptop, or else the path to the local line.
+ */
+async function getPoptopURL(abject) {
+    if (!abject.popTop) {
+        return getConfig().poptop;
+    }
+
+    try {
+        return getLineURL(abject.getAbject(abject.popTop()).thisUrl());
+    } catch(e) {
+        return getFileNameForTwistHash(abject.popTop());
+    }
+}
+
 exports.getArgs = getArgs;
 exports.formatInputs = formatInputs;
 exports.getVersion = getVersion;
@@ -439,3 +474,4 @@ exports.generateShield = generateShield;
 exports.write = write;
 exports.writeToFile = writeToFile;
 exports.getLineURL = getLineURL;
+exports.getPoptopURL = getPoptopURL;
