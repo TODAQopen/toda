@@ -65,7 +65,7 @@ function app(invPath=__dirname, config={}) {
             }, next);
     });
 
-    expressapp.use((err, req, res) => {
+    expressapp.use((err, req, res, next) => {
         if (err.constructor.name == "PayloadTooLargeError") {
             return res.status(413).send(err.message);
         }
