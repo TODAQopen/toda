@@ -264,10 +264,13 @@ function getFileOrHashPath(filePath) {
         if (fs.existsSync(exactFilePath)) {
             return exactFilePath;
         }
-        let line = Line.fromBytes(fs.readFileSync(config.line));
-        let lineLast = line.focuses[0].toString();
-        if (lineLast.startsWith(filePath) || lineLast.endsWith(filePath)) {
-            return config.line;
+
+        if (fs.existsSync(config.line)) {
+            let line = Line.fromBytes(fs.readFileSync(config.line));
+            let lineLast = line.focuses[0].toString();
+            if (lineLast.startsWith(filePath) || lineLast.endsWith(filePath)) {
+                return config.line;
+            }
         }
 
         /** Git is smart enough to figure out what commit you’re referring
@@ -276,16 +279,9 @@ function getFileOrHashPath(filePath) {
              * unambiguous; that is, no other object in the object database can
              * have a hash that begins with the same prefix. */
 
-        const allDir = fs.readdirSync(config.store);
-        let matches = allDir.filter(f => f.startsWith(filePath));
-        if (matches.length > 1) {
-            logFormatted(`Too many local matches for ${filePath}`);
-            return null;
-        }
-        if (matches.length == 1) {
-            filePath = path.join(config.store, matches[0]);
-        } else {
-            matches = allDir.filter(f => f.endsWith(filePath + ".toda"));
+        if (fs.existsSync(config.store)) {
+            const allDir = fs.readdirSync(config.store);
+            let matches = allDir.filter(f => f.startsWith(filePath));
             if (matches.length > 1) {
                 logFormatted(`Too many local matches for ${filePath}`);
                 return null;
@@ -293,7 +289,16 @@ function getFileOrHashPath(filePath) {
             if (matches.length == 1) {
                 filePath = path.join(config.store, matches[0]);
             } else {
-                return null;
+                matches = allDir.filter(f => f.endsWith(filePath + ".toda"));
+                if (matches.length > 1) {
+                    logFormatted(`Too many local matches for ${filePath}`);
+                    return null;
+                }
+                if (matches.length == 1) {
+                    filePath = path.join(config.store, matches[0]);
+                } else {
+                    return null;
+                }
             }
         }
     }

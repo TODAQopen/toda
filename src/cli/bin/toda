@@ -6,7 +6,7 @@
  * Apache License 2.0
  *************************************************************/
 
-const { getArgs, initConfig, setConfig, getConfig, initKeys, initSalt, getVersion, getPrivateKey } = require("./util");
+const { getArgs, initConfig, initKeys, initSalt, getVersion, getPrivateKey } = require("./util");
 const { create } = require("./helpers/twist");
 const { SignatureRequirement } = require("../../core/reqsat");
 const { importPublicKey } = require("../lib/pki");
@@ -30,8 +30,6 @@ void async function () {
     }
 
     let args = getArgs();
-    await init(args["config"], args["i"]);
-
     let cmd = args["_"][0];
     let cmdPath = path.join(__dirname, `toda-${cmd}.js`);
 
@@ -39,9 +37,11 @@ void async function () {
         return showVersion(args);
     }
 
-    if (args["help"] || !cmd) {
+    if (args["help"]) {
       return showHelp();
     }
+
+    await init(args["config"], args["i"]);
 
     if (!fs.existsSync(cmdPath)) {
       process.stderr.write(chalk.red(`Received invalid toda command "${cmd}"\n`));
