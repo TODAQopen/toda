@@ -1,0 +1,16 @@
+## rewrite this to work within the nginx alpine container!
+
+version: "1.0"
+config: /home/toda/.toda/config
+store: /home/toda/.toda/store
+publicKey: /home/toda/.toda/secure/id_secp256r1.pub
+privateKey: /home/toda/.toda/secure/id_secp256r1
+salt: /home/toda/.toda/secure/salt
+line: /home/toda/.toda/store/line.toda
+lineServer: https://line.todaq.net/
+poptop: https://line.todaq.net/
+inventoryServer: https://inventory.todaq.net
+maxHeaderSize: 1048576
+webPort: 3000
+invPort: 3000
+invUrl: ../
