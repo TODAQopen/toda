@@ -39,7 +39,7 @@ function app(invPath=__dirname, config={}) {
     expressapp.use(hostnameRouting(config));
 
     // routes
-    expressapp.post("/files", cors({origin: true}), async (req, res, next) => {
+    expressapp.post("/", cors({origin: true}), async (req, res, next) => {
         return putFile(path.join(invPath, req.toda.subdir), req.body)
             .then(data => {
                 res.setHeader("Content-Type", "application/octet-stream");
@@ -47,7 +47,7 @@ function app(invPath=__dirname, config={}) {
             }, next);
     });
 
-    expressapp.get("/files", cors({origin: true}), (req, res, next) => {
+    expressapp.get("/", cors({origin: true}), (req, res, next) => {
         return listFiles(path.join(invPath, req.toda.subdir))
             .then(data => {
                 res.setHeader("Content-Type", "application/octet-stream");
@@ -56,7 +56,7 @@ function app(invPath=__dirname, config={}) {
             }, next);
     });
 
-    expressapp.get("/files/:hex", cors({origin: true}), (req, res, next) => {
+    expressapp.get("/:hex", cors({origin: true}), (req, res, next) => {
         return getFile(path.join(invPath, req.toda.subdir), req.params.hex)
             .then(data => {
                 res.setHeader("Content-Type", "application/octet-stream");
@@ -73,7 +73,7 @@ function app(invPath=__dirname, config={}) {
         return res.status(500).send("This should not be happening -- see logs!");
     });
 
-    return expressapp;
+    return express().use("/files", expressapp);
 }
 
 exports.app = app;
