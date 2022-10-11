@@ -10,7 +10,7 @@ const { Symbol, Sha256 } = require("./hash");
 const { MemorySyncPacketStore } = require("./store");
 const { PairTriePacket, ArbitraryPacket, HashPacket } = require("./packet");
 const { Twist } = require("./twist");
-const todaCrypto = require("./crypto");
+const { Secp256r1, getPublicKeyFromPrivate } = require("./crypto");
 
 class Requirement extends MemorySyncPacketStore {
     static DEFAULT_HASH_IMP = Sha256;
@@ -188,7 +188,7 @@ async function getSatisfiableReq(twist, privateKey) {
             packet.getShapedValue(),
             {name: "ECDSA", namedCurve: "P-256",},
             true,
-            ["sign", "verify"]);
+            ["verify"]);
         let verified = await keysPaired(privateKey, publicKey);
         if (verified) {
             return sigAlgHash;
@@ -224,15 +224,11 @@ async function satisfyRequirements(tb, pk, signFn) {
  * @returns <Promise|Boolean> true if the keys are paired
  */
 async function keysPaired(privateKey, publicKey) {
-    let data = new ByteArray(Buffer.from("arbitrary data"));
-    let signedString = await crypto.subtle.sign({name: "ECDSA",  hash: { name: "SHA-256" }},
-        privateKey,
-        data);
+    let derivedPublicKey = await getPublicKeyFromPrivate(privateKey);
+    const jwkPublic = await crypto.subtle.exportKey("jwk", publicKey);
+    const jwkDerivedPublic = await crypto.subtle.exportKey("jwk", derivedPublicKey);
 
-    return crypto.subtle.verify({name: "ECDSA", hash: { name: "SHA-256" }},
-        publicKey,
-        signedString,
-        data);
+    return JSON.stringify(jwkPublic) === JSON.stringify(jwkDerivedPublic);
 }
 
 class ReqSatError extends Error {
@@ -251,7 +247,7 @@ function satisfies(reqHash, bodyHash, reqPacket, satPacket) {
     if (!reqHash.equals(SignatureRequirement.REQ_SECP256r1)) {
         throw new UnsupportedRequirementError(reqHash, reqPacket, satPacket, SignatureRequirement.REQ_SECP256r1.toString());
     }
-    return todaCrypto.Secp256r1.verify(reqPacket.getShapedValue(),
+    return Secp256r1.verify(reqPacket.getShapedValue(),
         satPacket.getShapedValue(),
         bodyHash.serialize());
 }

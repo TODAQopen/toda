@@ -5,7 +5,7 @@
 * Apache License 2.0
 *************************************************************/
 
-const {ByteArray} = require("./byte-array");
+const { ByteArray } = require("./byte-array");
 
 function _isNode() {
     return ((typeof document === "undefined") && (typeof navigator === "undefined" || navigator.product !== "ReactNative"));
@@ -37,7 +37,7 @@ class Secp256r1 extends TodaKeys {
             pubKeyBytes,
             {name: "ECDSA", namedCurve: "P-256",},
             true,
-            ["sign", "verify"]);
+            ["verify"]);
         return crypto.subtle.verify({name: "ECDSA", hash: {name: "SHA-256"}},
             publicKey,
             signature,
@@ -95,4 +95,17 @@ function _fromDER(sig) {
     return bytes;
 }
 
+/**
+ * Derives the public key from a given ECDSA private key by exporting it as JWK and removing the private portions
+ * https://stackoverflow.com/questions/72151096/how-to-derive-public-key-from-private-key-using-webcryptoapi/72153942#72153942
+ * @param privateKey <CryptoKey> The private key for which to derive a public key
+ * @returns {Promise<CryptoKey>} The derived public key
+ */
+async function getPublicKeyFromPrivate(privateKey){
+    const jwkPrivate = await crypto.subtle.exportKey("jwk", privateKey);
+    delete jwkPrivate.d;
+    return crypto.subtle.importKey("jwk", jwkPrivate, {name: "ECDSA", namedCurve: "P-256"}, true, ["verify"]);
+}
+
 exports.Secp256r1 = Secp256r1;
+exports.getPublicKeyFromPrivate = getPublicKeyFromPrivate;

@@ -113,7 +113,7 @@ function _fromPEM(pem) {
  * @returns {Promise<void|CryptoKey>} The imported key
  */
 async function importPublicKey(path) {
-    return importKey(path || KeyConfig.publicKey.path, KeyConfig.publicKey.format, KeyConfig.publicKey.header);
+    return importKey(path || KeyConfig.publicKey.path, KeyConfig.publicKey.format, KeyConfig.publicKey.header, ["verify"]);
 }
 
 /** Imports a public key file and parses it
@@ -122,7 +122,7 @@ async function importPublicKey(path) {
  */
 //todo(mje): We'll need to add support for ENCRYPTED private key
 async function importPrivateKey(path) {
-    return importKey(path || KeyConfig.privateKey.path, KeyConfig.privateKey.format, KeyConfig.privateKey.header);
+    return importKey(path || KeyConfig.privateKey.path, KeyConfig.privateKey.format, KeyConfig.privateKey.header, ["sign"]);
 }
 
 async function readKey(path) {
@@ -133,9 +133,10 @@ async function readKey(path) {
  * @param path <String> the path to the key file
  * @param format <String> the format of the key
  * @param header <String> the key header eg. PUBLIC KEY
+ * @param keyUsages <Array<String>> what the key is used for
  * @returns {Promise<void|CryptoKey>} The imported key
  */
-async function importKey(path, format, header) {
+async function importKey(path, format, header, keyUsages) {
     let pem = fs.readFileSync(path).toString();
     let keyData = _fromPEM(pem);
     return crypto.subtle.importKey(
@@ -146,7 +147,7 @@ async function importKey(path, format, header) {
             namedCurve: "P-256",
         },
         true,
-        ["sign", "verify"]
+        keyUsages
     );
 }
 
