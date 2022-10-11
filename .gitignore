@@ -87,6 +87,8 @@ typings/
 
 # Electron-Forge
 dist/
+!/dist/toda.dist.js
+!/dist/toda.web.dist.js
 
 src/main.js
 adot-electron-certs.p12

@@ -1,6 +1,6 @@
 {
   "name": "todajs",
-  "version": "0.1.005",
+  "version": "0.1.006",
   "description": "",
   "author": "TodaQ",
   "license": "Apache License 2.0",
@@ -14,6 +14,10 @@
     "todaize": "./src/cli/bin/todaize"
   },
   "main": "./dist/toda.dist.js",
+  "exports": {
+    ".": "./dist/toda.dist.js",
+    "./web": "./dist/toda.web.dist.js"
+  },
   "directories": {
     "test": "test"
   },
