@@ -7,7 +7,7 @@
 *************************************************************/
 
 const { Line, PersistentLine } = require("../../core/line");
-const { getArgs, getConfig, formatInputs, getFileOrInput, getDistinct, getFileOrHashPath, parseAbjectOrTwist, getAtomsFromPath, getLineURL } = require("./util");
+const { getArgs, getConfig, formatInputs, getFileOrInput, getDistinct, getFileOrHashPath, parseAbjectOrTwist, getAtomsFromPath } = require("./util");
 const { refresh, control } = require("./helpers/control");
 const { Atoms } = require("../../core/atoms");
 const { Twist } = require("../../core/twist");
@@ -98,7 +98,7 @@ async function showTwist(twistHash) {
         let poptop = null;
         let defaultTop = false;
         if (abject.popTop) {
-            poptop = getLineURL(abject.getAbject(abject.popTop()).thisUrl());
+            poptop = abject.getAbject(abject.popTop()).thisUrl();
         } else {
             defaultTop = true;
             poptop = config.line;

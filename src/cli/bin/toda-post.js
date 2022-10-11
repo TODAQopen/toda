@@ -9,7 +9,7 @@
 const { default: axios } = require("axios");
 const { Atoms } = require("../../core/atoms");
 const { handleProcessException } = require("./helpers/process-exception");
-const { getArgs, getFileOrInput, formatInputs, parseAbjectOrTwist, getAtomsFromPath, getLineURL } = require("./util");
+const { getArgs, getFileOrInput, formatInputs, parseAbjectOrTwist, getAtomsFromPath } = require("./util");
 const { refresh } = require("./helpers/control");
 const { Twist } = require("../../core/twist");
 const { Line } = require("../../core/line");
@@ -35,7 +35,7 @@ void async function () {
         status(chalk.white("Pulling latest proof information..."));
 
         if (abject.popTop) {
-            inputs.poptop = getLineURL(abject.getAbject(abject.popTop()).thisUrl());
+            inputs.poptop = abject.getAbject(abject.popTop()).thisUrl();
         }
 
         let pt = new Twist(await getAtomsFromPath(inputs.poptop));

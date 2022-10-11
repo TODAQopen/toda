@@ -10,7 +10,7 @@ const { Line } = require("../../../core/line");
 const { Twist } = require("../../../core/twist");
 const { isValidAndControlled, getTetheredAtoms } = require("./rigging");
 const { isControlled } = require("../../../core/reqsat");
-const { parseAbjectOrTwist, filePathForHash, getAtomsFromPath, getLineURL } = require("../util");
+const { parseAbjectOrTwist, filePathForHash, getAtomsFromPath } = require("../util");
 const chalk = require("chalk");
 const fs = require("fs-extra");
 const DraftLog = require("draftlog").into(console);
@@ -94,8 +94,7 @@ async function verifyControl(abj, pk, defaultPoptop) {
     // So assume it's the provided/default poptop
     let ptUrl;
     try {
-        let ptAbj = abj.getAbject(abj.popTop());
-        ptUrl = getLineURL(ptAbj.thisUrl());
+        ptUrl = abj.getAbject(abj.popTop()).thisUrl();
     } catch(e) {
         ptUrl = defaultPoptop;
     }

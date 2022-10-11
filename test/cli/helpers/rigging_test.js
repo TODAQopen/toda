@@ -55,7 +55,7 @@ describe("submitHoist", () => {
 
 describe("getLine", () => {
     it("should make a get request to the specified line server", () => {
-        let scope = nock(host).get("/line");
+        let scope = nock(host).get("/");
         scope.reply(200, Buffer.from("foo"));
 
         return getLine(host).then(r => {
@@ -73,7 +73,7 @@ describe("getHoist", () => {
 
         let lineBytes = fs.readFileSync(path.resolve(__dirname, "./files/line.toda"));
 
-        let scope = nock(host).get("/line");
+        let scope = nock(host).get("/");
         scope.reply(200, lineBytes);
 
         let expected = Hash.parse(new ByteArray(Buffer.from("41d3b8000e5959b81bcf55a4c4782deab8583f9b4c0624cdf9fec731cd2b06f40e", "hex")));

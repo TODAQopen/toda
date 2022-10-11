@@ -107,7 +107,7 @@ async function formatInputs(args, whitelist) {
     let verb = args["verb"];
     let verbs = args["verbs"] ? args["verbs"].split(",").map(v => v.trim()).filter(v => !!v) : [];
     let expiry = args["expiry"] ? new Date(args["expiry"]) : null;
-    let poptop = args["poptop"] || getLineURL(config.poptop);
+    let poptop = args["poptop"] || config.poptop;
     let nonce = args["nonce"] || Date.now().toString();
     let inventoryServer = args["server"] || config.inventoryServer;
     let data = args["data"] ? Buffer.from(args["data"], "hex") : null;
@@ -407,16 +407,6 @@ function writeToFile(abject, out) {
     }
 }
 
-/* Parse the path as a URL and add the /line endpoint, or if it's not a URL just return the path */
-//todo(mje): HACK - We should not need to make this assumption. Path should be fine to use as-is.
-function getLineURL(path) {
-    try {
-        return new URL("/line", path).toString();
-    } catch(e) {
-        return path;
-    }
-}
-
 /**
  * Given a Hash, iterates through the *.toda files in config.store and returns the path to the first one whose twist line
  * contains that hash.
@@ -446,7 +436,7 @@ async function getPoptopURL(abject) {
     }
 
     try {
-        return getLineURL(abject.getAbject(abject.popTop()).thisUrl());
+        return abject.getAbject(abject.popTop()).thisUrl();
     } catch(e) {
         return getFileNameForTwistHash(abject.popTop());
     }
@@ -478,5 +468,4 @@ exports.parseAbjectOrTwist = parseAbjectOrTwist;
 exports.generateShield = generateShield;
 exports.write = write;
 exports.writeToFile = writeToFile;
-exports.getLineURL = getLineURL;
 exports.getPoptopURL = getPoptopURL;

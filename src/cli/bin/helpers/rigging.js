@@ -15,7 +15,7 @@ const { Shield } = require("../../../core/shield");
 const { ByteArray } = require("../../../core/byte-array");
 const { Twist } = require("../../../core/twist");
 const { isControlled } = require("../../../core/reqsat");
-const { getAtomsFromPath, parseAbjectOrTwist, getLineURL, getConfig } = require("../util");
+const { getAtomsFromPath, parseAbjectOrTwist, getConfig } = require("../util");
 const fs = require("fs-extra");
 const chalk = require("chalk");
 
@@ -30,7 +30,7 @@ async function getLine(url) {
 
     return axios({
         method: "get",
-        url: new URL("/line", url).toString(),
+        url: url,
         responseType: "arraybuffer"
     }).then(res => new ByteArray(res.data));
 }
@@ -171,9 +171,9 @@ async function getTetherUrl(abject) {
     let llTwist = parseAbjectOrTwist(await getAtomsFromPath(config.line));
 
     if (isSameLine(llTwist, twist)) {
-        return getLineURL(config.poptop);
+        return config.poptop;
     } else if (abject.tetherUrl && abject.tetherUrl()) {
-        return getLineURL(abject.tetherUrl());
+        return abject.tetherUrl();
     } else {
         return config.line;
     }
