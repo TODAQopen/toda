@@ -37,9 +37,10 @@ function app(invPath=__dirname, config={}) {
     // middleware
     expressapp.use(express.raw({limit: config.maxFileSize}));
     expressapp.use(hostnameRouting(config));
+    expressapp.use(cors());
 
     // routes
-    expressapp.post("/", cors({origin: true}), async (req, res, next) => {
+    expressapp.post("/", async (req, res, next) => {
         return putFile(path.join(invPath, req.toda.subdir), req.body)
             .then(data => {
                 res.setHeader("Content-Type", "application/octet-stream");
@@ -47,7 +48,7 @@ function app(invPath=__dirname, config={}) {
             }, next);
     });
 
-    expressapp.get("/", cors({origin: true}), (req, res, next) => {
+    expressapp.get("/", (req, res, next) => {
         return listFiles(path.join(invPath, req.toda.subdir))
             .then(data => {
                 res.setHeader("Content-Type", "application/octet-stream");
@@ -56,7 +57,7 @@ function app(invPath=__dirname, config={}) {
             }, next);
     });
 
-    expressapp.get("/:hex", cors({origin: true}), (req, res, next) => {
+    expressapp.get("/:hex", (req, res, next) => {
         return getFile(path.join(invPath, req.toda.subdir), req.params.hex)
             .then(data => {
                 res.setHeader("Content-Type", "application/octet-stream");
