@@ -84,6 +84,10 @@ class DQ extends DelegableActionable {
         return quantity / this.getUnits();
     }
 
+    valueToQuantity(value) {
+        return value * this.getUnits();
+    }
+
     static mint(quantity, units, mintingInfo) {
         let c = new DI();
         c.setAssetClass(DQ.context);
@@ -99,11 +103,11 @@ class DQ extends DelegableActionable {
     }
 
     // Returns a new first twist of a DQ which _must_ be confirmed, then completed.
-    delegateValue(quantity) {
+    delegateValue(value) {
         let x = this.createDelegate();
         let c = new DI();
         c.setAssetClass(DQ.context);
-        c.setFieldAbject(DQ.context.fieldSyms.quantity, new P1Float(quantity));
+        c.setFieldAbject(DQ.context.fieldSyms.quantity, new P1Float(this.valueToQuantity(value)));
         x.setContext(c);
         return x;
     }
