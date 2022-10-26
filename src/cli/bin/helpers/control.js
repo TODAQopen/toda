@@ -10,7 +10,7 @@ const { Line } = require("../../../core/line");
 const { Twist } = require("../../../core/twist");
 const { isValidAndControlled, getTetheredAtoms } = require("./rigging");
 const { isControlled } = require("../../../core/reqsat");
-const { parseAbjectOrTwist, filePathForHash, getAtomsFromPath } = require("../util");
+const { parseAbjectOrTwist, filePathForHash, getFirstHashFromPath, getPoptopURL } = require("../util");
 const chalk = require("chalk");
 const fs = require("fs-extra");
 const DraftLog = require("draftlog").into(console);
@@ -24,15 +24,18 @@ const DraftLog = require("draftlog").into(console);
  */
 async function control(abject, poptop, pk) {
     try {
+        //todo(mje): We might want to cache this, for balance purposes...
         let line = Line.fromAtoms(abject.getAtoms());
         let lastFastHash = line.lastFastBeforeHash(abject.getHash());
         let twist = abject instanceof Twist ? abject : new Twist(abject.serialize(), abject.getHash());
 
         if (lastFastHash) {
-            if (!await isValidAndControlled(twist, poptop, pk)) {
+            let isValid = await isValidAndControlled(twist, poptop, pk);
+            if (!isValid) {
                 return Promise.reject(new ProcessException(7, "Unable to establish local control of this file (verifying controller)"));
             }
-            await isValidAndControlled(twist, poptop, pk);
+
+            return true;
 
         } else {
             //HACK(mje): Special case for validating a twist line with no last fast twist
@@ -49,9 +52,10 @@ async function control(abject, poptop, pk) {
  * @param poptop <Hash> The poptop hash
  * @param save <Boolean> If true will persist the updates to the file
  * @param status <console.draft()?> A drafting object for the console
+ * @param forceRecache <Boolean> Bypass the cached value
  * @returns <Promise<Atoms>> A promise resolving with the refreshed lsit of atoms
  */
-async function refresh(abject, poptop, save, noStatus) {
+async function refresh(abject, poptop, save, noStatus, forceRecache) {
     let status = null;
     if (!noStatus) {
         status = process.stdout.isTTY ? (console.draft ? console.draft() : null) : null;
@@ -59,7 +63,7 @@ async function refresh(abject, poptop, save, noStatus) {
     if (status) {
         status(chalk.white("Acquiring abjects..."));
     }
-    let refreshedAtoms = await getTetheredAtoms(abject, poptop, noStatus);
+    let refreshedAtoms = await getTetheredAtoms(abject, poptop, noStatus, forceRecache);
 
     if (status) {
         status(chalk.white("Parsing acquired abjects..."));
@@ -86,22 +90,11 @@ async function refresh(abject, poptop, save, noStatus) {
  * Refreshes and verifies control of the abject and returns the refreshed abject
  * @param abj <Abject> The abject to refresh and verify
  * @param pk <CryptoKey> The private key to verify control of
- * @param defaultPoptop <String> A URL/path to a twist to use as the default poptop
  * @returns <Promise<Abject>> The abject refreshed with the relevant tether line atoms
  */
-async function verifyControl(abj, pk, defaultPoptop) {
-    //todo(mje): HACK - the capability's poptop could be a non-Abject, which would fail parsing.
-    // So assume it's the provided/default poptop
-    let ptUrl;
-    try {
-        ptUrl = abj.getAbject(abj.popTop()).thisUrl();
-    } catch(e) {
-        ptUrl = defaultPoptop;
-    }
-
-    let pt = new Twist(await getAtomsFromPath(ptUrl));
-    let poptop = Line.fromAtoms(pt.getAtoms()).first(pt.getHash());
-
+async function verifyControl(abj, pk) {
+    let ptUrl = await getPoptopURL(abj);
+    let poptop = await getFirstHashFromPath(ptUrl);
     let abject = await refresh(abj, poptop, true, null);
     await control(abject, poptop, pk);
 

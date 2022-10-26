@@ -22,8 +22,7 @@ const yaml = require("yaml");
 const path = require("path");
 const os = require("os");
 const { v4: uuidv4 } = require("uuid");
-const axios = require("axios");
-
+const { getLineAtoms } = require("./helpers/http");
 
 // Needed to include interpreters
 const { Capability } = require("../../abject/capability");
@@ -233,13 +232,26 @@ async function getInputBytes() {
 /**
  * If the path is a file path that exists, use that - otherwise try to ping it as a line server.
  * @param path <String> Url to a line server or path to file
+ * @param forceRecache <Boolean> Bypass the cached value
  * @returns {Promise<Atoms>}
  */
-async function getAtomsFromPath(path) {
-    let bytes = fs.existsSync(path)
-        ? new ByteArray(fs.readFileSync(path))
-        : await axios({method: "get", url: path, responseType: "arraybuffer"}).then(res => new ByteArray(res.data));
-    return Atoms.fromBytes(bytes);
+async function getAtomsFromPath(path, forceRecache) {
+    if (fs.existsSync(path)) {
+        return Atoms.fromBytes(new ByteArray(fs.readFileSync(path)));
+    }
+
+    return getLineAtoms(path, forceRecache);
+}
+
+/**
+ * If the path is a file path that exists, use that - otherwise try to ping it as a line server.
+ * @param path <String> Url to a line server or path to file
+ * @returns {Promise<Atoms>}
+ */
+async function getFirstHashFromPath(path) {
+    return getAtomsFromPath(path).then(atoms => {
+        return Line.fromAtoms(atoms).first(atoms.lastAtomHash());
+    });
 }
 
 function getFileOrHashPath(filePath) {
@@ -374,6 +386,7 @@ function generateShield(salt, hash) {
  * @param focus <Hash|null> The focus hash
  * @returns <Abject|Twist>
  */
+//todo(mje): Might be worth caching...
 function parseAbjectOrTwist(atoms, focus) {
     try {
         return Abject.parse(atoms, focus);
@@ -438,7 +451,12 @@ async function getPoptopURL(abject) {
     try {
         return abject.getAbject(abject.popTop()).thisUrl();
     } catch(e) {
-        return getFileNameForTwistHash(abject.popTop());
+        let fn = await getFileNameForTwistHash(abject.popTop());
+        if (fn) {
+            return fn;
+        }
+
+        return getConfig().poptop;
     }
 }
 
@@ -454,6 +472,7 @@ exports.initKeys = initKeys;
 exports.initSalt = initSalt;
 
 exports.getAtomsFromPath = getAtomsFromPath;
+exports.getFirstHashFromPath = getFirstHashFromPath;
 exports.getFileOrInput = getFileOrInput;
 exports.getAcceptedInputs = getAcceptedInputs;
 exports.getInputBytes = getInputBytes;

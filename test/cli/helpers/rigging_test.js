@@ -53,17 +53,6 @@ describe("submitHoist", () => {
     });
 });
 
-describe("getLine", () => {
-    it("should make a get request to the specified line server", () => {
-        let scope = nock(host).get("/");
-        scope.reply(200, Buffer.from("foo"));
-
-        return getLine(host).then(r => {
-            assert.deepEqual(r, new ByteArray(Buffer.from("foo")));
-        });
-    });
-});
-
 describe("getHoist", () => {
     it("should verify that a hoist hitch exists for the provided lead on the specified line server", async () => {
         let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/test.toda")));

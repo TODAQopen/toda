@@ -12,28 +12,10 @@ const { Interpreter } = require("../../../core/interpret");
 const { Atoms } = require("../../../core/atoms");
 const { Sha256 } = require("../../../core/hash");
 const { Shield } = require("../../../core/shield");
-const { ByteArray } = require("../../../core/byte-array");
 const { Twist } = require("../../../core/twist");
 const { isControlled } = require("../../../core/reqsat");
 const { getAtomsFromPath, parseAbjectOrTwist, getConfig } = require("../util");
-const fs = require("fs-extra");
 const chalk = require("chalk");
-
-/** Retrieves the line bytes from the line server
- * @param url <String> the line server url or a path to a local line
- * @returns Promise<ByteArray> The response body from the line server
- */
-async function getLine(url) {
-    if (fs.existsSync(url)) {
-        return new ByteArray(fs.readFileSync(url));
-    }
-
-    return axios({
-        method: "get",
-        url: url,
-        responseType: "arraybuffer"
-    }).then(res => new ByteArray(res.data));
-}
 
 /** Submits a hoisting request to the line server
  * @param atoms <Atoms> the atoms to post to the line server
@@ -64,12 +46,12 @@ async function submitHoist(lead, meetHash, url) {
 /** Retrieves the hoist hitch for the specified lead
  * @param lead <Twist> the lead whose hitch to verify
  * @param url <String> the line server url
+ * @param forceRecache <Boolean> Bypass the cached value
  * @returns Promise<Twist|null> The hash of the hitch hoist if it exists, or null
  */
-async function getHoist(lead, url) {
-    //todo(mje): Replace with getTetheredAtoms()
-    let lineBytes = await getLine(url);
-    let leadLine = Line.fromAtoms(lead.getAtoms()).addBytes(lineBytes);
+async function getHoist(lead, url, forceRecache) {
+    let lineAtoms = await getAtomsFromPath(url, forceRecache);
+    let leadLine = Line.fromAtoms(lead.getAtoms()).addAtoms(lineAtoms);
     let i = new Interpreter(leadLine);
     return i.hitchHoist(lead.getHash());
 }
@@ -120,16 +102,16 @@ async function isValidAndControlled(abject, poptop, pk) {
 /** Adds the atoms from the tethered lines to this twist, up to the poptop
  * @param abject <Abject|Twist> the twist to refresh
  * @param poptop <Hash> the poptop of the twist
+ * @param forceRecache <Boolean> Bypass the cached value
  * @returns <Promise<Atoms>> The atoms in all the tethered chains
  */
-async function getTetheredAtoms(abject, poptop, noStatus) {
+async function getTetheredAtoms(abject, poptop, noStatus, forceRecache) {
     let status = null;
     if (!noStatus) {
         status = console.draft && process.stdout.isTTY ? console.draft() : null;
     }
 
     let twist = abject instanceof Twist ? abject : new Twist(abject.serialize());
-
     if ((twist.isTethered() || abject.tetherUrl) && !twistLineContainsHash(twist, poptop)) {
         if (status) {
             status(chalk.green.dim(">") + chalk.white.dim(twist.getHash().toString().substr(56)) + ".".repeat(15) + chalk.blue("Locating"));
@@ -140,7 +122,7 @@ async function getTetheredAtoms(abject, poptop, noStatus) {
         if (status) {
             status(chalk.green.dim(">") + chalk.white.dim(twist.getHash().toString().substr(56)) + ".".repeat(15) + chalk.blue("Downloading " + tetherUrl));
         }
-        let atoms = await getTetheredAtoms(parseAbjectOrTwist(await getAtomsFromPath(tetherUrl)), poptop, noStatus);
+        let atoms = await getTetheredAtoms(parseAbjectOrTwist(await getAtomsFromPath(tetherUrl, forceRecache)), poptop, noStatus, forceRecache);
 
         if (status) {
             status(chalk.green.dim(">") + chalk.white.dim(twist.getHash().toString().substr(56)) + ".".repeat(15) + chalk.blue("Material received") + chalk.dim.white(` [${tetherUrl}]`));
@@ -154,8 +136,7 @@ async function getTetheredAtoms(abject, poptop, noStatus) {
     if (status) {
         status(chalk.green.dim(">") + chalk.white.dim(twist.getHash().toString().substr(56)) + ".".repeat(15) + chalk.blue("Reached AIP"));
     }
-    let tga = twist.getAtoms();
-    return tga;
+    return twist.getAtoms();
 }
 
 /**todo(mje): HACK - Until local line is a SimpleHistoric:
@@ -185,8 +166,13 @@ async function getTetherUrl(abject) {
  * @returns <Boolean> true if the hash is in the twist's line
  */
 function twistLineContainsHash(twist, hash) {
-    let line = Line.fromAtoms(twist.getAtoms());
-    return line.twistList().find(h => h.equals(hash));
+    if (twist.getHash().equals(hash)) {
+        return true;
+    }
+
+    if (twist.prev()) {
+        return twistLineContainsHash(twist.prev(), hash);
+    }
 }
 
 function isSameLine(twist, t) {
@@ -195,7 +181,6 @@ function isSameLine(twist, t) {
     return line.equals(tl);
 }
 
-exports.getLine = getLine;
 exports.hoist = hoist;
 exports.getHoist = getHoist;
 exports.getLead = getLead;

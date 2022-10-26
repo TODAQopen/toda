@@ -13,11 +13,11 @@ const { ByteArray } = require("../../../core/byte-array");
 const { TwistBuilder, Twist } = require("../../../core/twist");
 const { Shield } = require("../../../core/shield");
 const { ArbitraryPacket } = require("../../../core/packet");
-const { getLine, getHoist, submitHoist, getTetherUrl } = require("./rigging");
+const { getHoist, submitHoist, getTetherUrl } = require("./rigging");
 const { signBytes } = require("../../lib/pki");
 const { satisfyRequirements } = require("../../../core/reqsat");
 const { setRequirements } = require("./requirements");
-const { getSuccessor, generateShield, getFileOrHashPath, getConfig } = require("../util");
+const { getSuccessor, generateShield, getFileOrHashPath, getConfig, getAtomsFromPath } = require("../util");
 const fs = require("fs-extra");
 
 /**
@@ -114,8 +114,8 @@ async function setFastFields(tether, tb, shield) {
         let tetherHash = Hash.parse(new ByteArray(Buffer.from(tether, "hex")));
         tb.setTetherHash(tetherHash);
     } catch(e) {
-        let bytes = await getLine(tether);
-        tb.setTether(new Twist(Atoms.fromBytes(bytes)));
+        let atoms = await getAtomsFromPath(tether);
+        tb.setTether(new Twist(atoms));
     }
 
     // If there is no shield and this is an external tether then generate a default shield
@@ -133,7 +133,7 @@ async function setFastFields(tether, tb, shield) {
     let lastFastTwist = line.twist(line.lastFastBeforeHash(line.lastFastBeforeHash(tb.getHash())));
     if (lastFastTwist) {
         let tetherUrl = await getTetherUrl(tb);
-        let hh = await getHoist(lastFastTwist, tetherUrl);
+        let hh = await getHoist(lastFastTwist, tetherUrl, true);
 
         if (hh) {
             tb.addRigging(lastFastTwist.getHash(), hh.getHash());
@@ -153,6 +153,7 @@ async function setFastFields(tether, tb, shield) {
 //todo(mje): We'll want to verify poptop when doing this so we don't continue to hoist forever
 // eg. rigging.twistLineContainsHash()
 async function hoistLocal(lead, meetHash, path, pk) {
+    //todo(mje): Probably don't want to cache here? We might hoist local back to back
     let tether = new Twist(Atoms.fromBytes(new ByteArray(fs.readFileSync(path))));
     let rigging = Shield.rigForHoist(lead.getHash(), meetHash, lead.shield());
 

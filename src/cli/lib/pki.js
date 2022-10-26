@@ -69,7 +69,6 @@ async function createKeys(outPublic, outPrivate) {
     let privateKey = await crypto.subtle.exportKey(KeyConfig.privateKey.format, keyPair.privateKey);
     let privatePem = _toPEM(Buffer.from(privateKey), KeyConfig.privateKey.header);
     fs.outputFileSync(outPrivate || KeyConfig.privateKey.path, privatePem.toString(), {mode: 0o600});
-
     return keyPair;
 }
 

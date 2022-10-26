@@ -1,13 +1,13 @@
 {
   "name": "todajs",
-  "version": "0.1.605",
+  "version": "0.1.606",
   "description": "",
   "author": "TodaQ",
   "license": "Apache License 2.0",
   "homepage": "https://engineering.todaq.net",
   "repository": {
-      "url": "https://github.com/TODAQopen/toda",
-      "type": "git"
+    "url": "https://github.com/TODAQopen/toda",
+    "type": "git"
   },
   "bin": {
     "toda": "./src/cli/bin/toda",
