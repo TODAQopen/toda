@@ -460,6 +460,18 @@ async function getPoptopURL(abject) {
     }
 }
 
+async function lockFile(path) {
+    try {
+        fs.openSync(`${path}.line-lock`, "ax");
+    } catch (e) {
+        return Promise.reject(new ProcessException(9, `The file ${path} is currently locked for editing. Please try again shortly.`));
+    }
+}
+
+function releaseLock(path) {
+    fs.rmSync(`${path}.line-lock`);
+}
+
 exports.getArgs = getArgs;
 exports.formatInputs = formatInputs;
 exports.getVersion = getVersion;
@@ -488,3 +500,6 @@ exports.generateShield = generateShield;
 exports.write = write;
 exports.writeToFile = writeToFile;
 exports.getPoptopURL = getPoptopURL;
+
+exports.lockFile = lockFile;
+exports.releaseLock = releaseLock;

@@ -17,7 +17,7 @@ const { getHoist, submitHoist, getTetherUrl } = require("./rigging");
 const { signBytes } = require("../../lib/pki");
 const { satisfyRequirements } = require("../../../core/reqsat");
 const { setRequirements } = require("./requirements");
-const { getSuccessor, generateShield, getFileOrHashPath, getConfig, getAtomsFromPath } = require("../util");
+const { getSuccessor, generateShield, getFileOrHashPath, getConfig, getAtomsFromPath, lockFile, releaseLock } = require("../util");
 const fs = require("fs-extra");
 
 /**
@@ -151,9 +151,9 @@ async function setFastFields(tether, tb, shield) {
  * @returns <TwistBuilder> a TwistBuilder object that can be used to generate the Twist
  */
 //todo(mje): We'll want to verify poptop when doing this so we don't continue to hoist forever
-// eg. rigging.twistLineContainsHash()
 async function hoistLocal(lead, meetHash, path, pk) {
-    //todo(mje): Probably don't want to cache here? We might hoist local back to back
+    await lockFile(path);
+
     let tether = new Twist(Atoms.fromBytes(new ByteArray(fs.readFileSync(path))));
     let rigging = Shield.rigForHoist(lead.getHash(), meetHash, lead.shield());
 
@@ -169,6 +169,8 @@ async function hoistLocal(lead, meetHash, path, pk) {
 
     //todo(mje): Keep the name of the line file the same until we have tether-url implemented.
     fs.outputFileSync(path, tb.serialize().toBytes());
+
+    releaseLock(path);
 }
 
 /**
