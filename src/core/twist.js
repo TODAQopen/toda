@@ -279,6 +279,15 @@ class Twist {
         return new Twist(this.atoms, ph);
     }
 
+    first() {
+        let prev = this.prev();
+        if (!prev) {
+            return this.getHash();
+        } else {
+            return this.first();
+        }
+    }
+
     rig(hash) {
         let riggingHash = this.body.getRiggingHash();
         if (riggingHash.isNull()) {

@@ -250,7 +250,7 @@ async function getAtomsFromPath(path, forceRecache) {
  */
 async function getFirstHashFromPath(path) {
     return getAtomsFromPath(path).then(atoms => {
-        return Line.fromAtoms(atoms).first(atoms.lastAtomHash());
+        return new Twist(atoms).first();
     });
 }
 
@@ -444,18 +444,9 @@ async function getFileNameForTwistHash(hash) {
  * @returns <String> The Line URL of the abject's poptop, or else the path to the local line.
  */
 async function getPoptopURL(abject) {
-    if (!abject.popTop) {
-        return getConfig().poptop;
-    }
-
     try {
         return abject.getAbject(abject.popTop()).thisUrl();
     } catch(e) {
-        let fn = await getFileNameForTwistHash(abject.popTop());
-        if (fn) {
-            return fn;
-        }
-
         return getConfig().poptop;
     }
 }
