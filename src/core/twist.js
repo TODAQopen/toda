@@ -284,7 +284,7 @@ class Twist {
         if (!prev) {
             return this.getHash();
         } else {
-            return this.first();
+            return prev.first();
         }
     }
 
