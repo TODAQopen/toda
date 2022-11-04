@@ -78,7 +78,15 @@ class Interpreter {
         if (hash.equals(this.topHash)) {
             return true;
         }
-        let prev = this.prev(hash);
+        let prev;
+        try
+        {
+            prev = this.prev(hash);
+        }
+        catch (err)
+        {
+            return false;
+        }
         if (prev) {
             return this.isTopline(prev.hash);
         }
@@ -333,7 +341,7 @@ class Interpreter {
             return; // success - hitches have been verified back to desired point.
         }
         if (this.twist(unverifiedFast).prev()) {
-            return this._verifyHitchLine(this.prevTetheredTwist(unverifiedFast).hash);
+            return this._verifyHitchLine(this.prevTetheredTwist(unverifiedFast).hash, optLastSupported, false);
         }
         if (optLastSupported) {
             throw new Error("This should never happen: thing in this line isn't in this line.");
@@ -345,7 +353,7 @@ class Interpreter {
      * Verifies the entire history of these twists is fastened; will
      * end with a half hitch.
      */
-    async verifyHitchLine(hash) {
+    async verifyHitchLine(hash, startHash = undefined) {
         let twist = this.twist(hash);
 
         if (!twist.isTethered()) {
@@ -354,7 +362,7 @@ class Interpreter {
         }
         // console.log("Top hash is:", this.topHash.toString());
         // console.log("Last lead is: ", this.prevTetheredTwist(twist.hash).hash.toString());
-        return this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash, undefined, true);
+        return this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash, startHash, true);
     }
 }
 
