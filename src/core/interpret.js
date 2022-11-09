@@ -205,28 +205,30 @@ class Interpreter {
     /**
      * @return <Twist>
      */
-    nextRigEntryTwist(hash, rigKeyHash) {
-        let twist = this.next(hash);
-        if (!twist) {
-            return null;
-        }
+    isHoist(lead, twist) {
+        let s = Shield.shield(lead.hash, lead.hash, lead.shield());
+        let ss = Shield.doubleShield(lead.hash, lead.hash, lead.shield());
+        let v = twist.rig(s);
+        let vv = twist.rig(ss);
 
-        if (twist.hasRigKey(rigKeyHash)) {
+        return v && vv && !v.equals(s) && Shield.shield(lead.hash, v, lead.shield()).equals(vv);
+    }
+
+    hoistForwardSearch(lead, twist) {
+        if (!twist)
+            return null;
+        if (this.isHoist(lead, twist))
             return twist;
-        }
-        return this.nextRigEntryTwist(twist.hash, rigKeyHash);
+        return this.hoistForwardSearch(lead, this.next(twist.hash));
     }
 
     /**
-     * Given a 'lead', returns a 'hoist'
+     * Given a 'lead', returns a 'hoist' or null
      * @returns <Twist>
      */
-    hitchHoist(hash) {
-        let twist = this.twist(hash);
-        let shield = Shield.shield(hash, hash, twist.shield());
-
-        return this.nextRigEntryTwist(twist.tether().hash, shield);
-
+    hitchHoist(leadHash) {
+        let lead = this.twist(leadHash);
+        return this.hoistForwardSearch(lead, this.next(lead.tether().hash));
     }
 
     /**
@@ -263,24 +265,12 @@ class Interpreter {
         return null;
     }
 
-    verifyShield(hash) {
-        let twist = this.twist(hash);
-        let hoist = this.hitchHoist(hash);
-        let nextEntry = this.nextRigEntryTwist(twist.tether().hash, Shield.doubleShield(hash, hash, twist.shield()));
-        if (!(nextEntry.equals(hoist))) {
-            throw new Error("not first successor with double shield rig entry..."); //todo
-        }
-    }
-
     /**
      * @return <Twist> meet
      */
     async verifyHitch(hash) {
         let meet = this.hitchMeet(hash);
 
-        // console.log("Verifying hitch from " + hash.toString() + " to " + meet.hash.toString());
-
-        this.verifyShield(hash);
         await this.verifyLegitSeg(hash, meet.hash);
 
         if (!(this.prevTetheredTwist(meet.hash).hash.equals(hash))) {
