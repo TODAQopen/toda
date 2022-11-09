@@ -244,13 +244,15 @@ class HashPairPacket extends HashPacket {
 
 
     getShapedValueFromContent() {
-        return super.getShapedValueFromContent().reduce((pairs, hash, index) => {
+        let hs = super.getShapedValueFromContent();
+        if (hs.length % 2 != 0)
+            throw ShapeException("HashPairPacket does not contain even number of hashes.");
+        return hs.reduce((pairs, hash, index) => {
             // xxx(acg): seriously js has no built-in array chunkifier?
             if (index % 2 == 0) pairs.push([]);
             pairs[pairs.length - 1].push(hash);
             return pairs;
         }, []);
-        // TODO: consider throwing odd num error
     }
     /**
      * @returns Array.<[Hash,Hash]> array of pairs of Hashes
@@ -445,6 +447,13 @@ class BasicTwistPacket extends HashPacket {
         super([body, sats]);
     }
 
+    getShapedValueFromContent() {
+        let shapedValue = super.getShapedValueFromContent();
+        if(shapedValue.length != 2)
+            throw ShapeException("Basic twist contains " + shapedValue.length + " hashes, not 2.");
+        return shapedValue;
+    }
+
     // helpful shortcuts
     getBodyHash() {
         return this.getShapedValue()[0];
@@ -480,6 +489,13 @@ class BasicBodyPacket extends HashPacket {
      */
     constructor(prev, tether, reqs, cargo, rigging, shield) {
         super([prev, tether, shield, reqs, rigging, cargo]);
+    }
+
+    getShapedValueFromContent() {
+        let shapedValue = super.getShapedValueFromContent();
+        if(shapedValue.length != 6)
+            throw ShapeException("Basic body contains " + shapedValue.length + " hashes, not 6.");
+        return shapedValue;
     }
 
     // helpful shortcuts
