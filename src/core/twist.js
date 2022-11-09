@@ -10,14 +10,16 @@ const { Sha256, NullHash } = require("./hash");
 const { HashMap } = require("./map");
 const { Atoms } = require("./atoms");
 
-class MissingHashPacketError {
+class MissingHashPacketError extends Error {
     constructor(hash, message) {
+        super();
         this.hash = hash.toString();
         this.message = message;
     }
 }
-class ShapeError {
+class ShapeError extends Error {
     constructor(hash, msg) {
+        super();
         this.hash = hash;
         this.msg = msg;
     }
