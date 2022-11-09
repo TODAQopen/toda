@@ -165,14 +165,12 @@ Capability.simpleRestrictionAC.addACField(Capability.simpleRestrictionAC.fieldSy
     fExpiry);
 
 let fHttpVerb = new AssetClassField();
-fHttpVerbs.consolidation = DI.consolidations.firstWriteWins;
-fHttpVerbs.type = P1String.interpreter;
+fHttpVerb.consolidation = DI.consolidations.firstWriteWins;
+fHttpVerb.type = P1String.interpreter;
 
 let fNonce = new AssetClassField();
 fNonce.consolidation = DI.consolidations.firstWriteWins;
 fNonce.type = P1String.interpreter;
-
-
 
 Capability.simpleRequestAC = new DIAssetClassClass();
 Capability.simpleRequestAC.fieldSyms = {};
