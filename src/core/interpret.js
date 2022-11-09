@@ -242,7 +242,10 @@ class Interpreter {
             throw new MissingHoistError(hash);
         }
 
-        return this.twist(hoist.rig(Shield.shield(hash, hash, leadTwist.shield())));
+        let meet = this.twist(hoist.rig(Shield.shield(hash, hash, leadTwist.shield())));
+        if(meet.isTethered())
+            return meet;
+        throw new Error("Meet is not fast.");
     }
 
     /**
