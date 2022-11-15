@@ -280,7 +280,7 @@ $ toda list [DIRECTORY]
 ### hoist
 `$ toda hoist [--line-server URL] [--verify] FILE_SOURCE`
 
-Hoists a twist to the specified line server. Defaults to the value of `lineServer` in the `config.yml`. If `--verify` is specified, returns the value of the Hash associated with the hoist, or an error if the hoist doesn't exist.
+Hoists a twist to the specified line server. Defaults to the value of `lineServer` in the `config.yml`. If `--verify` is specified, returns the value of the hash associated with the hoist, or an error if the hoist doesn't exist.
 ```
 $ toda hoist <~/.toda/store/411c3436751e30e42043b29c4aa9f969d681b03c3273322a798aa68af152450124.toda
 ```
@@ -288,7 +288,7 @@ $ toda hoist <~/.toda/store/411c3436751e30e42043b29c4aa9f969d681b03c3273322a798a
 ### get-hoist
 `$ toda get-hoist [--line-server URL] FILE_SOURCE`
 
-Returns the value of the Hash associated with the hoist, or nothing if the hoist doesn't exist. Defaults to the value of `lineServer` in the `config.yml`.
+Returns the value of the hash associated with the hoist, or nothing if the hoist doesn't exist. Defaults to the value of `lineServer` in the `config.yml`.
 ```
 $ toda get-hoist <~/.toda/store/411c3436751e30e42043b29c4aa9f969d681b03c3273322a798aa68af152450124.toda
 410a3e68c6cf404b1e7be188f9b341651c4afc7ec6347fe0a8e85cf827cbe089bd
@@ -332,7 +332,7 @@ $ toda request --url http://test-url/files --verb get --data aabbccdd --capabili
 #### Advanced
 
 ##### Hoist/Rigging
-When you are ready to hoist your Twists you can use the `toda hoist` command. Since we create twists that are tethered by default, we automatically handle hoisting them to their tethered line when we append. So looking at our example above we can verify the hitch either by calling `toda get-hoist` or `toda hoist --verify` like so:
+When you are ready to hoist your twists you can use the `toda hoist` command. Since we create twists that are tethered by default, we automatically handle hoisting them to their tethered line when we append. So looking at our example above we can verify the hitch either by calling `toda get-hoist` or `toda hoist --verify` like so:
 
 ```
 $ toda hoist --verify <~/.toda/store/4178feba7b2fdec3778b39348a8ba8bc1577eec57dc1480daff32c066871a92c6c.toda
@@ -350,7 +350,7 @@ The specified twist does not have a last fast twist.
 
 
 ##### Inspect
-We can use `toda inspect` to take a detailed look at the hashes in a Twist. Let's look at a capability file.
+We can use `toda inspect` to take a detailed look at the hashes in a twist. Let's look at a capability file.
 
 ```
 $ toda inspect 412ec07a09fbae3ed12c640c653afc3a6511fcf4605326076771b0457f3f6bcd95 <~/.toda/store/412ec07a09fbae3ed12c640c653afc3a6511fcf4605326076771b0457f3f6bcd95.toda

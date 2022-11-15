@@ -4,9 +4,9 @@
   </a>
 </p>
 
-<h3 align="center">TODA Cryptographic Asset System</h3>
+<h3 align="center">TODA Files: A Cryptographic Asset Structure</h3>
 
-TODA is a system for creating digital assets, based on a unique cryptographic distributed data structure and supporting systems.
+A TODA file is a representation of a digital asset. It is based on a novel cryptographic data structure.
 <br>
 <br>
 This package contains the library for interacting with low-level structures, as well as higher-level abstractions for application design.  It additionally contains the `toda` command-line tool to assist with development, debugging, admin and support.  Further, the CLI now contains a quick-start server for serving and viewing assets.
@@ -32,18 +32,18 @@ See the [command line tools documentation](docs/cli.md)
 
 ### core:
 Defines Hash and Packet, the only two core data structures.
-Relies on a util class we have called ByteArray which extends UIntArray.
-Includes a Rig Checker, which assesses the validity of asset integrity.
+Relies on a util class called ByteArray, which extends UIntArray.
+Includes a rig (structure) checker, which assesses asset integrity.
 
 - Atoms: an ordered hashmap of <Hash>:<respective Packet> pairs
-- Shield: utilities for creating and checking Shield values
+- Shield: utilities for creating and checking shielded values
 - ReqSat: utilities for creating and parsing Requirements and Satisfactions packets
-- interpret: the rig checker
+- Interpret: the rig checker
 - Twist: an abstraction over Hash and Packets which represents twists
 - TwistBuilder: a factory for Twists
 
 ### abject:
-Higher-level structures describing contents of TODA assets and how to apply the rig checker in various desireable ways.
+Higher-level structures describing contents of TODA assets, and how to apply the rig checker to determine their integrity.
 - Actionable: any TODA object requiring a line of integrity
 - DelegableActionable: a TODA object which depends on the integrity of a another in a particular way
 - DI: Basic container for fields and values
