@@ -1,6 +1,6 @@
 {
   "name": "todajs",
-  "version": "0.1.608",
+  "version": "0.1.609",
   "description": "",
   "author": "TodaQ",
   "license": "Apache License 2.0",
@@ -53,6 +53,8 @@
     "minimist": "^1.2.6",
     "node-json-color-stringify": "^1.1.0",
     "npm": "^8.12.1",
+    "pdfkit": "^0.13.0",
+    "qrcode": "^1.5.1",
     "uuid": "^8.3.2",
     "vue": "^3",
     "vue-router": "^4.0.14",

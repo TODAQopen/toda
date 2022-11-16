@@ -24,6 +24,7 @@ Usage:
                     [--shield HEX] [--tether URL|FILE_PATH] {--capability CAP_PATH | CAP_SRC}
   toda control      [FILE_PATH] [--poptop PATH] [--refresh]
   toda request      [--capability CAP_PATH] [--url URL] [--verb HTTP_VERB] [--nonce STRING] [--data HEX]
+  toda audit-dq     [FILE_PATH]
 
 Options:
   -v, --version         Displays the current CLI version

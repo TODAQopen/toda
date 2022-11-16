@@ -87,7 +87,7 @@ $ toda create --empty --shield aabbcc
 ### append
 `toda append PREV [--poptop URL]  [--secp256r1 PUB_KEY_PATH] [--ed25519 PUB_KEY_PATH] [--shield SHIELD_SPEC] [--tether URL] {--cargo CARGO | --empty | CARGO_SRC}`
 
-Creates a successor to the specified PREV `*.toda` file and appends the bytes to that file, renaming it to the new hash. Verifies control against the `--poptop` (default `config.lineServer`) before appending. Defaults to `~/.toda/store/<hash>.toda`. 
+Creates a successor to the specified PREV `*.toda` file and appends the bytes to that file, renaming it to the new hash. Verifies control against the `--poptop` (default `config.lineServer`) before appending. Defaults to `~/.toda/store/<hash>.toda`.
 
 eg.
 ```
@@ -321,12 +321,17 @@ Web server running on http://localhost:8080
 Authorizes the specified `capability` token and makes an HTTP request using that token as a b64 encoded http-header `X-TODA-Capability` and returns the response.
 
 ```
-$ toda request --url http://test-url/files --verb get --data aabbccdd --capability ~/.toda/store/41db15f3745fa8697a275f75e6b262746e0a4a764694bc4405a9329c5c38e72d2e.toda 
+$ toda request --url http://test-url/files --verb get --data aabbccdd --capability ~/.toda/store/41db15f3745fa8697a275f75e6b262746e0a4a764694bc4405a9329c5c38e72d2e.toda
 ```
 
+### audit-dq
+`$ toda audit-dq [FILE_PATH]`
 
+Generates a PDF audit report for the specified DQ.
 
-
+```
+$ toda audit-dq ../../reporting/examples/41419f04a356a76c8c8196dfa74cfd45d45c4b3b54a7514fca3cb3515a87f599ad.toda
+```
 
 
 #### Advanced
