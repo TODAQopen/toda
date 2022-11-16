@@ -22,7 +22,7 @@ class Atoms extends HashMap {
    * @throws things
    */
     set(hash, packet) {
-        hash.assertVerifiesPacket(packet); // throws
+        // hash.assertVerifiesPacket(packet); // throws
         return super.set(hash, packet);
     }
 

@@ -26,6 +26,7 @@ class Hash {
         this.serializedValue = new ByteArray(hashValue.length + 1);
         this.serializedValue[0] = this.constructor.algoCode;
         this.serializedValue.set(this.hashValue, 1);
+        this.stringValue = this.serializedValue.toString();
     }
 
     static hash() {
@@ -55,7 +56,8 @@ class Hash {
      * @returns <String> the hex representation of this object
      */
     toString() {
-        return this.serialize().toString();
+        return this.stringValue;
+        // return this.serialize().toString();
     }
 
     /**
@@ -158,7 +160,8 @@ class Hash {
      * @returns <Boolean>
      */
     equals(hash) {
-        return this.toString() == hash.toString();
+        return this.stringValue == hash.toString();
+        // return this.toString() == hash.toString();
     }
 
     /**
