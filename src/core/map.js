@@ -49,11 +49,12 @@ class HashMap extends Map {
         if(this.hashes === undefined) {
             this.hashes = {};
         }
-        
+
+        let keystring = key.toString();
         if (!this.hashes[keystring]) {
             this.hashes[keystring] = key;
         }
-        
+
         return super.set(this.hashes[keystring], value);
     }
 

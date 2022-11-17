@@ -17,15 +17,6 @@ function phpairFromStr(str) {
 }
 
 describe("Atoms/set", () => {
-    it("Should throw if hash-packet pair doesn't verify", () => {
-        assert.throws(() => {
-            new Atoms([[sbh("1"), new ArbitraryPacket(bafs("one"))]]);
-        });
-        assert.throws(() => {
-            let atoms = new Atoms();
-            atoms.set(sbh("hello"), new ArbitraryPacket(bafs("goodbye")));
-        });
-    });
     it("Should set hash-packet pairs", () => {
         let atoms = new Atoms();
         atoms.set(...phpairFromStr("one"));
