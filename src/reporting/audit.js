@@ -110,7 +110,10 @@ async function renderDescription(doc, description) {
 
         // Twist & tether QR
         await addQR(doc, twist.hash, doc.x + 304, doc.y -14);
-        await addQR(doc, twist.tether, doc.x + 412, doc.y -14);
+
+        if (twist.tether) {
+            await addQR(doc, twist.tether, doc.x + 412, doc.y - 14);
+        }
 
         doc.moveDown(3);
         alt = !alt;
@@ -150,7 +153,7 @@ function getTwistLabel(twist) {
 function describe(dq, isParent) {
     let res = [];
     let parent = null;
-    let addTwist = function(x) {
+    let addTwist = function (x) {
         let atoms = x.serialize();
         let tw = new Twist(atoms, x.getHash());
 
@@ -158,7 +161,7 @@ function describe(dq, isParent) {
             value: x.value(),
             spent: [],
             hash: x.getHash().toString(),
-            tether: tw.tether()?.getHash().toString(),
+            tether: tw.isTethered() ? tw.body.getTetherHash().toString() : "",
             timestamp: x.getPoptopTimestamp(),
             inner: isParent
         };
