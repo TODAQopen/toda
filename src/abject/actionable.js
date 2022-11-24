@@ -133,6 +133,19 @@ class Actionable extends Abject {
     setContext(abject, hashImp) {
         return this.setFieldAbject(Actionable.fieldSyms.context, abject, hashImp);
     }
+
+    // Returns the timestamp of the abject's poptop hitch
+    getPoptopTimestamp() {
+        let atoms = this.serialize();
+        let pt = new Twist(atoms, this.popTop());
+
+        //todo(mje): This could become a performance bottleneck, let's find a way to optimize
+        let interpreter = new Interpreter(Line.fromAtoms(atoms), pt.first());
+        let hitch = interpreter.getToplineHitch(this.getHash());
+        if (hitch) {
+            return this.getAbject(hitch.getHash()).timestamp();
+        }
+    }
 }
 
 class DelegableActionable extends Actionable {

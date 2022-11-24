@@ -319,6 +319,17 @@ class Twist {
         return null;
     }
 
+    lastFast() {
+        let prev = this.prev();
+        if (prev) {
+            if (prev.tether()) {
+                return prev;
+            } else {
+                return prev.lastFast();
+            }
+        }
+    }
+
     /**
      * if param 'key' provided, does a lookup, otherwise returns trie.
      */

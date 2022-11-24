@@ -357,6 +357,22 @@ class Interpreter {
         // console.log("Last lead is: ", this.prevTetheredTwist(twist.hash).hash.toString());
         return this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash, startHash, true);
     }
+
+    // Retrieves the hitch linking this twist hash to the topline
+    getToplineHitch(hash) {
+        let twist = this.twist(hash);
+        let lastFast = twist.lastFast();
+        if (twist.lastFast()) {
+            let hitch = this.hitchHoist(lastFast.getHash());
+            if (hitch) {
+                if (this.topHash.equals(hitch.first())) {
+                    return hitch;
+                } else {
+                    return this.getToplineHitch(hitch.getHash());
+                }
+            }
+        }
+    }
 }
 
 exports.Interpreter = Interpreter;

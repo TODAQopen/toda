@@ -5,12 +5,6 @@ const QRCode = require("qrcode");
 const fs = require("fs");
 const path = require("path");
 
-const BIconArrowDownRight = path.resolve(__dirname, "assets/arrow-down-right.png");
-const BIconArrowRight = path.resolve(__dirname, "assets/arrow-right.png");
-const BIconArrowUp = path.resolve(__dirname, "assets/arrow-up.png");
-const BIconArrowUpLeft = path.resolve(__dirname, "assets/arrow-up-left.png");
-const BIconStars = path.resolve(__dirname, "assets/stars.png");
-
 //todo(mje): CERTIFICATES
 // https://medium.com/@eduardoqgomes/creating-a-certificate-template-with-pdfkit-in-node-js-dd843e09e6cf
 
@@ -36,7 +30,7 @@ async function generateAuditReport(dq, out) {
 
     // We could instead return a blob and have some other fn write it out
     doc.pipe(fs.createWriteStream(path.resolve(__dirname, out || "examples/output.pdf")));
-    doc.fontSize(8);
+    doc.fontSize(6);
 
     // Adds assets common to each page
     formatPage(doc, `Audit Report for ${dq.getHash()}`);
@@ -50,14 +44,77 @@ async function generateAuditReport(dq, out) {
 }
 
 function formatPage(doc, title) {
+    doc.font("Courier-Bold");
+
     if (title) {
-        doc.image(path.resolve(__dirname, "assets/favicon.ico"), { width: 8, height: 8 });
-        doc.moveUp(1);
-        doc.font("Courier-Bold").text(title, doc.x + 10, doc.y + 1);
-        doc.x -= 10;
+        doc.text(title, { align: "center" });
+        doc.moveDown(4);
     }
 
+    doc.text("Value".padEnd(15), { continued: true });
+    doc.text("Spent".padEnd(15), { continued: true });
+    doc.text("Notes".padEnd(20), { continued: true });
+    doc.text("Date".padEnd(35), { continued: true });
+    doc.text("Twist".padEnd(30), { continued: true });
+    doc.text("Tether".padEnd(20), { continued: true });
+
     doc.font("Courier").moveDown(4);
+
+    // Resets the doc.y position
+    doc.text("");
+}
+
+async function addQR(doc, data, x, y) {
+    let qr = await QRCode.toDataURL(`toda:${data}`, {
+        color: {
+            dark: "#000",
+            light: "#0000"
+        }
+    });
+    doc.image(qr, x, y, { height: 20, width: 20 });
+}
+
+async function renderDescription(doc, description) {
+    let alt = false;
+
+    for (let twist of description) {
+        // This is to ensure a new page is triggered before doing the rectangle fill
+        doc.text("");
+
+        // Colour the row background
+        let fill = alt ? "#aef2dc" : "#e9fbf6";
+        doc.rect(doc.page.margins.left - 5, doc.y - 10, doc.page.width - doc.page.margins.right - doc.page.margins.left, 26).fill(fill);
+        doc.fill("black");
+
+        // Value
+        doc.text(twist.value.toString().padEnd(15), { continued: true });
+
+        // Spent
+        let spent = twist.spent[0] > 0 ? twist.spent[0] : "-";
+        doc.text(`${spent}`.padEnd(15), { continued: true });
+
+        // Notes
+        doc.text(getTwistLabel(twist).padEnd(20), { continued: true });
+
+        // Date
+        if (twist.timestamp) {
+            doc.text(new Date(twist.timestamp).toLocaleString("en-US", { hour12: false }).padEnd(42), { continued: true });
+        } else {
+            doc.text("-".padEnd(42), { continued: true });
+        }
+
+
+        // Twist & tether hash
+        doc.text(twist.hash.substring(0, 7).padEnd(30), { continued: true });
+        doc.text(twist.tether.substring(0, 7).padEnd(20));
+
+        // Twist & tether QR
+        await addQR(doc, twist.hash, doc.x + 304, doc.y -14);
+        await addQR(doc, twist.tether, doc.x + 412, doc.y -14);
+
+        doc.moveDown(3);
+        alt = !alt;
+    }
 }
 
 function addPageNumbers(doc) {
@@ -74,85 +131,38 @@ function addPageNumbers(doc) {
     }
 }
 
-function getTwistIcon(twist, inner) {
-    if (twist.master) {
-        return BIconStars;
-    } else if (twist.parent) {
-        return BIconArrowDownRight;
-    } else if (twist.latest && inner) {
-        return BIconArrowUpLeft;
-    } else if (twist.latest) {
-        return BIconArrowRight;
-    } else {
-        return BIconArrowUp;
-    }
-}
-
-function getTwistLabel(twist, inner) {
+function getTwistLabel(twist) {
     if (twist.master) {
         return "Minted";
-    } else if (twist.latest && inner) {
+    } else if (twist.latest && twist.inner) {
         return "Split note";
     } else if (twist.latest) {
         return "Latest revision";
-    } else if (twist.parent) {
+    } else if (twist.hasParent) {
         return "New note";
     } else {
         return "";
     }
 }
 
-// todo(mje): What do we do if there are many levels of indenting that would take us off the page?
-async function renderDescription(doc, description, inner = 0) {
-    // Need to apply an X modifier to everything based inner/indent level
-    const labelSpacing = 72;
-    const indent = inner > 0 ? 20 : 0;
-    doc.x += indent;
-
-    for (let twist of description) {
-        // Value
-        doc.text("     ", { continued: true });
-        doc.text(twist.value.toString().padEnd(10), { continued: true });
-
-        // Icon (Add this after adding the text, since text can trigger a new page but image cannot)
-        doc.image(getTwistIcon(twist, inner > 0), { width: 8, height: 8, align: "center", valign: "center" });
-        doc.moveUp(1);
-
-        // Twist hash & QR code
-        doc.text(twist.hash);
-        let qrURL = await QRCode.toDataURL(`toda:${twist.hash}`);
-        doc.image(qrURL, doc.x + 400, doc.y -15, { height: 40, width: 40, align: "center", valign: "center" });
-
-        // Tether hash
-        doc.text("     Tether:   ", {continued: true});
-        doc.text(twist.tether, doc.x, doc.y);
-
-        // Sub Label details
-        let label = twist.spent.length > 0 ?
-            `${getTwistLabel(twist, inner > 0)} · Spent ${twist.spent[0]}` :
-            getTwistLabel(twist, inner > 0);
-
-        doc.text(label, doc.x + labelSpacing, doc.y);
-        doc.x -= labelSpacing;
-        doc.moveDown(4);
-
-        // Recurse
-        if (twist.parent) {
-            await renderDescription(doc, twist.parent, inner + 1);
-        }
-    }
-
-    doc.x -= indent;
-}
-
 // Borrowed from TodaTwin
 //todo(acg): consider adding something like this to abject/delegableActionable
-function describe(dq) {
+function describe(dq, isParent) {
     let res = [];
     let parent = null;
     let addTwist = function(x) {
-        let tw = new Twist(x.serialize(), x.getHash());
-        let descr = {value: x.value(), spent: [], hash: x.getHash().toString(), tether: tw.tether()?.getHash().toString()};
+        let atoms = x.serialize();
+        let tw = new Twist(atoms, x.getHash());
+
+        let descr = {
+            value: x.value(),
+            spent: [],
+            hash: x.getHash().toString(),
+            tether: tw.tether()?.getHash().toString(),
+            timestamp: x.getPoptopTimestamp(),
+            inner: isParent
+        };
+
         let cd = x.confirmedDelegates();
         if (cd) {
             for (let del of cd) {
@@ -184,7 +194,9 @@ function describe(dq) {
 
     if (parent) {
         res.pop();
-        res[res.length - 1].parent = describe(parent.delegateOf());
+        let parentDesc = describe(parent.delegateOf(), true);
+        res[res.length - 1].hasParent = true;
+        res = res.concat(parentDesc);
     }
 
     return res;
