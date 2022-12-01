@@ -37,7 +37,8 @@ function app(invPath=__dirname, config={}) {
     // middleware
     expressapp.use(express.raw({limit: config.maxFileSize}));
     expressapp.use(hostnameRouting(config));
-    expressapp.use(cors());
+    let corsmw = config.cors ? cors(config.cors) : cors();
+    expressapp.use(corsmw);
 
     // routes
     expressapp.post("/", async (req, res, next) => {
