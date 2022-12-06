@@ -31,12 +31,17 @@ class Packet {
 
         this.len = fourByteInt(content.length);
         this.content = content;
-        this.shapedVal = content; //urg
 
         this.serializedValue = new ByteArray(content.length + 5);
         this.serializedValue[0] = this.constructor.shapeCode;
         this.serializedValue.set(this.len, 1);
         this.serializedValue.set(this.content, 5);
+    }
+
+    // lazy packet expansion
+    get shapedVal() {
+        Object.defineProperty(this, "shapedVal", { value: this.getShapedValueFromContent(), writable: false, configurable: true })
+        return this.shapedVal
     }
 
     /**
@@ -57,10 +62,10 @@ class Packet {
     static PACKET_CONTENT_OFFSET = this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH;
 
     static parse(bytes) {
-        let packetLength = ByteArray.from(bytes.slice(this.PACKET_LENGTH_OFFSET,
+        let packetLength = ByteArray.from(bytes.subarray(this.PACKET_LENGTH_OFFSET,
             this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH)).toInt();
         return Packet.createFromShapeCode(bytes[this.PACKET_SHAPE_OFFSET],
-            ByteArray.from(bytes.slice(this.PACKET_CONTENT_OFFSET,
+            ByteArray.from(bytes.subarray(this.PACKET_CONTENT_OFFSET,
                 this.PACKET_CONTENT_OFFSET + packetLength)));
     }
 
@@ -74,7 +79,6 @@ class Packet {
 
         // xxx(acg): tell me you don't love js
         o.__proto__ = imp.prototype;
-        o.shapedVal = o.getShapedValueFromContent(); //haaaack :-)
         o.serializedValue[0] = shapeCode; // haaaack
 
         return o;
@@ -107,7 +111,10 @@ class Packet {
 
 
     getShapedValue() {
-        throw new Error("abstract method not implemented in class Packet");
+        // TODO: THINK: both .shapedVal and .getShapedValue() are used to access this property
+        //              might want to remove .getShapedValue() and just use .shapedVal...
+        return this.shapedVal;
+        // throw new Error("abstract method not implemented in class Packet");
     }
 
     /**
@@ -155,13 +162,6 @@ class ArbitraryPacket extends Packet {
     static shapeCode = 0x60;
     static moniker = "Arbitrary Packet";
 
-    /**
-     * @returns <ByteArray> the bytes contained in this packet
-     */
-    getShapedValue() {
-        return this.shapedVal;
-    }
-
     getShapedValueFromContent() {
         return this.content;
     }
@@ -195,7 +195,6 @@ class HashPacket extends Packet {
         super(hashes.map((hash) => hash.serialize())
             .reduce((buffer, bytes) => buffer.concat(bytes),
                 new ByteArray()));
-        this.shapedVal = hashes;
     }
 
     getShapedValueFromContent() {
@@ -204,23 +203,16 @@ class HashPacket extends Packet {
         while (buf.length > 0) {
             let hash = Hash.parse(buf);
             hashes.push(hash);
-            buf = buf.slice(hash.numBytes());
+            buf = buf.subarray(hash.numBytes());
         }
         return hashes;
-    }
-
-    /**
-     * @returns <Array.<Hash>> an array of Hashes representing the content of this packet
-     */
-    getShapedValue() {
-        return this.shapedVal;
     }
 
     /**
      * @returns <Array.<Hash>>
      */
     getContainedHashes() {
-        return this.getShapedValueFromContent(); // efficiency issue?
+        return this.shapedVal; // efficiency issue?
     }
 
     getContainedValueHashes() {
@@ -232,14 +224,12 @@ class HashPacket extends Packet {
  * A packet containing a (list of) pair(s) of hashes
  */
 class HashPairPacket extends HashPacket {
+
     /**
      * @param pairs <Array.<Hash,Hash>> the list of hash pairs to create a packet from.
      */
     constructor(pairs) {
         super(pairs.flat());
-
-        // XXX(acg): store this for efficiency
-        this.shapedVal = pairs;
     }
 
 
@@ -253,12 +243,6 @@ class HashPairPacket extends HashPacket {
             pairs[pairs.length - 1].push(hash);
             return pairs;
         }, []);
-    }
-    /**
-     * @returns Array.<[Hash,Hash]> array of pairs of Hashes
-     */
-    getShapedValue() {
-        return this.shapedVal;
     }
 
     /**
@@ -276,7 +260,7 @@ class HashPairPacket extends HashPacket {
      * @returns <Array.<Hash>> Includes all Key and Value hashes
      */
     getContainedHashes() {
-        return super.getShapedValueFromContent(); //efficiency?
+        return this.shapedVal;
     }
 }
 
@@ -296,9 +280,6 @@ class PairTriePacket extends HashPairPacket {
             throw new ShapeException("SHAPE_ORDER", "Map not sorted");
         }
         super([...hashMap]);
-
-        //XXX(acg): also store this, for efficiency.
-        this.shapedVal = hashMap;
     }
 
     /**
@@ -329,13 +310,6 @@ class PairTriePacket extends HashPairPacket {
             }
         }
         return true;
-    }
-
-    /**
-     * @returns <Map.<Hash:Hash>> k:v pairs of hashes
-     */
-    getShapedValue() {
-        return this.shapedVal;
     }
 
     getShapedValueFromContent() {
@@ -397,7 +371,7 @@ class PairTriePacket extends HashPairPacket {
      * @returns <Array.<Hash>> All Key and Value hashes
      */
     getContainedHashes() {
-        return super.getContainedHashes();
+        return this.shapedVal;
     }
 
     /**

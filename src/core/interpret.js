@@ -7,7 +7,7 @@
 
 const {Twist} = require("./twist");
 const {Shield} = require("./shield");
-const {satisfies,ReqSatError} = require("./reqsat");
+const {RequirementSatisfier, ReqSatError} = require("./reqsat");
 
 
 class InterpreterResult extends Error {
@@ -114,7 +114,8 @@ class Interpreter {
         if (!sigPacket) {
             throw new MissingError(sigPacketHash, "missing sig packet...");
         }
-        if (!(await satisfies(reqHash, twist.packet.getBodyHash(), keyPacket, sigPacket))) {
+
+        if (!(await RequirementSatisfier.verifySatisfaction(reqHash, twist, keyPacket, sigPacket))) {
             throw new ReqSatError(reqHash, twist.packet.getBodyHash(), keyPacket, sigPacket);
         }
     }
@@ -202,9 +203,6 @@ class Interpreter {
         return this.prevTetheredTwist(prev.hash);
     }
 
-    /**
-     * @return <Twist>
-     */
     isHoist(lead, twist) {
         let s = Shield.shield(lead.hash, lead.hash, lead.shield());
         let ss = Shield.doubleShield(lead.hash, lead.hash, lead.shield());
@@ -284,7 +282,6 @@ class Interpreter {
         let hoist = this.hitchHoist(hash);
 
         if (this.isTopline(hoist.hash)) {
-            // console.log("Hoist in top line:", hoist.hash.toString());
             if (!hoist.hash.equals(this.topHash)) {
                 await this.verifyLegitSeg(this.topHash, hoist.hash);
             }

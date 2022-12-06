@@ -20,18 +20,22 @@ class Line {
         this.atoms = new Atoms();
         this.parents = new HashMap();
         this.successors = new HashMap();
-        this.focuses = [];
+        this.focus = null;
     }
 
-    static fromAtoms(atoms) {
+    static fromAtoms(atoms, focus) {
         let x = new this();
 
         for (let [h,p] of atoms) {
             x.put(h,p);
         }
 
-        x.focuses.push(atoms.lastAtomHash());
+        x.focus = focus || atoms.lastAtomHash();
         return x;
+    }
+
+    static fromTwist(twist) {
+        return this.fromAtoms(twist.atoms, twist.getHash());
     }
 
     static fromBytes(bytes) {
@@ -43,36 +47,20 @@ class Line {
     }
 
     /**
-   * Returns an array of twists related to the focuses of each file
-   * @returns {Array<Hash>} Array of twist hashes
-   */
-    twistList() {
-        let focusHistories = this.focuses.map(h => this.history(this.last(h) || h)).flat();
+     * Returns an array of twists related to the focus of each file
+     * @returns {Array<Hash>} Array of twist hashes
+     */
+    twistList() { //FIXME(acg): what is even going on here?
+        let focusHistories = this.history(this.last(this.focus) || this.focus);
         return Array.from(this.atoms.keys()).filter(h => focusHistories.find(fh => fh.equals(h)));
     }
 
-    /**
-   * Returns an array of the latest twists related to the focuses of each file, eg. excluding any twists that are ancestors of another in the list
-   * @returns {Array<Hash>} Array of twist hashes
-   */
-    latestTwistList() {
-        return this.focuses.map(h => this.last(h) || h);
+    contains(hash) {
+        return this.twistList().find(h => h.equals(hash));
     }
 
-    /**
-   * Returns an array of all twists
-   * @returns {Array<Hash>} Array of twist hashes
-   */
-    detailedTwistList() {
-        return Array.from(this.atoms.keys()).filter(h => !!this.twist(h));
-    }
-
-    /**
-   * Returns an array of the latest twists, eg. excluding any twists that are ancestors of another in the list
-   * @returns {Array<Hash>} Array of twist hashes
-   */
-    latestDetailedTwistList() {
-        return this.detailedTwistList().map(h => this.last(h) || h);
+    latestTwist() {
+        return this.last(this.focus) || this.focus;
     }
 
     /**
@@ -163,6 +151,8 @@ class Line {
         }
     }
 
+    //XXX(acg): do we really need 15 different history functions?
+
     completeHistory(hash) {
         let history = this.history(hash) || [];
         let successors = this.successorList(hash);
@@ -181,9 +171,9 @@ class Line {
    * @returns {Hash}
    */
     lastFast(hash) {
-        let line = this.completeHistory(hash);
-        while (line.length > 0) {
-            let h = line.pop();
+        let hashes = this.completeHistory(hash);
+        while (hashes.length > 0) {
+            let h = hashes.pop();
             let twist = this.twist(h);
             if (twist && twist.isTethered()) {
                 return h;
@@ -192,11 +182,11 @@ class Line {
     }
 
     /**
-   * Returns the hash of the latest tethered twist before the given one (searches backwards from the given hash.)
-   * Returns null if input hash is not found in store.
-   * @param {Hash} hash
-   * @returns {Hash}
-   */
+     * Returns the hash of the latest tethered twist before the given one (searches backwards from the given hash.)
+     * Returns null if input hash is not found in store.
+     * @param {Hash} hash
+     * @returns {Hash}
+     */
     lastFastBeforeHash(hash) {
         let history = this.history(hash) || [];
         history.pop();
@@ -213,6 +203,7 @@ class Line {
             }
         }
     }
+
 
     /**
    * Returns a Twist object corresponding to the given hash if exists nd null otherwize
@@ -244,19 +235,19 @@ class Line {
         return this.atoms.get(hash);
     }
 
+    //FIXME(acg): Remove this. I'm only leaving this in because the tests rely
+    //on it for some reason. Tests should just use a virtual inventory.
     /**
-   * Copies the given twist store into this.store
-   * @param {Twist} twist
-   */
+     * Copies the given twist store into this.store
+     * @param {Twist} twist
+     */
     putTwist(twist) {
-        this.focuses.push(twist.atoms.lastAtomHash());
+        this.focus = twist.atoms.lastAtomHash();
         return twist.atoms.forEach((packet, hash) => this.put(hash, packet));
     }
 
+
     //store fns
-    verify(hash, packet) {
-        return hash.assertVerifiesPacket(packet);
-    }
 
     get(hash) {
         return this.atoms.get(hash);
@@ -280,15 +271,14 @@ class Line {
     }
 
     put(hash, packet) {
-        this.verify(hash, packet);
         this.atoms.set(hash, packet);
-        packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
 
         if (packet instanceof BasicTwistPacket) {
+            packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
             let body = this.get(packet.getBodyHash());
             if (body) {
                 let prev = body.getPrevHash();
-                let existingSuccessor = this.successors.get(prev);
+                let existingSuccessor = this.successor(prev);
                 if (existingSuccessor) {
                     if (existingSuccessor.equals(hash)) {
                         return;
@@ -305,11 +295,12 @@ class Line {
         }
 
         if (packet instanceof BasicBodyPacket) {
+            packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
             let parentHashes = this.parents.get(hash);
             let twistHash = parentHashes ? parentHashes[0] : null;
             if (twistHash) {
                 let prev = packet.getPrevHash();
-                let existingSuccessor = this.successors.get(prev);
+                let existingSuccessor = this.successor(prev);
                 if (existingSuccessor) {
                     if (existingSuccessor.equals(twistHash)) {
                         return;
@@ -338,63 +329,4 @@ class Line {
     }
 }
 
-
-class PersistentLine extends Line {
-    constructor(dir) {
-        super();
-        this.dir = dir || __dirname;
-
-        try {
-            fs.mkdirSync(this.dir);
-        } catch (err) {
-            if (err.code != "EEXIST") {
-                throw err;
-            }
-        }
-        let todaFiles = fs.readdirSync(this.dir).filter(fname => fname.endsWith(".toda"));
-        todaFiles.forEach(fname => {
-            let atoms = Atoms.fromBytes(ByteArray.from(fs.readFileSync(this.withDir(fname))));
-            atoms.forEach((packet, hash) => this.put(hash, packet));
-            this.focuses.push(atoms.lastAtomHash());
-        });
-    }
-
-    /**
-   * Prefixes this.dir to a given file name string
-   * @param {string} fname
-   * @returns {string}
-   */
-    withDir(fname) {
-        return `${this.dir}/${fname}`;
-    }
-
-    /**
-   * Returns a file name corresponding to a given hash
-   * @param {Hash} hash
-   * @returns {string}
-   */
-    filePath(hash) {
-        return this.withDir(`${hash}.toda`);
-    }
-
-    /**
-   * Serializes and writes a twist to disk
-   * @param {Hash} hash
-   */
-    toDisk(hash) {
-        let twist = this.twist(hash);
-        fs.writeFileSync(this.filePath(hash), twist.atoms.toBytes());
-    }
-
-    /**
-   * Serializes all in twists in memory and writes them to disk
-   */
-    dump() {
-        let twists = this.atoms.keys().map(h => [h, this.twist(h)]).filter(([h, t]) => !!t); // get all twist hashes and objects
-        twists.forEach(t => fs.writeFileSync(this.filePath(t.getHash()), t.atoms.toBytes()));
-    }
-}
-
 exports.Line = Line;
-exports.PersistentLine = PersistentLine;
-

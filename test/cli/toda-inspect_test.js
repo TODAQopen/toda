@@ -13,7 +13,7 @@ const { execSync } = require("child_process");
 const path = require("path");
 const assert = require("assert");
 
-describe("toda-inspect", async() => {
+xdescribe("toda-inspect", async() => {
     beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 

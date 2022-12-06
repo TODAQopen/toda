@@ -66,7 +66,8 @@ describe("Line/twistList", () => {
         let line = new Line();
         line.putTwist(tw1);
         line.putTwist(tw2);
-        assert.deepEqual([tw1.getHash(), tw2.getHash()], line.twistList());
+        //XXX(acg): Line no longer has any concept of "multiple focuses"
+        assert.deepEqual([tw2.getHash()], line.twistList());
     });
 });
 

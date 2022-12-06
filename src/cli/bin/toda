@@ -6,10 +6,7 @@
  * Apache License 2.0
  *************************************************************/
 
-const { getArgs, initConfig, initKeys, initSalt, getVersion, getPrivateKey } = require("./util");
-const { create } = require("./helpers/twist");
-const { SignatureRequirement } = require("../../core/reqsat");
-const { importPublicKey } = require("../lib/pki");
+const { getArgs, initConfig, setConfig, getConfig, initKeys, initSalt, getVersion, getClient } = require("./util");
 const { handleProcessException, ProcessException } = require("./helpers/process-exception");
 const { spawn } = require("child_process");
 const fs = require("fs-extra");
@@ -61,7 +58,8 @@ void async function () {
       });
     }).catch(() => {});
   } catch (pe) {
-    handleProcessException(pe);
+      handleProcessException(pe);
+      //throw pe;
   }
 }()
 
@@ -70,7 +68,7 @@ async function init(cfgPath, identity) {
     let config = initConfig(cfgPath);
     await initKeys(config.publicKey, config.privateKey);
     initSalt(config.salt);
-    await initLine(config.line, config.poptop, config.publicKey, await getPrivateKey(identity || config.privateKey));
+    // TODO(acg): local line?
 }
 
 // If the local line specified in the config file doesn't exist, generate a new one and update the pointer

@@ -13,7 +13,7 @@ const { initTestEnv, getTodaPath, getConfigPath, getConfig, cleanupTestEnv } = r
 const { execSync } = require("child_process");
 const assert = require("assert");
 
-describe("toda-list", async() => {
+xdescribe("toda-list", async() => {
     beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 

@@ -15,7 +15,7 @@ const { execSync } = require("child_process");
 const fs = require("fs-extra");
 const assert = require("assert");
 
-describe("toda-capability-delegate", async() => {
+xdescribe("toda-capability-delegate", async() => {
     beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 

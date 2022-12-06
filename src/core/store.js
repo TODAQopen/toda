@@ -17,12 +17,7 @@ class PacketStore {
     async get(hash) {
     }
 
-    verify(hash, packet) {
-        hash.assertVerifiesPacket(packet);
-    }
-
     put(hash, packet) {
-        this.verify(hash, packet);
     }
 
     /**
@@ -261,12 +256,7 @@ class SyncPacketStore {
     get(hash) {
     }
 
-    verify(hash, packet) {
-        return hash.assertVerifiesPacket(packet);
-    }
-
     put(hash, packet) {
-        this.verify(hash, packet);
     }
 }
 

@@ -9,8 +9,8 @@ const { Capability } = require("../../../src/abject/capability");
 const { Atoms } = require("../../../src/core/atoms");
 const { Twist } = require("../../../src/core/twist");
 const { ByteArray } = require("../../../src/core/byte-array");
-const { create } = require("../../../src/cli/bin/helpers/twist");
-const { generateKey } = require("../../../src/cli/lib/pki");
+
+
 const { capability, authorize, delegate } = require("../../../src/cli/bin/helpers/capability");
 const { Sha256 } = require("../../../src/core/hash");
 const { Shield } = require("../../../src/core/shield");
@@ -20,7 +20,7 @@ const assert = require("assert");
 const fs = require("fs-extra");
 const path = require("path");
 
-describe("append capability", () => {
+xdescribe("append capability", () => {
     let store = path.resolve(__dirname, "./files");
     let linePath = path.resolve(store, "./cap-line.toda");
     let url = "http://test-url.com";
@@ -114,7 +114,7 @@ describe("append capability", () => {
     });
 });
 
-describe("delegate capability", () => {
+xdescribe("delegate capability", () => {
     let store = path.resolve(__dirname, "./files");
     let linePath = path.resolve(__dirname, "./files/cap-line.toda");
     let url = "http://test-url.com";

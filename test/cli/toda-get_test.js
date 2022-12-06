@@ -18,7 +18,7 @@ const { Sha256 } = require("../../src/core/hash");
 const path = require("path");
 const { getTodaPath, getConfigPath, initTestEnv, cleanupTestEnv } = require("./test-utils");
 
-describe('toda-get', async() => {
+xdescribe('toda-get', async() => {
   beforeEach(initTestEnv);
   afterEach(cleanupTestEnv);
 

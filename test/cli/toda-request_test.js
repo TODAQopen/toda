@@ -21,7 +21,7 @@ const http = require("http");
 const util = require("node:util");
 const exec = util.promisify(require("node:child_process").exec);
 
-describe("toda-request", () => {
+xdescribe("toda-request", () => {
     beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 

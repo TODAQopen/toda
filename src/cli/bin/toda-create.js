@@ -6,10 +6,10 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, formatInputs, getFileOrInput, write, writeToFile } = require("./util");
+const { getArgs, formatInputs, getFileOrInput, getClient, write } = require("./util");
 const { handleProcessException } = require("./helpers/process-exception");
-const { create } = require("./helpers/twist");
 const { Atoms } = require("../../core/atoms");
+
 const DraftLog = require("draftlog");
 
 /** Creates a .toda file with the specified details.
@@ -29,14 +29,12 @@ void async function () {
             inputs.cargo = Atoms.fromBytes(await getFileOrInput());
         }
 
-        let tb = await create(inputs.shield, inputs.req, inputs.tether, inputs.privateKey, inputs.cargo);
+        let toda = await getClient();
+        let x = await toda.create(inputs.tether, inputs.req, inputs.cargo);
+        write(x);
 
-        if (!args.test) {
-            writeToFile(tb, args.out);
-        }
-
-        write(tb);
     } catch (pe) {
+        //throw pe;
         handleProcessException(pe);
     }
 }();

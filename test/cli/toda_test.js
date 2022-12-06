@@ -14,7 +14,7 @@ const assert = require("assert");
 const path = require("path");
 const yaml = require("yaml");
 
-describe("toda", async() => {
+xdescribe("toda", async() => {
     beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 

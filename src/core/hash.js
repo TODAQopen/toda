@@ -72,7 +72,7 @@ class Hash {
      * @param <ByteArray> raw bytes which hopefully start with an algoCode
      */
     static parse(raw) {
-        return this.createFromAlgoCode(raw[0], raw.slice(1));
+        return this.createFromAlgoCode(raw[0], raw.subarray(1));
     }
 
     static fromHex(str) {
@@ -90,7 +90,7 @@ class Hash {
         if (!imp) {
             throw new Error("Unknown algorithm code: ", algoCode);
         }
-        return new imp(ByteArray.from(hashValue.slice(0, imp.getHashValueLength())));
+        return new imp(ByteArray.from(hashValue.subarray(0, imp.getHashValueLength())));
     }
 
     static registeredAlgoByCode = {};

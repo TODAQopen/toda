@@ -6,11 +6,11 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, getFileOrInput, formatInputs, writeToFile, getFileOrHash, write } = require("./util");
+const { getArgs, getFileOrInput, formatInputs, writeToFile, getFileOrHash, write, getClient, getConfig, setConfig } = require("./util");
 const { handleProcessException } = require("./helpers/process-exception");
-const { append } = require("./helpers/twist");
-const { verifyControl } = require("./helpers/control");
+
 const { Atoms } = require("../../core/atoms");
+const { Hash } = require("../../core/hash");
 const { Twist } = require("../../core/twist");
 
 if (process.stdout.isTTY) {
@@ -36,16 +36,32 @@ void async function () {
             inputs.cargo = Atoms.fromBytes(await getFileOrInput());
         }
 
-        let prev = new Twist(Atoms.fromBytes(getFileOrHash(args["_"][0])));
-        let abject = await verifyControl(prev, inputs.privateKey, inputs.poptop);
-        let tb = await append(abject, inputs.shield, inputs.req, inputs.tether, inputs.privateKey, () => {}, inputs.cargo);
+        //let prev = Twist.fromBytes(getFileOrHash(args["_"][0]));
+        let toda = await getClient();
 
-        if (!args.test) {
-            writeToFile(tb, args.out);
+        if (!toda.defaultRelayHash) {
+            let t = await toda.create(null, inputs.req);
+            toda.defaultRelayHash = t.getHash();
+            let config = getConfig();
+            config.relayHash = t.getHash().toString();
+            setConfig(config);
         }
 
-        write(tb);
+        //TODO: re-introduce fuzzy matching here?
+        let prev = toda.get(Hash.fromHex(args["_"][0]));
+
+        //TODO(acg): provide other levels of guarantees - e.g. canonicity.
+        if (!await toda.isSatisfiable(prev)) {
+            console.error("not satisfiable.");
+            return;
+        }
+
+        let x = await toda.append(prev, inputs.tether, inputs.req, inputs.cargo, () => {});
+
+        write(x);
+
     } catch (pe) {
         handleProcessException(pe);
+        //throw pe;
     }
 }();

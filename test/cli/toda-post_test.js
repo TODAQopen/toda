@@ -16,7 +16,7 @@ const { initTestEnv, getTodaPath, getConfigPath, cleanupTestEnv } = require("./t
 const path = require("path");
 const fs = require("fs/promises");
 
-describe('toda-post', async() => {
+xdescribe('toda-post', async() => {
 
   beforeEach(initTestEnv);
   afterEach(cleanupTestEnv);

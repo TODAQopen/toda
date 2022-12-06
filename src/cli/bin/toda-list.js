@@ -6,9 +6,7 @@
 * Apache License 2.0
 *************************************************************/
 
-const { Line, PersistentLine } = require("../../core/line");
-const { getArgs, getConfig, formatInputs, getFileOrInput, getDistinct, getFileOrHashPath, parseAbjectOrTwist, getAtomsFromPath } = require("./util");
-const { refresh, control } = require("./helpers/control");
+const { getArgs, getConfig, formatInputs, getClient } = require("./util");
 const { Atoms } = require("../../core/atoms");
 const { Twist } = require("../../core/twist");
 const fs = require("fs-extra");
@@ -20,41 +18,12 @@ const DraftLog = require("draftlog").into(console);
 void async function () {
     try {
         let args = getArgs();
-        let path = args["_"][0] || getConfig().store;
 
-        if (!fs.existsSync(path)) {
-            let betterPath = getFileOrHashPath(path);
-            if (betterPath) {
-                path = betterPath;
-            }
-        }
-
-        let line;
-        try {
-            let lstat = fs.lstatSync(path);
-            if (lstat.isDirectory()) {
-                line = new PersistentLine(path);
-            }
-        } catch (e) {}
-        if (!line) {
-            let bytes = await getFileOrInput(path);
-            line = Line.fromBytes(bytes);
-        }
-
-        let res;
-        if (args["detailed"]) {
-            //res = args['latest'] ? line.latestDetailedTwistList() : line.detailedTwistList();
-            res = line.latestDetailedTwistList();
-        } else {
-            //res = args['latest'] ? line.latestTwistList() : line.twistList();
-            res = line.latestTwistList();
-        }
-
-        let twistHashes = getDistinct(res);
+        let toda = await getClient();
+        let twistHashes = toda.inv.list();
         twistHashes.sort();
-        //logFormatted(toPagedString(twistHashes, args['all']));
         for (let hash of twistHashes) {
-            showTwist(hash).catch(console.log);
+            showTwist(toda, hash).catch(console.log);
         }
 
     } catch (pe) {
@@ -67,13 +36,7 @@ void async function () {
 // not needed yet; just done in closure
 //const twists = {};
 
-async function showTwist(twistHash) {
-    let args = getArgs();
-    let config = getConfig();
-
-    args.poptop = args.poptop ?? config.line;
-    let inputs = await formatInputs(args);
-
+async function showTwist(toda, twistHash) {
 
     let twist = {hash: twistHash,
         numTwists: null,
@@ -84,18 +47,20 @@ async function showTwist(twistHash) {
         statusError: null,
         status: console.draft(),
     };
-    renderTwist(twist);
+
 
 
     try {
+        let t = toda.get(twistHash);
+        if (!t) {
+            return;
+        }
         // obviously, duplicates a bunch from toda-control
-        let atoms = Atoms.fromBytes(await getFileOrInput(twist.hash));
-        twist.statusParse = chalk.dim.white("Parsing...");
         renderTwist(twist);
-        let abject = parseAbjectOrTwist(atoms);
-        twist.statusParse = chalk.green(`[${abject.constructor.name}]`);
+        twist.statusParse = chalk.green(`[${t.constructor.name}]`);
         renderTwist(twist);
-        let poptop = null;
+
+/*        let poptop = null;
         let defaultTop = false;
         if (abject.popTop) {
             poptop = abject.getAbject(abject.popTop()).thisUrl();
@@ -109,9 +74,11 @@ async function showTwist(twistHash) {
         twist.statusDownload = chalk.dim.white(`AIP ${poptop.toString().substr(0,8)} ${defaultTop ? "[default]" : ""}`);
         let refreshedAbject = await refresh(abject, poptop, config, args.refresh, true);
         twist.statusControl = chalk.dim.white("Determining control...");
-        renderTwist(twist);
-        await control(refreshedAbject, poptop, inputs.privateKey);
-        twist.statusControl = chalk.green("✓ Local control");
+        renderTwist(twist); */
+
+        if (await toda.isSatisfiable(t)) {
+            twist.statusControl = chalk.green("✓ Local control");
+        }
         renderTwist(twist);
     } catch(e) {
         if (e.reason) {
@@ -129,6 +96,7 @@ async function showTwist(twistHash) {
                 if (twist.statusDownload) {
                     twist.statusControl = chalk.red("Error");
                 } else {
+                    console.log(e);
                     twist.statusDownload = chalk.red("Parse/Download Error");
                     twist.statusControl = chalk.red("------");
                 }

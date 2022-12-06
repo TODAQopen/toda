@@ -22,11 +22,11 @@ class Atoms extends HashMap {
    * @throws things
    */
     set(hash, packet) {
+        // TODO: turn this assertion back on (make it fast and lazy)
         // hash.assertVerifiesPacket(packet); // throws
         return super.set(hash, packet);
     }
 
-    //todo(mje): HACK - this allows us to refresh the atoms in a twist/abject and maintain the original lastAtom
     forceSetLast(hash, packet) {
         if (this.has(hash)) {
             this.delete(hash);
@@ -36,7 +36,9 @@ class Atoms extends HashMap {
     }
 
     copy() {
-        return new Atoms(this);
+        let clone = new Atoms(this);
+        clone.hashes = Object.assign({}, this.hashes);
+        return clone;
     }
 
 
@@ -77,9 +79,9 @@ class Atoms extends HashMap {
     static *entries(bytes) {
         while (bytes.length > 0) {
             let hash = Hash.parse(bytes);
-            bytes = bytes.slice(hash.serialize().length);
+            bytes = bytes.subarray(hash.serialize().length);
             let packet = Packet.parse(bytes);
-            bytes = bytes.slice(packet.serialize().length);
+            bytes = bytes.subarray(packet.serialize().length);
             yield [hash, packet];
         }
     }

@@ -31,6 +31,10 @@ class ByteArray extends Uint8Array {
         return Buffer.from(this).readUInt32BE();
     }
 
+    equals(x) {
+        return ByteArray.isEqual(this, x);
+    }
+
     /**
    * Returns true if byte-arrays are equal and false otherwise
    * @param {ByteArray} lhs

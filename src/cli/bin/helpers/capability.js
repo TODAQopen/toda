@@ -7,7 +7,6 @@
 
 const { Abject } = require("../../../abject/abject");
 const { Capability } = require("../../../abject/capability");
-const { append, setFastFields } = require("./twist");
 const { getAtomsFromPath } = require("../util");
 
 /**

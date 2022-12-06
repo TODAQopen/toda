@@ -9,6 +9,8 @@ const { BasicBodyPacket, BasicTwistPacket, PairTriePacket } = require("./packet"
 const { Sha256, NullHash } = require("./hash");
 const { HashMap } = require("./map");
 const { Atoms } = require("./atoms");
+const { Shield } = require("./shield");
+const { SignatureRequirement } = require("./reqsat");
 
 class MissingHashPacketError extends Error {
     constructor(hash, message) {
@@ -37,6 +39,7 @@ class TwistBuilder {
         this.tether = tether || null;
         this.requirements = requirements || null;
         this.shieldPacket = shield || null;
+        this.riggingPacket = null;
         this.rigging = new HashMap(rigging || []);
 
         this.hashImp = TwistBuilder.defaultHashImp;
@@ -61,12 +64,20 @@ class TwistBuilder {
         return this.prevHash;
     }
 
+    setRiggingPacket(riggingPacket) {
+        this.riggingPacket = riggingPacket;
+    }
+
     /** Adds a key-val to the rigging trie hashmap
      * @param key <Hash> the key hash
      * @param val <Hash> the value hash
      */
     addRigging(key, val) {
         this.rigging.set(key, val);
+    }
+
+    setKeyRequirement(type, pubKey) {
+        this.setRequirements(new SignatureRequirement(this.getHashImp(), type, pubKey));
     }
 
     /** Sets the twist requirements
@@ -124,6 +135,10 @@ class TwistBuilder {
         return new Atoms([...this.atoms, [bodyHash, body], [twistHash, twist]]);
     }
 
+    twist(hashImp) {
+        return new Twist(this.serialize(hashImp));
+    }
+
     /** Sets the cargo data
      * @param atoms <Atoms> the cargo atoms to set
      */
@@ -152,7 +167,7 @@ class TwistBuilder {
     }
 
     getRiggingPacket() {
-        return PairTriePacket.createFromUnsorted(this.rigging);
+        return this.riggingPacket || PairTriePacket.createFromUnsorted(this.rigging);
     }
 
     getBodyPacket(hashImp) {
@@ -180,7 +195,10 @@ class TwistBuilder {
             this.atoms.set(this.cargoHash, cargo);
         }
 
-        if (this.rigging.size > 0) {
+        if (this.riggingPacket || this.rigging.size > 0) {
+            if (this.riggingPacket && this.rigging.size > 0) {
+                throw new Error("merge not implemented: set fixed packet and added key/vals... fixme");
+            }
             let rigging = this.getRiggingPacket(hashImp);
             this.riggingHash = hashImp.fromPacket(rigging);
             this.atoms.set(this.riggingHash, rigging);
@@ -206,8 +224,6 @@ class TwistBuilder {
     }
 
     createSuccessor() {
-        // TODO: add similar requirements, satisfy reqs... (similar to File)
-
         let atoms = this.serialize();
         let next = new TwistBuilder(atoms);
         next.prevHash = atoms.lastAtomHash();
@@ -216,6 +232,10 @@ class TwistBuilder {
 
     hasRequirements() {
         return this.requirements.size > 0;
+    }
+
+    getTetherHash() {
+        return this.tetherHash; //TODO: misses out on where this.tether was set
     }
 
     isTethered() {
@@ -230,6 +250,16 @@ class TwistBuilder {
         // we should really memoize this or something
         return this.serialize().lastAtomHash();
     }
+
+    // kinda redundant
+    prev() {
+        let ph = this.getPrevHash();
+        if (ph.isNull()) {
+            return null;
+        }
+        return new Twist(this.atoms, ph);
+    }
+
 }
 
 class Twist {
@@ -249,6 +279,10 @@ class Twist {
         }
     }
 
+    getHashImp() {
+        return this.packet.getHashImp();
+    }
+
     getAtoms() {
         return this.atoms;
     }
@@ -263,6 +297,10 @@ class Twist {
 
     getBody() {
         return this.body;
+    }
+
+    getBodyHash() {
+        return this.packet.getBodyHash();
     }
 
     get(hash) {
@@ -281,14 +319,56 @@ class Twist {
         return new Twist(this.atoms, ph);
     }
 
-    first() {
-        let prev = this.prev();
-        if (!prev) {
-            return this.getHash();
-        } else {
-            return prev.first();
+    /**
+      * Walks backwards, looking for the most recent prev that matches `predicate`
+      * @param predicate <Function(this)>
+      * @
+     */
+    findLast(predicate) {
+        if (predicate(this)) {
+            return this;
         }
+        let p = this.prev();
+        if (p) {
+            return p.findLast(predicate);
+        }
+        return null;
     }
+
+    /** Returns the last fast twist before this one. */
+    lastFast() {
+        let p = this.prev();
+        if (p) {
+            return p.findLast(t => t.isTethered());
+        }
+        return null;
+    }
+
+    /**
+     * Backwards search of previous twists, looking for the hash of the tether
+     *  whose twist exists in this.atoms
+     * @returns <Hash>
+     */
+    findLastStoredTetherHash()
+    {
+        let tetherHash = this.getTetherHash();
+        if (this.get(tetherHash)) {
+            return tetherHash;
+        }
+        return this.lastFast()?.findLastStoredTetherHash();
+    }
+
+    /**
+      * Looks to see if `previousHash` is one of the previous twists of this twist,
+      *  returning that twist if it does.
+      * @param previousHash <Hash>
+      * @returns <Twist>
+      */
+    findPrevious(previousHash)
+    {
+        return this.findLast(t => t.getHash().equals(previousHash));
+    }
+
 
     rig(hash) {
         let riggingHash = this.body.getRiggingHash();
@@ -319,15 +399,9 @@ class Twist {
         return null;
     }
 
-    lastFast() {
-        let prev = this.prev();
-        if (prev) {
-            if (prev.tether()) {
-                return prev;
-            } else {
-                return prev.lastFast();
-            }
-        }
+
+    getTetherHash() {
+        return this.body.getTetherHash();
     }
 
     /**
@@ -398,6 +472,19 @@ class Twist {
         }
 
         return tb;
+    }
+
+    hoistPacket(successorHash) {
+        return Shield.rigForHoist(this.getHash(), successorHash, this.shield());
+    }
+
+    static fromBytes(bytes) {
+        return new this(Atoms.fromBytes(bytes));
+    }
+
+    // adds atoms without changing the focus.
+    safeAddAtoms(atoms) {
+        this.atoms = new Atoms([...this.atoms, ...atoms, this.atoms.lastAtom()]);
     }
 }
 

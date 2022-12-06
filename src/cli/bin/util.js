@@ -11,11 +11,15 @@ const { NullHash, Sha256, Hash } = require("../../core/hash");
 const { ByteArray } = require("../../core/byte-array");
 const { Twist } = require("../../core/twist");
 const { Line  } = require("../../core/line");
-const { importPublicKey, importPrivateKey, createKeys } = require("../lib/pki");
 const { ProcessException } = require("./helpers/process-exception");
 const { formatBytes, logFormatted } = require("./helpers/formatters");
 const { defaults } = require("../defaults");
 const { SignatureRequirement } = require("../../core/reqsat");
+
+const { TodaClient } = require("../../client/client");
+const { LocalInventoryClient } = require("../../client/inventory");
+const { SECP256r1 } = require("../../client/secp256r1");
+
 const fs = require("fs-extra");
 const parseArgs = require("minimist");
 const yaml = require("yaml");
@@ -65,6 +69,7 @@ function getArgs(argDefaults = {}) {
     return parseArgs(process.argv.slice(2), opts);
 }
 
+// TODO(acg): revisit in light of Inventory
 function filePathForHash(hash) {
     return path.join(getConfig().store, `${hash}.toda`);
 }
@@ -78,8 +83,13 @@ async function formatInputs(args, whitelist) {
     let config = getConfig();
 
     let shield = args["shield"] ? new ByteArray(Buffer.from(args["shield"], "hex")) : null;
-    let tether = args["tether"] || config.line;
-    let privateKey = await getPrivateKey(args["i"] || config.privateKey);
+    let tether = args["tether"];
+    if (tether) {
+        tether = Hash.fromHex(tether);
+    }
+    // tether || config.line;
+
+    //let privateKey = await getPrivateKey(args["i"] || config.privateKey);
 
     let cargo = args["cargo"] ?
         Atoms.fromBytes(new ByteArray(fs.readFileSync(args["cargo"]))) :
@@ -89,6 +99,7 @@ async function formatInputs(args, whitelist) {
         Abject.parse(Atoms.fromBytes(getFileOrHash(args["capability"]))) :
         null;
 
+    /*
     let req;
     if (args["secp256r1"]) {
         req = {
@@ -100,7 +111,7 @@ async function formatInputs(args, whitelist) {
             type: SignatureRequirement.REQ_ED25519,
             key: await importPublicKey(args["ed25519"])
         };
-    }
+    }*/
 
     let url = args["url"];
     let verb = args["verb"];
@@ -118,9 +129,9 @@ async function formatInputs(args, whitelist) {
     let inputs = {
         shield: shield,
         tether: tether,
-        privateKey: privateKey,
+        privateKey: config.privateKey,
         cargo: cargo,
-        req: req,
+        //req: req,
         url: url,
         verbs: verbs,
         verb: verb,
@@ -137,6 +148,21 @@ async function formatInputs(args, whitelist) {
 
     whitelist = whitelist || Object.keys(inputs);
     return whitelist.reduce((acc, k) => { acc[k] = inputs[k]; return acc; }, {});
+}
+
+async function getClient() {
+
+    let config = getConfig();
+    let kp = await SECP256r1.fromDisk(config.privateKey);
+    let c = new TodaClient(new LocalInventoryClient(config.store));
+
+    if (config.relayHash) {
+        c.defaultRelayHash = Hash.fromHex(config.relayHash);
+    }
+
+    c.addSatisfier(kp);
+    c.shieldSalt = config.salt;
+    return c;
 }
 
 function getVersion() {
@@ -187,9 +213,10 @@ function getConfig() {
 }
 
 /** Checks that the default keys exist and creates them otherwise */
-async function initKeys(publicKey, privateKey) {
-    if (!fs.existsSync(privateKey) || !fs.existsSync(publicKey)) {
-        await createKeys(publicKey, privateKey);
+async function initKeys(publicKeyPath, privateKeyPath) {
+    if (!fs.existsSync(privateKeyPath)) {
+        let keyPair = await SECP256r1.generate();
+        keyPair.toDisk(privateKeyPath, publicKeyPath);
     }
 }
 
@@ -229,6 +256,7 @@ async function getInputBytes() {
     });
 }
 
+//FIXME(acg): duplicated by rigging/getLine()
 /**
  * If the path is a file path that exists, use that - otherwise try to ping it as a line server.
  * @param path <String> Url to a line server or path to file
@@ -317,6 +345,7 @@ function getFileOrHashPath(filePath) {
     return filePath;
 }
 
+// FIXME(acg): use inventory.
 function getFileOrHash(filePath) {
     let fhp = getFileOrHashPath(filePath);
 
@@ -325,6 +354,8 @@ function getFileOrHash(filePath) {
     }
     return null;
 }
+
+// FIXME(acg): use inventory.
 
 // Accepts a process object and a file path
 // Reads a file at the specified source, or reads in from STDIN if none specified
@@ -366,21 +397,6 @@ function getPacketSize(packet, friendly) {
     return friendly ? formatBytes(packet.getSize()) : packet.getSize();
 }
 
-/** Returns the successor of an abject, if it exists
- * @param abject <Twist/Abject> A twist or an abject to append to
- * @returns <Twist|null> The successor twist, if it exists
- */
-function getSuccessor(abject) {
-    let atoms = abject instanceof Twist ? abject.getAtoms() : abject.serialize();
-    let line = Line.fromAtoms(atoms);
-    return line.successor(abject.getHash());
-}
-
-function generateShield(salt, hash) {
-    hash = hash || new NullHash();
-    return Sha256.hash(salt.concat(hash.serialize()));
-}
-
 /** Attempts to parse the atoms as an abject. If that fails, returns a Twist containing those atoms instead.
  * @param atoms <Atoms> The atoms to parse
  * @param focus <Hash|null> The focus hash
@@ -402,7 +418,8 @@ function write(abject) {
     if (process.stdout.isTTY) {
         console.log(abject.getHash().toString());
     } else {
-        process.stdout.write(abject.serialize().toBytes());
+        let by = abject.getAtoms().toBytes();
+        process.stdout.write(by);
     }
 }
 
@@ -420,37 +437,6 @@ function writeToFile(abject, out) {
     }
 }
 
-/**
- * Given a Hash, iterates through the *.toda files in config.store and returns the path to the first one whose twist line
- * contains that hash.
- * @param hash <Hash> A Twist's Hash
- * @returns <String> the path to the file
- */
-async function getFileNameForTwistHash(hash) {
-    let files = fs.readdirSync(path.resolve(getConfig().store));
-    for (let file of files.filter(f => path.extname(f) === ".toda")) {
-        let p = path.resolve(getConfig().store, file);
-        let l = Line.fromAtoms(await getAtomsFromPath(p));
-        if (l.twistList().find(h => h.equals(hash))) {
-            return p;
-        }
-    }
-}
-
-/**
- * Abjects can have a poptop set to a local line that isn't a SimpleHistoric. This is a getter fn to handle that.
- * If this is a Twist then we assume the configured poptop.
- * @param abject <Abject|Twist>
- * @returns <String> The Line URL of the abject's poptop, or else the path to the local line.
- */
-async function getPoptopURL(abject) {
-    try {
-        return abject.getAbject(abject.popTop()).thisUrl();
-    } catch(e) {
-        return getConfig().poptop;
-    }
-}
-
 async function lockFile(path) {
     try {
         fs.openSync(`${path}.line-lock`, "ax");
@@ -463,6 +449,7 @@ function releaseLock(path) {
     fs.rmSync(`${path}.line-lock`);
 }
 
+exports.getClient = getClient;
 exports.getArgs = getArgs;
 exports.formatInputs = formatInputs;
 exports.getVersion = getVersion;
@@ -481,16 +468,15 @@ exports.getAcceptedInputs = getAcceptedInputs;
 exports.getInputBytes = getInputBytes;
 exports.getDistinct = getDistinct;
 exports.getPacketSize = getPacketSize;
-exports.getSuccessor = getSuccessor;
+
 
 exports.filePathForHash = filePathForHash;
 exports.getFileOrHashPath = getFileOrHashPath;
 exports.getFileOrHash = getFileOrHash;
 exports.parseAbjectOrTwist = parseAbjectOrTwist;
-exports.generateShield = generateShield;
 exports.write = write;
 exports.writeToFile = writeToFile;
-exports.getPoptopURL = getPoptopURL;
 
 exports.lockFile = lockFile;
 exports.releaseLock = releaseLock;
+

@@ -235,6 +235,14 @@ class Abject {
         return null;
     }
 
+    static fromTwist(twist) {
+        try {
+            return Abject.parse(twist.getAtoms(), twist.getHash());
+        } catch (e) {
+            return null;
+        }
+    }
+
     /**
      * Interpret the given collection of atoms given installed
      * interpreters.  Assumes primary atom is last.
