@@ -9,7 +9,7 @@
 const { Abject } = require("../abject/abject");
 const { ByteArray } = require("../core/byte-array");
 const { LocalRelayClient, RemoteRelayClient } = require("./relay");
-const { Sha256, NullHash } = require("../core/hash");
+const { Hash, Sha256, NullHash } = require("../core/hash");
 const { ArbitraryPacket } = require("../core/packet");
 const { TwistBuilder, Twist } = require("../core/twist");
 const { Interpreter } = require("../core/interpret");
@@ -344,7 +344,8 @@ class TodaClient {
         for (let hash of this.inv.list()) {
             let tw = this.get(hash);
             if (tw && tw.getHash().equals(hash)) {
-                res.push(hash);
+                // FIXME - these shouldn't be giving me hex
+                res.push(Hash.fromHex(hash));
             }
         }
         return res;
