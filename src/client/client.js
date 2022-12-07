@@ -34,6 +34,9 @@ class TodaClient {
         this.shieldSalt = "~/.toda/.salt";
 
         this.requirementSatisfiers = [];
+
+        this.retryTimes = 3;
+        this.retryInterval = 1000;
     }
 
     addSatisfier(rs) {
@@ -45,8 +48,10 @@ class TodaClient {
             return new LocalRelayClient(this, this.defaultRelayHash);
         }*/
         if (this.defaultRelayUrl) {
+            console.log("returning default relay url:", this.defaultRelayUrl);
             return new RemoteRelayClient(this.defaultRelayUrl);
         }
+        console.error("No default relay found.");
         return null;
     }
 
@@ -58,7 +63,8 @@ class TodaClient {
         if (twist.getTetherHash().isNull()) {
             return;
         }
-
+        console.log("getting relay for:", twist.getHash().toString(), "tethered to:",
+                    twist.getTetherHash().toString());
         try {
             let abj = Abject.fromTwist(twist);
             if (abj && abj.tetherUrl && abj.tetherUrl()) { //duck-duck-go
@@ -133,14 +139,23 @@ class TodaClient {
         if (lead) {
             let relay = this.getRelay(lead);
             if (!relay) {
+                console.error("NO RELAY FOUND FOR:", lead.getHash().toString());
                 throw new WaitForHitchError(); //TODO: specialize this error
             }
-            let hitch = await relay.getHoist(lead);
-            if (hitch) {
-                tb.addRigging(lead.getHash(), hitch.getHash());
-            } else {
-                throw new WaitForHitchError();
+
+            let attempts = 0;
+            while (attempts < this.retryTimes) {
+                attempts++;
+                let hitch = await relay.getHoist(lead);
+                if (hitch) {
+                    tb.addRigging(lead.getHash(), hitch.getHash());
+                    return;
+                } else {
+                    console.warn("Requerying for hitch...");
+                    await new Promise(res => setTimeout(res, this.retryInterval));
+                }
             }
+            throw new WaitForHitchError();
         }
         //TODO(acg): why wouldn't we also not take advantage of having grabbed
         //all those proof atoms and save em?
