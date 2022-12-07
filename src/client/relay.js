@@ -45,10 +45,14 @@ class RemoteRelayClient extends RelayClient {
     }
 
     _hoist(atoms) {
+        console.log("Hoisting to: ", this.url.toString());
         return axios({
             method: "POST",
-            url: this.url.toString(),
-            contentType: "application/octet-stream",
+            //XXX(acg): I **HATE** this.
+            url: this.url.toString() + "hoist",
+            headers: {
+                "Content-Type": "application/octet-stream"
+            },
             data: atoms.toBytes()
         });
     }
@@ -84,6 +88,7 @@ class LocalRelayClient extends RelayClient {
     }
 
     _hoist(atoms) {
+        console.log("Hosting to local: ", this.hash.toString());
         let relay = this.get();
 
         // heuristic.  use current key if last update was keyed

@@ -68,7 +68,7 @@ class LocalInventoryClient extends InventoryClient {
 
     // extremely dangerous; use only for tests.
     deleteAll() {
-        if (!this.invRoot.includes(".toda/store")) {
+        if (!this.invRoot.includes("toda")) {
             throw Error("not sure if I should delete this");
         }
         fs.emptyDirSync(this.invRoot);

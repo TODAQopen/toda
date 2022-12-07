@@ -30,6 +30,7 @@ class TodaClient {
         this.defaultTopLine = "https://slow.line.todaq.net";
 
         this.defaultRelayHash = null;
+        this.defaultRelayUrl = null;
         this.shieldSalt = "~/.toda/.salt";
 
         this.requirementSatisfiers = [];
@@ -39,9 +40,12 @@ class TodaClient {
         this.requirementSatisfiers.push(rs);
     }
 
-    _defaultRelay() {
-        if (this.defaultRelayHash) {
+    _defaultRelay(twist) {
+        /*if (this.defaultRelayHash && !twist.findPrevious(this.defaultRelayHash)) {
             return new LocalRelayClient(this, this.defaultRelayHash);
+        }*/
+        if (this.defaultRelayUrl) {
+            return new RemoteRelayClient(this.defaultRelayUrl);
         }
         return null;
     }
@@ -65,9 +69,7 @@ class TodaClient {
         if (this.get(twist.getTetherHash())) {
             return new LocalRelayClient(this, twist.getTetherHash());
         }
-
-        //FIXME(acg): deal with if it _is_ default relay?
-        return this._defaultRelay();
+        return this._defaultRelay(twist);
     }
 
     getRelayFromString(relayStr) {
@@ -197,6 +199,7 @@ class TodaClient {
         await this.satisfyRequirements(next);
         await this.inv.put(next.serialize());
 
+
         const nextTwist = next.twist();
         const lastFast = nextTwist.lastFast();
         if (tether && lastFast && !noHoist) {
@@ -204,6 +207,10 @@ class TodaClient {
             // FIXME(acg): what exactly are we waiting for?
             try {
                 let r = this.getRelay(lastFast);
+                if (!r) {
+                    //or do we warn..?
+                    throw new Error("Cannot find relay for " + lastFast.getHash().toString());
+                }
                 let nth = nextTwist.getHash();
                 await r.hoist(lastFast, nth);
             } catch(e) {
