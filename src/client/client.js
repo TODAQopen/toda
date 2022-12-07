@@ -315,6 +315,19 @@ class TodaClient {
         }
         return true;
     }
+
+    // FIXME(acg): perf
+    listLatest() {
+        let res = [];
+        for (let hash of this.inv.list()) {
+            let tw = this.get(hash);
+            if (tw && tw.getHash().equals(hash)) {
+                res.push(hash);
+            }
+        }
+        return res;
+    }
+
 }
 
 class TodaClientError extends Error {}
