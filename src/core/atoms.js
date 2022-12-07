@@ -70,7 +70,17 @@ class Atoms extends HashMap {
     }
 
     toBytes() {
-        return Array.from(this).reduce((bytes, [h, p]) => bytes.concat(h.serialize().concat(p.serialize())), new ByteArray());
+        let a = Array.from(this)
+        let len = a.reduce((acc, [h,p]) => acc+h.serializedValue.byteLength+p.serializedValue.byteLength, 0)
+        let ret = new ByteArray(len)
+        let off = 0
+        a.forEach(([h, p]) => {
+            ret.set(h.serializedValue, off)
+            off += h.serializedValue.byteLength
+            ret.set(p.serializedValue, off)
+            off += p.serializedValue.byteLength
+        })
+        return ret
     }
 
     /**
