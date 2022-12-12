@@ -4,10 +4,10 @@ const webpack = require("webpack");
 const isProduction = process.env.NODE_ENV == "production";
 
 const config = {
-    entry: "./toda.js",
+    entry: "./toda.web.js",
     output: {
         path: path.resolve(__dirname, "../dist"),
-        filename: "toda.dist.js",
+        filename: "toda.web.dist.js",
         library: "toda",
     },
     devServer: {
@@ -29,17 +29,6 @@ const config = {
             }
         ]
     },
-    target: "node"
-};
-
-const webConfig = {
-    ...config,
-    target: "web",
-    output: {
-        path: path.resolve(__dirname, "../dist"),
-        filename: "toda.web.dist.js",
-        library: "toda",
-    },
     resolve: {
         fallback: {
             buffer: require.resolve("buffer/"),
@@ -48,6 +37,7 @@ const webConfig = {
             stream: require.resolve("stream-browserify")
         },
     },
+    target: "web",
     plugins: [
         new webpack.ProvidePlugin({
             Buffer: ["buffer", "Buffer"],
@@ -57,10 +47,10 @@ const webConfig = {
 
 module.exports = () => {
     if (isProduction) {
-        config.mode = webConfig.mode = "production";
+        config.mode = "production";
     } else {
-        config.mode = webConfig.mode = "development";
+        config.mode = "development";
     }
 
-    return [config, webConfig];
+    return config;
 };
