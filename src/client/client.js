@@ -137,6 +137,17 @@ class TodaClient {
     async _setPost(tb) {
         const lead = tb.twist().lastFast()?.lastFast();
         if (lead) {
+            // temporary hackitty hack
+            // does this twist already contain the hoisting info?
+            let local = new LocalRelayClient(this, tb.twist().lastFast().getHash());
+            let h = await local.getHoist(lead);
+            if (h) {
+                console.log("FOUND IN SELF!")
+                tb.addRigging(lead.getHash(), h.getHash());
+                return;
+            }
+
+            // orig:
             let relay = this.getRelay(lead);
             if (!relay) {
                 console.error("NO RELAY FOUND FOR:", lead.getHash().toString());
@@ -228,6 +239,10 @@ class TodaClient {
                 }
                 let nth = nextTwist.getHash();
                 await r.hoist(lastFast, nth);
+
+                // temporary test... ... (probably only works for I.R.)
+                await this.pull(nextTwist, r.hash);
+
             } catch(e) {
                 console.error("Hoist error:", e);
                 throw(e);
@@ -269,8 +284,12 @@ class TodaClient {
      *
      */
     async pull(twist, poptopHash) {
-        let relay = this.getRelay(twist);
-        let relayTwist = twist;
+        if (!twist.prev()) {
+            return;
+        }
+        let relay = this.getRelay(twist.prev());
+        let relayTwist = twist.prev();
+        // FIXME(acg): I'm pretty sure both of these need a PREV before them.
 
         while (relay) {
             let startHash = relayTwist.findLastStoredTetherHash();
@@ -290,6 +309,8 @@ class TodaClient {
             relay = this.getRelay(relayTwist);
         }
         // TODO: should this auto-save?
+        // yes
+        this.inv.put(twist.getAtoms());
     }
 
     async isCanonical(twist, popTop) {

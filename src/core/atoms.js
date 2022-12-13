@@ -22,7 +22,12 @@ class Atoms extends HashMap {
    * @throws things
    */
     set(hash, packet) {
-        // TODO: turn this assertion back on (make it fast and lazy)
+        if (!packet) {
+            throw new Error("Cannot set null packet");
+        }
+        // null hash checks performed by superclass.
+
+        // TODO(dxnn): turn this assertion back on (make it fast and lazy)
         // hash.assertVerifiesPacket(packet); // throws
         return super.set(hash, packet);
     }

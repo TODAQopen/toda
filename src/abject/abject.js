@@ -274,6 +274,9 @@ class Abject {
                 throw new AbjectMissingBodyPacket(atoms);
             }
             cargoHash = body.getCargoHash();
+            if (cargoHash.isNull()) {
+                throw new AbjectError("Abject cargo hash cannot be null");
+            }
             cargo = atoms.get(cargoHash);
 
             if (!cargo) {

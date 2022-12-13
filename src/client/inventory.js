@@ -111,7 +111,7 @@ class LocalInventoryClient extends InventoryClient {
             this.loadFromDisk(hash);
         }
         return this.files.get(this.twistIdx.get(hash))?.getAtoms();
-    }
+    } //TODO(acg): would like to see better testing of this.
 
     _getFromDisk(hash) {
         let path = this.filePathForHash(hash);
@@ -128,7 +128,6 @@ class LocalInventoryClient extends InventoryClient {
         }
         return atoms;
     }
-
 
     put(atoms, explicitPath) {
         let destPath = explicitPath || this.filePathForHash(atoms.lastAtomHash());

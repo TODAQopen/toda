@@ -154,3 +154,63 @@ describe("append", () => {
 
 
 });
+
+describe("pull should include all required info", async () => {
+    it("send to remote and back", async () => {
+
+        fs.mkdirSync("/tmp/todatest/files1", {recursive:true});
+        fs.mkdirSync("/tmp/todatest/files2", {recursive:true});
+        fs.writeFileSync("/tmp/todatest/files1/salt","aaaaaa");
+        fs.writeFileSync("/tmp/todatest/files2/salt","bbbbbb");
+
+        // set up a local address
+        let keyPair = await SECP256r1.generate();
+        let toda = new TodaClient(new LocalInventoryClient("/tmp/todatest/files1"));
+        toda.shieldSalt = "/tmp/todatest/files1/salt";
+        toda.addSatisfier(keyPair);
+        let localLine = await toda.create(null, keyPair);
+        let localLineNext = await toda.append(localLine, null, keyPair);
+
+        // set up a "remote" address
+        let keyPair2 = await SECP256r1.generate();
+        let toda2 = new TodaClient(new LocalInventoryClient("/tmp/todatest/files2"));
+        toda2.shieldSalt = "/tmp/todatest/files2/salt";
+        toda2.addSatisfier(keyPair2);
+        let remoteLine = await toda2.create(null, keyPair2);
+        let remoteLineNext = await toda2.append(remoteLine, null, keyPair2);
+
+        // create a test file controlled by local
+        let a = await toda.create(localLineNext.getHash());
+        // append a second fast twist with same tether, causing a hitch.
+        let aNext = await toda.append(a, localLineNext.getHash());
+        assert(await toda.isSatisfiable(aNext));
+
+        // append a third fast twist, because why not
+        let aNNext = await toda.append(aNext, localLineNext.getHash());
+        assert(await toda.isSatisfiable(aNNext));
+
+        // xfer it to the original twist in the remote.
+        let aNNNext = await toda.append(aNNext, remoteLine.getHash());
+        toda2.inv.put(aNNNext.getAtoms());
+
+        assert(! await toda.isSatisfiable(aNNNext));
+        assert(await toda2.isSatisfiable(aNNNext));
+
+        // append another fast twist, causing a hitch, requiring previous (local) hoist info
+        let b = await toda2.append(aNNNext, remoteLineNext.getHash());
+        assert(await toda2.isSatisfiable(b));
+
+        //...
+
+        //TODO(acg): do a variant of this which includes canonicity, and which
+        //also demonstrates how forks fail.
+
+    });
+});
+
+//TODO(acg): I think we require more detailed tests on when shieldPackets are
+//included.
+
+describe("multiple local layers should work", async() => {
+    
+});

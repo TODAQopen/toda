@@ -488,7 +488,9 @@ class Twist {
 
     // adds atoms without changing the focus.
     safeAddAtoms(atoms) {
-        this.atoms = new Atoms([...this.atoms, ...atoms, this.atoms.lastAtom()]);
+        let [h,p] = this.atoms.lastAtom();
+        this.atoms = new Atoms([...this.atoms, ...atoms]);
+        this.atoms.forceSetLast(h,p);
     }
 }
 

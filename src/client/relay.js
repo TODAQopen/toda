@@ -33,7 +33,12 @@ class RelayClient {
     async getHoist(lead) {
         let relay = await this.get();
         let i = new Interpreter(Line.fromTwist(relay).addAtoms(lead.getAtoms())); //awkward
-        return i.hitchHoist(lead.getHash());
+        try {
+            return i.hitchHoist(lead.getHash());
+        } catch (e) {
+            console.warn("Error getting hoist:", e);
+            return null;
+        }
     }
 }
 
