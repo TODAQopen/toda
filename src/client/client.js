@@ -28,6 +28,7 @@ class TodaClient {
         /** Use this default for evaluating non-abjects when no top is specified. */
         /** Also use this default when creating new abjects when no top is specified. */
         this.defaultTopLine = "https://slow.line.todaq.net";
+        this.defaultTopLineHash = null;
 
         this.defaultRelayHash = null;
         this.defaultRelayUrl = null;
@@ -230,7 +231,6 @@ class TodaClient {
         const lastFast = nextTwist.lastFast();
         if (tether && lastFast && !noHoist) {
             // TODO(acg): ensure this is FIRMLY written before hoisting.
-            // FIXME(acg): what exactly are we waiting for?
             try {
                 let r = this.getRelay(lastFast);
                 if (!r) {
@@ -240,8 +240,10 @@ class TodaClient {
                 let nth = nextTwist.getHash();
                 await r.hoist(lastFast, nth);
 
-                // temporary test... ... (probably only works for I.R.)
-                await this.pull(nextTwist, r.hash);
+                // FIXME(acg): Clean up this logic.  Works for basic cases for now
+                if (r.hash || this.defaultTopLineHash) {
+                    await this.pull(nextTwist, r.hash || this.defaultTopLineHash);
+                }
 
             } catch(e) {
                 console.error("Hoist error:", e);
