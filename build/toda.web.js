@@ -1,6 +1,8 @@
 const packet = require("../src/core/packet.js");
 const hash = require("../src/core/hash.js");
 const twist = require("../src/core/twist.js");
+const line = require("../src/core/line.js");
+const reqsat = require("../src/core/reqsat.js");
 const atoms = require("../src/core/atoms.js");
 const abject = require("../src/abject/abject.js");
 const capability = require("../src/abject/capability.js");
@@ -13,6 +15,8 @@ const { ByteArray } = require("../src/core/byte-array.js");
 exports.packet = packet;
 exports.hash = hash;
 exports.twist = twist;
+exports.line = line;
+exports.reqsat = reqsat;
 exports.atoms = atoms;
 exports.abject = abject;
 exports.capability = capability;
