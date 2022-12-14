@@ -362,7 +362,7 @@ class Interpreter {
         if (twist.lastFast()) {
             let hitch = this.hitchHoist(lastFast.getHash());
             if (hitch) {
-                if (this.topHash.equals(hitch.first())) {
+                if (this.topHash.equals(hitch.first().getHash())) {
                     return hitch;
                 } else {
                     return this.getToplineHitch(hitch.getHash());

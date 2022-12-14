@@ -373,6 +373,14 @@ class Twist {
         return this.findLast(t => t.getHash().equals(previousHash));
     }
 
+    first() {
+        let prev = this.prev();
+        if (!prev) {
+            return this;
+        }
+
+        return prev.first();
+    }
 
     rig(hash) {
         let riggingHash = this.body.getRiggingHash();

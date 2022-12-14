@@ -271,17 +271,6 @@ async function getAtomsFromPath(path, forceRecache) {
     return getLineAtoms(path, forceRecache);
 }
 
-/**
- * If the path is a file path that exists, use that - otherwise try to ping it as a line server.
- * @param path <String> Url to a line server or path to file
- * @returns {Promise<Atoms>}
- */
-async function getFirstHashFromPath(path) {
-    return getAtomsFromPath(path).then(atoms => {
-        return new Twist(atoms).first();
-    });
-}
-
 function getFileOrHashPath(filePath) {
     if (!fs.existsSync(filePath)) {
         filePath = String(filePath); //hack
@@ -462,7 +451,6 @@ exports.initKeys = initKeys;
 exports.initSalt = initSalt;
 
 exports.getAtomsFromPath = getAtomsFromPath;
-exports.getFirstHashFromPath = getFirstHashFromPath;
 exports.getFileOrInput = getFileOrInput;
 exports.getAcceptedInputs = getAcceptedInputs;
 exports.getInputBytes = getInputBytes;
