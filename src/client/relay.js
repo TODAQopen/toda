@@ -36,7 +36,7 @@ class RelayClient {
         try {
             return i.hitchHoist(lead.getHash());
         } catch (e) {
-            console.warn("Error getting hoist:", e);
+            //console.warn("Error getting hoist:", e);
             return null;
         }
     }

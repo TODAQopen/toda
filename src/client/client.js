@@ -286,29 +286,21 @@ class TodaClient {
      *
      */
     async pull(twist, poptopHash) {
-        if (!twist.prev()) {
+        // TODO(acg): investigate what happens if the last twist isn't fast
+        let lastFast = twist.lastFast();
+        if (!lastFast) {
             return;
         }
-        let relay = this.getRelay(twist.prev());
-        let relayTwist = twist.prev();
-        // FIXME(acg): I'm pretty sure both of these need a PREV before them.
+        console.log("Pulling hitch for", lastFast.getHash().toString());
+        let relay = this.getRelay(lastFast);
 
         while (relay) {
-            let startHash = relayTwist.findLastStoredTetherHash();
-            let tempTwist = await relay.get(startHash);
-
-            twist.safeAddAtoms(tempTwist.getAtoms());
-
-            // Can't just check the tempTwist, since it may not contain
-            //  the entire relay line. Need to check all of the atoms
-            //  combined
-            relayTwist = new Twist(twist.getAtoms(), tempTwist.getHash());
-            if (relayTwist.findPrevious(poptopHash)) {
-                return;
-            }
+            let relayTwist = await relay.get();
+            twist.safeAddAtoms(relayTwist.getAtoms());
+            let line = Line.fromTwist(relayTwist);
 
             // TODO(acg): prevent infinite looping if we mess up the poptop
-            relay = this.getRelay(relayTwist);
+            relay = this.getRelay(line.twist(line.latestTwist()));
         }
         // TODO: should this auto-save?
         // yes
