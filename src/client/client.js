@@ -14,6 +14,7 @@ const { ArbitraryPacket } = require("../core/packet");
 const { TwistBuilder, Twist } = require("../core/twist");
 const { Interpreter } = require("../core/interpret");
 const { Line } = require("../core/line");
+const { SimpleHistoric } = require("../abject/simple-historic");
 const fs = require("fs-extra");
 
 class TodaClient {
@@ -365,7 +366,6 @@ class TodaClient {
         }
         return res;
     }
-
 }
 
 class TodaClientError extends Error {}

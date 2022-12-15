@@ -5,13 +5,23 @@
 * Apache License 2.0
 *************************************************************/
 
-const {Hash} = require("../core/hash");
-const {Abject} = require("./abject");
-const {Actionable} = require("./actionable");
-const {HashMap} = require("../core/map");
+const { Hash } = require("../core/hash");
+const { Abject } = require("./abject");
+const { Actionable } = require("./actionable");
+const { HashMap } = require("../core/map");
+const { AssetClassField, DI, DIAssetClassClass } = require("./di");
+const { P1String } = require("./primitive");
+const { TwistBuilder } = require("../core/twist");
 
+//todo(mje): Presumably we need a way to set requirements on this
 class SimpleHistoric extends Abject {
     static interpreter = Hash.fromHex("22a79a7b8b0ee38c196cfefb263cc4a7310d801db8df332e31021267c8c30e1f7c");
+
+    constructor() {
+        super();
+        this.twistHash = null;
+        this.twistBuilder = new TwistBuilder();
+    }
 
     static fieldSyms = {
         timestamp: Hash.fromHex("22c7df9af32847a5425b1c9577fef55431732ca50889110b3e6ac9897a7e5583b4"),
@@ -33,11 +43,32 @@ class SimpleHistoric extends Abject {
 
     //todo(mje): HACK - Temporary fix to read the focus correctly with `getHash()`
     getHash() {
-        return this.twistHash;
+        return this.twistHash ?? this.buildTwist().getHash();
+    }
+
+    serialize(hashImp) {
+        return this.buildTwist().serialize(hashImp);
     }
 
     getContext() {
         return this.getFieldAbject(Actionable.fieldSyms.context);
+    }
+
+    setContext(abject) {
+        return this.setFieldAbject(Actionable.fieldSyms.context, abject);
+    }
+
+    buildTwist() {
+        this.twistBuilder.atoms.merge(this.atoms);
+        this.twistBuilder.data.merge(this.data);
+        return this.twistBuilder;
+    }
+
+    createSuccessor() {
+        let next = new this.constructor();
+        next.twistBuilder.setPrevHash(this.getHash());
+        next.addAtoms(this.serialize());
+        return next;
     }
 
     timestamp() {
@@ -64,8 +95,62 @@ class SimpleHistoric extends Abject {
         let c = this.getContext();
         return c.getFieldAbject(SimpleHistoric.fieldSyms.moniker);
     }
+
+    set(timestamp, tetherUrl, thisUrl, infoUrl, moniker) {
+        let context = new DI();
+        context.setAssetClass(SimpleHistoric.AC);
+        context.setFieldAbject(SimpleHistoric.AC.fieldSyms.timestamp, new P1String(timestamp));
+
+        if (tetherUrl) {
+            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.tetherUrl, new P1String(tetherUrl));
+        }
+
+        if (thisUrl) {
+            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.thisUrl, new P1String(thisUrl));
+        }
+
+        if (infoUrl) {
+            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.infoUrl, new P1String(infoUrl));
+        }
+
+        if (moniker) {
+            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.moniker, new P1String(moniker));
+        }
+
+        this.setContext(context);
+    }
 }
 
 Abject.registerInterpreter(SimpleHistoric);
+
+let fTimestamp = new AssetClassField();
+fTimestamp.consolidation = DI.consolidations.lastWriteWins;
+fTimestamp.type = P1String.interpreter;
+fTimestamp.required = true;
+
+let fTetherUrl = new AssetClassField();
+fTetherUrl.consolidation = DI.consolidations.lastWriteWins;
+fTetherUrl.type = P1String.interpreter;
+
+let fThisUrl = new AssetClassField();
+fThisUrl.consolidation = DI.consolidations.lastWriteWins;
+fThisUrl.type = P1String.interpreter;
+
+let fInfoUrl = new AssetClassField();
+fInfoUrl.consolidation = DI.consolidations.lastWriteWins;
+fInfoUrl.type = P1String.interpreter;
+
+let fMoniker = new AssetClassField();
+fMoniker.consolidation = DI.consolidations.lastWriteWins;
+fMoniker.type = P1String.interpreter;
+
+SimpleHistoric.AC = new DIAssetClassClass();
+SimpleHistoric.AC.fieldSyms = SimpleHistoric.fieldSyms;
+
+SimpleHistoric.AC.addACField(SimpleHistoric.AC.fieldSyms.timestamp, fTimestamp);
+SimpleHistoric.AC.addACField(SimpleHistoric.AC.fieldSyms.tetherUrl, fTetherUrl);
+SimpleHistoric.AC.addACField(SimpleHistoric.AC.fieldSyms.thisUrl, fThisUrl);
+SimpleHistoric.AC.addACField(SimpleHistoric.AC.fieldSyms.infoUrl, fInfoUrl);
+SimpleHistoric.AC.addACField(SimpleHistoric.AC.fieldSyms.moniker, fMoniker);
 
 exports.SimpleHistoric = SimpleHistoric;
