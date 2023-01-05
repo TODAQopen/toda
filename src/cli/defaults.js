@@ -15,9 +15,7 @@ const defaults = {
     poptop: "https://slow.line.todaq.net/",
     inventoryServer: "https://inventory.todaq.net",
     maxHeaderSize: 1048576,
-    webPort: 3000,
-    invPort: 3000,
-    invUrl: "../"
+    invPort: 3000
 };
 
 exports.defaults = defaults;

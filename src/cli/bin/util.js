@@ -46,7 +46,6 @@ function getArgs(argDefaults = {}) {
             "empty",
             "help",
             "human-readable",
-            "inventory",
             "json",
             "latest",
             "line",
@@ -56,7 +55,6 @@ function getArgs(argDefaults = {}) {
             "rebuild",
             "refresh",
             "test",
-            "web",
             "verbose"],
         alias: {
             C: "content",
@@ -122,7 +120,6 @@ async function formatInputs(args, whitelist) {
     let inventoryServer = args["server"] || config.inventoryServer;
     let data = args["data"] ? Buffer.from(args["data"], "hex") : null;
 
-    const webPort = args["web-port"] || config.webPort;
     const invPort = args["inv-port"] || config.invPort;
     const invPath = args["inv-path"] || config.store;
 
@@ -141,7 +138,6 @@ async function formatInputs(args, whitelist) {
         capability: capability,
         inventoryServer: inventoryServer,
         data: data,
-        webPort: webPort,
         invPort: invPort,
         invPath: invPath
     };

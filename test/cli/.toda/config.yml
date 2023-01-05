@@ -5,6 +5,4 @@ salt: ./test/cli/.toda/secure/salt
 line: ./test/cli/.toda/store/line.toda
 inventoryServer: https://inventory.todaq.net
 maxHeaderSize: 1048576
-webPort: 3001
 invPort: 3001
-invUrl: ../

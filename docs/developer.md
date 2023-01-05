@@ -64,14 +64,8 @@ The path to an inventory server for posts.
 #### maxHeaderSize `1048576`
 Configures the maximum header size in bytes for requests made to the inventory server. Capability tokens are set in the `X-TODA-Capability` header, which are often larger than the node default limit of `16kb`.
 
-#### webPort `3000`
-The port to run the web application on.
-
 #### invPort `3000`
 The port to run a local inventory server on.
-
-#### invUrl `../`
-The inventory server URL for the web application to point to.
 
 ## Command Reference
 ### create
@@ -295,25 +289,15 @@ $ toda get-hoist <~/.toda/store/411c3436751e30e42043b29c4aa9f969d681b03c3273322a
 ```
 
 ### serve
-`$ toda serve [--web [--web-port PORT] [--inv-url URL]] [--inv [--inv-port PORT] [--inv-path DIRECTORY]]`
+`$ toda serve [--inv-port PORT] [--inv-path DIRECTORY]`
 
-Starts an inventory server and a web app to browse it. If neither `--web` nor `--inv` are specified, will start both by default. If web and inventory are using the same port, a single server will be started for both.
-`--web` starts the web server on the specified `--web-port` or :3000.
-`--inv-url` indicates the URL of the inventory server for the web app to make requests.
-`--inv` starts the inventory server on the specified `--inv-port` or :3000.
+Starts an inventory server on the specified `--inv-port` or :3000.
 `--inv-path` indicates the directory on the server where files are stored.
 
 ```
 $ toda serve
-Web && Inventory server running on http://localhost:3000
-```
-
-```
-$ toda serve --web --web-port 8080 --inv-url http://localhost:3000 --inv
 Inventory server running on http://localhost:3000
-Web server running on http://localhost:8080
 ```
-
 
 ### request
 `$ toda request [--capability CAP_PATH] [--url URL] [--verb HTTP_VERB] [--nonce STRING] [--data HEX]`

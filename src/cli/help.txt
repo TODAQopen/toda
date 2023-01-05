@@ -13,8 +13,7 @@ Usage:
   toda get-hoist    [--line-server URL] FILE_SOURCE
   toda list         [--latest] [--all] [--detailed] [DIRECTORY|FILE_PATH]
   toda inspect      [--packet] HASH FILE_SOURCE
-  toda serve        [--web [--web-port PORT] [--inv-url URL]]
-                    [--inv [--inv-port PORT] [--inv-path DIRECTORY]]
+  toda serve        [--inv-port PORT] [--inv-path DIRECTORY]
   toda capability   [--url URL] [--verbs HTTP_VERBS] [--expiry EPOCH_TIMESTAMP_MS] [--shield HEX]
                     [--pop-top URL|FILE_PATH] [--tether URL|FILE_PATH]
   toda capability-authorize

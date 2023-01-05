@@ -7,6 +7,4 @@ line: ./test/cli/.toda/store/line.toda
 poptop: 41b159657fb3d30278479a546cb5ec68346e8e8360fa8b9fe7ec1559a1b662a7cd
 inventoryServer: https://inventory.todaq.net
 maxHeaderSize: 1048576
-webPort: 3001
 invPort: 3001
-invUrl: ../
