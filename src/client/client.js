@@ -305,7 +305,7 @@ class TodaClient {
         }
         // TODO: should this auto-save?
         // yes
-        this.inv.put(twist.getAtoms());
+        await this.inv.put(twist.getAtoms());
     }
 
     async isCanonical(twist, popTop) {
