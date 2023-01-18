@@ -89,4 +89,5 @@ Todaized.addACField(Todaized.fieldSyms.fFileContent, fFileContent);
 Todaized.addACField(Todaized.fieldSyms.fFileCreated, fFileCreated);
 Todaized.addACField(Todaized.fieldSyms.fFileModified, fFileModified);
 
+exports.Todaized = Todaized;
 exports.todaize = todaize;
