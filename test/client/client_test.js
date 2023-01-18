@@ -5,9 +5,11 @@
 * Apache License 2.0
 *************************************************************/
 
+const { Abject } = require("../../src/abject/abject");
+const { SimpleHistoric } = require("../../src/abject/simple-historic");
 const { TodaClient, WaitForHitchError } = require("../../src/client/client");
 const { SECP256r1 } = require("../../src/client/secp256r1");
-const { LocalInventoryClient } = require("../../src/client/inventory");
+const { LocalInventoryClient, VirtualInventoryClient } = require("../../src/client/inventory");
 
 const { ByteArray } = require("../../src/core/byte-array");
 const { Hash, Sha256 } = require("../../src/core/hash");
@@ -79,7 +81,6 @@ describe("append", () => {
         let latestLocal = Line.fromAtoms(toda.inv.get(localLine.getHash()));
         assert(hoist.getHash().equals(latestLocal.latestTwist()));
     });
-
 
         // TODO(acg): Not sure what's up with the below.
 
@@ -155,6 +156,48 @@ describe("append", () => {
 
 });
 
+describe("finalize twist", () => {
+
+    it("should correctly make a successor to the first abject", async () => {
+        let toda = new TodaClient(new VirtualInventoryClient());
+        toda.shieldSalt = path.resolve(__dirname, "./files/salt");
+
+        let a0 = new SimpleHistoric();
+        let tb0 = a0.buildTwist();
+        let t0 = await toda.finalizeTwist(tb0);
+        let tether = Hash.fromHex("41313b593c91b6b5c5ab23be3d561cea76d6dba74d8455f01807010580dddbf299");
+        let tb1 = a0.createSuccessor().buildTwist();
+        let t1 = await toda.finalizeTwist(tb1, tether);
+
+        assert.ok(t0.getHash().equals(t1.prev().getHash()));
+        assert.ok(tether.equals(t1.getTetherHash()));
+        assert.ok(Abject.fromTwist(t1));
+        assert.ok(Abject.fromTwist(t1) instanceof SimpleHistoric);
+    });
+
+    it("test simple historic fields properly populated", async () => {
+        let toda = new TodaClient(new VirtualInventoryClient());
+        toda.shieldSalt = path.resolve(__dirname, "./files/salt");
+
+        let timestamp = new Date().toISOString();
+        let thisUrl = "http://www.myspace.com";
+
+        let a0 = new SimpleHistoric();
+        a0.set(timestamp, undefined, thisUrl);
+        let t0 = await toda.finalizeTwist(a0.buildTwist());
+        let tether = Hash.fromHex("41313b593c91b6b5c5ab23be3d561cea76d6dba74d8455f01807010580dddbf299");
+        let a1 = Abject.fromTwist(t0).createSuccessor();
+        a1.set(timestamp, undefined, thisUrl);
+        let tb1 = a1.buildTwist();
+        let t1 = await toda.finalizeTwist(tb1, tether);
+
+        assert.equal(timestamp, Abject.fromTwist(t0).timestamp());
+        assert.equal(thisUrl, Abject.fromTwist(t0).thisUrl());
+        assert.equal(timestamp, Abject.fromTwist(t1).timestamp());
+        assert.equal(thisUrl, Abject.fromTwist(t1).thisUrl());
+    });
+});
+
 describe("pull should include all required info", async () => {
     it("send to remote and back", async () => {
 
@@ -212,5 +255,5 @@ describe("pull should include all required info", async () => {
 //included.
 
 describe("multiple local layers should work", async() => {
-    
+
 });

@@ -14,7 +14,6 @@ const { ArbitraryPacket } = require("../core/packet");
 const { TwistBuilder, Twist } = require("../core/twist");
 const { Interpreter } = require("../core/interpret");
 const { Line } = require("../core/line");
-const { SimpleHistoric } = require("../abject/simple-historic");
 const fs = require("fs-extra");
 
 class TodaClient {
@@ -144,7 +143,6 @@ class TodaClient {
             let local = new LocalRelayClient(this, tb.twist().lastFast().getHash());
             let h = await local.getHoist(lead);
             if (h) {
-                console.log("FOUND IN SELF!")
                 tb.addRigging(lead.getHash(), h.getHash());
                 return;
             }
@@ -188,6 +186,20 @@ class TodaClient {
         // TODO(acg): re-introduce already-existing successor check here.
 
         return this._append(prev, prev.createSuccessor(), tether, req, cargo, preSignHook, rigging, opts);
+    }
+
+    /**
+     * @param twistBuilder <TwistBuilder> the twist to build
+     * @param tetherHash <Hash>
+     * @param req <Requirement> the requirements to use
+     */
+    finalizeTwist(twistBuilder, tetherHash, req, opts)
+    {
+        return this._append(twistBuilder.prev(),
+                            twistBuilder,
+                            tetherHash ?? twistBuilder.getTetherHash(),
+                            req,
+                            undefined, undefined, undefined, opts);
     }
 
     /**
