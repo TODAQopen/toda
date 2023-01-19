@@ -11,6 +11,7 @@ const { TodaClient, WaitForHitchError } = require("../../src/client/client");
 const { SECP256r1 } = require("../../src/client/secp256r1");
 const { LocalInventoryClient, VirtualInventoryClient } = require("../../src/client/inventory");
 
+const { Atoms } = require("../../src/core/atoms");
 const { ByteArray } = require("../../src/core/byte-array");
 const { Hash, Sha256 } = require("../../src/core/hash");
 
@@ -19,6 +20,68 @@ const { Line } = require("../../src/core/line");
 const assert = require("assert");
 const fs = require("fs-extra");
 const path = require("path");
+const nock = require("nock");
+const { v4: uuidv4 } = require('uuid');
+
+// TODO: Move this somewhere else + generalize it
+class MockSimpleHistoricRelay {
+    constructor(thisUrl, tetherUrl) 
+        this.thisUrl = thisUrl;
+        this.tetherUrl = tetherUrl;
+    }
+
+    async initialize() {
+        this.kp = await SECP256r1.generate();
+        this.dirPath = `${__dirname}/files/` + uuidv4();
+        this.client = new TodaClient(new LocalInventoryClient(this.dirPath));
+        this.client.shieldSalt = path.resolve(__dirname, "./files/salt");
+        this.client.addSatisfier(this.kp);
+        let firstAbj = new SimpleHistoric();
+        firstAbj.set(new Date().toISOString(), this.tetherUrl, this.thisUrl);
+        let first = await this.client.finalizeTwist(firstAbj.buildTwist(), undefined, this.kp);
+        this.index = [first];
+    }
+
+    async append(tether, riggingPacket) {
+        let lastAbj = Abject.fromTwist(this.latest());
+        let nextAbj = lastAbj.createSuccessor();
+        nextAbj.set(new Date().toISOString(), this.tetherUrl, this.thisUrl);
+        let nextTb = nextAbj.buildTwist();
+        nextTb.setRiggingPacket(riggingPacket);
+        let next = await this.client.finalizeTwist(nextTb, tether, this.kp);
+        this.index.push(next);
+        return next;
+    }
+
+    first() 
+        return this.index[0];
+    }
+
+    latest() {
+        return this.index.slice(-1)[0];
+    }
+
+    nockEndpoints(url) {
+        nock(url)
+            .persist()
+            .get('/')
+            .query({})
+            .reply(200, async (uri, requestBody) => Buffer.from(this.latest().getAtoms().toBytes()));
+
+        // note that in the body of the callback function `this` refers to axios
+        let server = this;
+        nock(url)
+            .persist()
+            .post('/hoist')
+            .query({})
+            .reply(200, async function () {
+                       let riggingPacket = Atoms.fromBytes(this.req.requestBodyBuffers[0]).lastPacket();
+                       // TODO: this is a bit gross; theoretically it could be the latest but it doesn't really matter :shrug:
+                       let tether = server.latest().getTetherHash();
+                       let next = await server.append(tether, riggingPacket);
+                });
+    }
+}
 
 describe("create", () => {
 
@@ -153,7 +216,34 @@ describe("append", () => {
         }));
     });
 
+    it("append with remote test", async () => {
+        let top = new MockSimpleHistoricRelay("http://localhost:8090", "http://localhost:notactuallyreal");
+        await top.initialize();
+        nock.cleanAll();
+        top.nockEndpoints("http://localhost:8090");
 
+        let footKp = await SECP256r1.generate();
+        let foot = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
+        foot.shieldSalt = path.resolve(__dirname, "./files/salt");
+        foot.addSatisfier(footKp);
+        foot.defaultTopLineHash = top.latest().getHash();
+
+        let foot0_abj = new SimpleHistoric();
+        let foot0 = await foot.finalizeTwist(foot0_abj.buildTwist(), undefined, footKp);
+        let foot1_abj = foot0_abj.createSuccessor();
+        foot1_abj.set(new Date().toISOString(), "http://localhost:8090");
+        let foot1 = await foot.finalizeTwist(foot1_abj.buildTwist(), top.latest().getHash(), footKp);
+        let foot2_abj = foot1_abj.createSuccessor();
+        foot2_abj.set(new Date().toISOString(), "http://localhost:8090");
+        let foot2 = await foot.finalizeTwist(foot2_abj.buildTwist(), top.latest().getHash(), footKp);
+        let foot3_abj = foot2_abj.createSuccessor();
+        foot3_abj.set(new Date().toISOString(), "http://localhost:8090");
+        let foot3 = await foot.finalizeTwist(foot3_abj.buildTwist(), top.latest().getHash(), footKp);
+
+        assert.ok(foot3);
+        assert.ok(foot3.get(top.latest().getHash()));
+        assert.equal("http://localhost:8090", Abject.fromTwist(foot3).tetherUrl());
+    });
 });
 
 describe("finalize twist", () => {
@@ -250,6 +340,48 @@ describe("pull should include all required info", async () => {
 
     });
 });
+
+describe("Multi-remote pull test", () =>
+    {
+        it("Should be able to recursively reach up to the topline", async () => {
+            nock.cleanAll();
+
+            let top = new MockSimpleHistoricRelay("http://localhost:8090");
+            await top.initialize();
+            top.nockEndpoints("http://localhost:8090");
+
+            let mid = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8090");
+            await mid.initialize();
+            mid.nockEndpoints("http://localhost:8091");
+
+            let footKp = await SECP256r1.generate();
+            let foot = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
+            foot.shieldSalt = path.resolve(__dirname, "./files/salt");
+            foot.addSatisfier(footKp);
+            foot.defaultTopLineHash = top.latest().getHash();
+
+            await top.append();
+            await mid.append(top.latest().getHash());
+            await mid.append(top.latest().getHash());
+
+            let foot0_abj = new SimpleHistoric();
+            let foot0 = await foot.finalizeTwist(foot0_abj.buildTwist(), undefined, footKp);
+            let foot1_abj = foot0_abj.createSuccessor();
+            foot1_abj.set(new Date().toISOString(), "http://localhost:8091");
+            let foot1 = await foot.finalizeTwist(foot1_abj.buildTwist(), mid.latest().getHash(), footKp);
+            let foot2_abj = foot1_abj.createSuccessor();
+            foot2_abj.set(new Date().toISOString(), "http://localhost:8091");
+            let foot2 = await foot.finalizeTwist(foot2_abj.buildTwist(), mid.latest().getHash(), footKp);
+            let foot3_abj = foot2_abj.createSuccessor();
+            foot3_abj.set(new Date().toISOString(), "http://localhost:8091");
+            let foot3 = await foot.finalizeTwist(foot3_abj.buildTwist(), mid.latest().getHash(), footKp);
+
+            await foot.pull(foot3, top.first().getHash());
+
+            assert.ok(foot3.get(mid.latest().getHash()));
+            assert.ok(foot3.get(top.latest().getHash()));
+        });
+    });
 
 //TODO(acg): I think we require more detailed tests on when shieldPackets are
 //included.
