@@ -306,11 +306,13 @@ class TodaClient {
         }
         console.log("Pulling hitch for", lastFast.getHash().toString());
         let relay = this.getRelay(lastFast);
+        let relayTwist = twist;
 
         while (relay) {
-            let relayTwist = await relay.get();
+            let startHash = new Twist(twist.getAtoms(), relayTwist.getHash()).findLastStoredTetherHash();
+            relayTwist = await relay.get(startHash);
             twist.safeAddAtoms(relayTwist.getAtoms());
-            let line = Line.fromTwist(relayTwist);
+            let line = Line.fromAtoms(twist.getAtoms(), relayTwist.getHash());
 
             // TODO(acg): prevent infinite looping if we mess up the poptop
             relay = this.getRelay(line.twist(line.latestTwist()));
