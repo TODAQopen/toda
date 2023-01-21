@@ -62,7 +62,7 @@ class TodaClient {
      */
     getRelay(twist) {
         if (twist.getTetherHash().isNull()) {
-            return;
+            return undefined;
         }
         console.log("getting relay for:", twist.getHash().toString(), "tethered to:",
                     twist.getTetherHash().toString());
@@ -239,7 +239,6 @@ class TodaClient {
         await this.satisfyRequirements(next);
         await this.inv.put(next.serialize());
 
-
         const nextTwist = next.twist();
         const lastFast = nextTwist.lastFast();
         if (tether && lastFast && !noHoist) {
@@ -309,9 +308,14 @@ class TodaClient {
         let relayTwist = twist;
 
         while (relay) {
-            let startHash = new Twist(twist.getAtoms(), relayTwist.getHash()).findLastStoredTetherHash();
-            relayTwist = await relay.get(startHash);
-            twist.safeAddAtoms(relayTwist.getAtoms());
+            let startHash = relayTwist.findLastStoredTetherHash();
+            let upstream = await relay.get(startHash);
+            twist.safeAddAtoms(upstream.getAtoms());
+            relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
+
+            if (relayTwist.findPrevious(poptopHash)) {
+                return;
+            }
             let line = Line.fromAtoms(twist.getAtoms(), relayTwist.getHash());
 
             // TODO(acg): prevent infinite looping if we mess up the poptop
