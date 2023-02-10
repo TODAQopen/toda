@@ -314,7 +314,7 @@ class TodaClient {
             relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
 
             if (relayTwist.findPrevious(poptopHash)) {
-                return;
+                break;
             }
             let line = Line.fromAtoms(twist.getAtoms(), relayTwist.getHash());
 
