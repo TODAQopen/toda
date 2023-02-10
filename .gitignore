@@ -102,3 +102,5 @@ adot-electron-certs.p12
 .idea
 .vscode
 
+# Test files
+test/client/files/*

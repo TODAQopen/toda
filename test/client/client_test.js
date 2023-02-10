@@ -365,6 +365,59 @@ describe("Multi-remote pull test", () => {
             // asked for [4] and after
             assert.ok(atomsFromMidGet2.get(mid.twists()[4].getHash()));
             assert.ok(atomsFromMidGet2.get(mid.twists()[5].getHash()));
+        });
+
+    it("Should never pull http://localhost:8092, since 8091 is the topline", async () => {
+        nock.cleanAll();
+
+        // foot tethers into A (8090), into B (8091), into C (8092)
+        let C_abj = new SimpleHistoric();
+        C_abj.set(new Date().toISOString(), "http://localhost:8093", "http://localhost:8092");
+        let C = C_abj.buildTwist().twist();
+
+        let B_abj = new SimpleHistoric();
+        B_abj.set(new Date().toISOString(), "http://localhost:8092", "http://localhost:8091");
+        B_abj.buildTwist().setTetherHash(C.getHash());
+        let B = B_abj.buildTwist().twist();
+
+        let A_abj = new SimpleHistoric();
+        A_abj.set(new Date().toISOString(), "http://localhost:8091", "http://localhost:8090");
+        A_abj.buildTwist().setTetherHash(B.getHash());
+        let A = A_abj.buildTwist().twist();
+
+        let foot0_abj = new SimpleHistoric();
+        foot0_abj.set(new Date().toISOString(), "http://localhost:8090");
+        foot0_abj.buildTwist().setTetherHash(A.getHash());
+        let foot0 = foot0_abj.buildTwist().twist();
+
+        let foot1_abj = Abject.fromTwist(foot0).createSuccessor();
+        foot1_abj.set(new Date().toISOString(), "http://localhost:8090");
+        foot1_abj.buildTwist().setTetherHash(A.getHash());
+        let foot1 = foot1_abj.buildTwist().twist();
+
+        let requestTracker = [];
+        nock("http://localhost:8092")
+            .persist()
+            .get("/")
+            .reply(200, () => { requestTracker.push(8092);
+                                return Buffer.from(C.getAtoms().toBytes()); });
+
+        nock("http://localhost:8091")
+            .persist()
+            .get("/")
+            .reply(200, () => { requestTracker.push(8091);
+                                return Buffer.from(B.getAtoms().toBytes()); });
+
+        nock("http://localhost:8090")
+            .persist()
+            .get("/")
+            .reply(200, () => { requestTracker.push(8090);
+                                return Buffer.from(A.getAtoms().toBytes()); });
+
+        let client = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
+        client.defaultTopLineHash = B.getHash();
+        await client.pull(foot1, B.getHash());
+        assert.deepEqual([8090, 8091], requestTracker);
     });
 });
 
