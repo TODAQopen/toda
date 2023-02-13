@@ -51,7 +51,7 @@ void async function () {
         // TODO(acg): This *STILL* doesn't tell us "up to when" this is actually
         // canonical, right?
 
-        await toda.isCanonical(twist, popTop);
+        await toda.isCanonical(twist, popTop.getHash());
         status(chalk.white("Control check complete."));
 
         // Output
@@ -71,4 +71,3 @@ function formatOutput(twist, popTop, timestamp) {
 
     return output;
 }
-

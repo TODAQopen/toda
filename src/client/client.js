@@ -326,7 +326,7 @@ class TodaClient {
         await this.inv.put(twist.getAtoms());
     }
 
-    async isCanonical(twist, popTop) {
+    async isCanonical(twist, popTopHash) {
         //XXX(acg): assumes current twist is fast.  assumes we can't have anything loose.
 
         let line = Line.fromTwist(twist);
@@ -334,7 +334,7 @@ class TodaClient {
 
             //FIXME(acg): This is potentially *highly* redundant: we don't
             //necessarily want to be doing this every time.
-            let i = new Interpreter(line, popTop.getHash());
+            let i = new Interpreter(line, popTopHash);
             try {
                 await i.verifyHitchLine(twist.getHash());
             } catch (e) {
