@@ -7,7 +7,7 @@
 
 
 const { LocalKeyPair } = require("./keypair");
-const { SignatureRequirement } = require("../core/reqsat")
+const { SignatureRequirement, RequirementSatisfier } = require("../core/reqsat");
 const fs = require("fs-extra");
 
 function _isNode() {
@@ -86,5 +86,7 @@ class SECP256r1 extends LocalKeyPair {
         );
     }
 }
+
+RequirementSatisfier.registerSatisfier(SECP256r1.requirementTypeHash, SECP256r1);
 
 exports.SECP256r1 = SECP256r1;

@@ -5,12 +5,17 @@
 * Apache License 2.0
 *************************************************************/
 
+const {Interpreter, MissingHoistError, MissingPrevious, MissingSuccessor, MissingPostEntry, LooseTwistError} = require("../../src/core/interpret");
+const {Line} = require("../../src/core/line");
+const {SerialStore} = require("../../src/core/store");
 const { TodaClient, CannotSatisfyError } = require("../../src/client/client");
 const { SECP256r1 } = require("../../src/client/secp256r1");
 const { KeyPair } = require("../../src/client/keypair");
+const { ByteArray } = require("../../src/core/byte-array");
 const { VirtualInventoryClient } = require("../../src/client/inventory");
-//const { ByteArray } = require("../../../src/core/byte-array");
+const {Twist, MissingHashPacketError} = require("../../src/core/twist");
 const assert = require("assert");
+const fs = require("fs");
 
 describe("setRequirements", () => {
     it("should set the requirements trie on the twistbuilder", async () => {
@@ -66,5 +71,75 @@ describe("satisfyRequirements", () => {
                 assert(err instanceof CannotSatisfyError);
                 return true;
             });
+    });
+});
+
+describe("Runs pickled secp256r1 tests (v1)", () => {
+    let runPassTest = async (todaFile) => {
+        const data = new ByteArray(fs.readFileSync(todaFile));
+        let s = new SerialStore(data);
+        let line = new Line();
+        await s.copyInto(line);
+        let i = new Interpreter(line, undefined);
+
+        let twist1 = Twist.fromBytes(data);
+        let twist0 = twist1.prev();
+
+        return i.verifyLegit(twist0, twist1);
+    };
+
+    let runThrowTest = async (todaFile, expectedErrorType) => {
+        const data = new ByteArray(fs.readFileSync(todaFile));
+        let s = new SerialStore(data);
+        let line = new Line();
+        await s.copyInto(line);
+        let i = new Interpreter(line, undefined);
+
+        let twist1 = Twist.fromBytes(data);
+        let twist0 = twist1.prev();
+
+        let err;
+        try {
+            await i.verifyLegit(twist0, twist1);
+        } catch (e) {
+            err = e;
+        }
+        if (err) {
+            assert(err instanceof expectedErrorType);
+        } else {
+            assert(false, "expected error.");
+        }
+    };
+
+    it("green: satisfied sig", async() => {
+        return runPassTest(`${__dirname}/../toda-tests/reqsat/secp256r1/green/satisfied_sig.toda`);
+    });
+
+    it("yellow: sat missing", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/secp256r1/yellow/sat_missing.toda`, Error);
+    });
+
+    it("yellow: req missing", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/secp256r1/yellow/req_missing.toda`, Error);
+    });
+
+    it("red: req missing and sat not arb", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/secp256r1/red/req_missing_and_sat_not_arb.toda`, Error);
+    });
+
+    it("red: req not arb", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/secp256r1/red/req_not_arb.toda`, Error);
+    });
+
+    it("red: sat not arb", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/secp256r1/red/sat_not_arb.toda`, Error);
+    });
+
+    it("red: signed over wrong hash", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/secp256r1/red/signed_over_wrong_hash.toda`, Error);
+    });
+
+    it("red: wrong private key used", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/secp256r1/red/wrong_priv_key_used.toda`, Error);
     });
 });

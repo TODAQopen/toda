@@ -15,7 +15,7 @@ const {ByteArray} = require("../../src/core/byte-array");
 const assert = require("assert");
 const fs = require("fs");
 
-describe("Can eat pickled tests", () => {
+describe("Runs pickled rig tests (v1)", () => {
 
     const toplineField = Hash.parse(new ByteArray(Buffer.from("41f6813114f5c023d2173d5efe39009f302a782456aa5321ffa905f20c6970c5b8","hex")));
 
@@ -34,8 +34,8 @@ describe("Can eat pickled tests", () => {
         let line = new Line();
         await s.copyInto(line);
 
-        let i = new Interpreter(line, getTopline(line, s.primaryHash));
-        return i.verifyHitchLine(s.primaryHash);
+        let i = new Interpreter(line, getTopline(line, s.getPrimaryHash()));
+        return i.verifyHitchLine(s.getPrimaryHash());
     };
 
     let runThrowsTest = async (todaFile, f) => {
@@ -45,11 +45,11 @@ describe("Can eat pickled tests", () => {
         let line = new Line();
         await s.copyInto(line);
 
-        let i = new Interpreter(line, getTopline(line, s.primaryHash));
+        let i = new Interpreter(line, getTopline(line, s.getPrimaryHash()));
 
         let err;
         try {
-            await i.verifyHitchLine(s.primaryHash);
+            await i.verifyHitchLine(s.getPrimaryHash());
             console.log("uh oh");
         } catch (e) {
             err = e;
@@ -298,5 +298,87 @@ describe("`verifyHitchLine` can handle partial proofs when provided `startHash`"
             x = false;
         }
         assert(x, "Running interpreter should succeed.");
+    });
+});
+
+describe("Runs pickled reqsattrie tests (v1)", () => {
+    let runPassTest = async (todaFile) => {
+        const data = new ByteArray(fs.readFileSync(todaFile));
+        let s = new SerialStore(data);
+        let line = new Line();
+        await s.copyInto(line);
+        let i = new Interpreter(line, undefined);
+
+        let twist1 = Twist.fromBytes(data);
+        let twist0 = twist1.prev();
+
+        return i.verifyLegit(twist0, twist1);
+    };
+
+    let runThrowTest = async (todaFile, expectedErrorType) => {
+        const data = new ByteArray(fs.readFileSync(todaFile));
+        let s = new SerialStore(data);
+        let line = new Line();
+        await s.copyInto(line);
+        let i = new Interpreter(line, undefined);
+
+        let twist1 = Twist.fromBytes(data);
+        let twist0 = twist1.prev();
+
+        let err;
+        try {
+            await i.verifyLegit(twist0, twist1);
+        } catch (e) {
+            err = e;
+        }
+        if (err) {
+            assert(err instanceof expectedErrorType);
+        } else {
+            assert(false, "expected error.");
+        }
+    };
+
+    it("green: satisfied sig", async() => {
+        return runPassTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/green/req_and_sat_null.toda`);
+    });
+
+    it("yellow: unknown interpreter type", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/unknown_interpreter.toda`, ReqSatError);
+    });
+
+    it("yellow: reqtrie missing", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/reqtrie_missing.toda`, MissingHashPacketError);
+    });
+
+    it("yellow: sattrie missing", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/sattrie_missing.toda`, MissingHashPacketError);
+    });
+
+    it("red: req is null but the sat is not", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/req_null_sat_not.toda`, Error);
+    });
+
+    it("red: sat is null but the req is not", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sat_null_req_not.toda`, Error);
+    });
+
+    it("red: req is not a trie", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/reqtrie_invalid.toda`, TypeError);
+    });
+
+    it("red: sat is not a trie", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sattrie_invalid.toda`, TypeError);
+    });
+
+    it("red: req / sat keys mismatch", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/reqtrie_sattrie_different_keys.toda`, Error);
+    });
+
+    it("red: sattrie has an extra key", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sattrie_key_extra.toda`, Error);
+    });
+
+    it("red: sattrie has one less key", async() => {
+        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sattrie_key_not_included.toda`, Error);
     });
 });
