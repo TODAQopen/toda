@@ -273,11 +273,12 @@ class TodaClient {
         let prev = tb.prev();
         if (prev && prev.reqs()) {
             // REVIEW(acg): policy on multi-reqs?
+            // NOTE(cs): I have no idea what is going on here.
             for (let [reqTypeHash, reqPacketHash] of
                  Array.from(prev.reqs().getShapedValue().entries())) { //eew
                 for (let satisfier of this.requirementSatisfiers) {
                     if (await satisfier.isSatisfiable(reqTypeHash, prev.get(reqPacketHash))) {
-                        tb.setSatisfactions(await satisfier.satisfy(prev));
+                        await tb.satisfy(satisfier);
                         return;
                     }
                 }

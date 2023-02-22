@@ -10,6 +10,7 @@ const { SimpleHistoric } = require("../../src/abject/simple-historic");
 const { TodaClient, WaitForHitchError } = require("../../src/client/client");
 const { SECP256r1 } = require("../../src/client/secp256r1");
 const { LocalInventoryClient, VirtualInventoryClient } = require("../../src/client/inventory");
+const { Interpreter } = require("../../src/core/interpret");
 
 const { Atoms } = require("../../src/core/atoms");
 const { ByteArray } = require("../../src/core/byte-array");
@@ -182,6 +183,22 @@ describe("append", () => {
         assert.ok(foot3.get(top.latest().getHash()));
         assert.equal("http://localhost:8090", Abject.fromTwist(foot3).tetherUrl());
     });
+
+    it("should have valid req + sats", async () => {
+        let keyPair = await SECP256r1.generate();
+        let toda = new TodaClient(new LocalInventoryClient("./files"));
+        toda.shieldSalt = path.resolve(__dirname, "./files/salt");
+        toda.addSatisfier(keyPair);
+
+        let t0 = await toda.create(undefined, keyPair);
+        let t1 = await toda.append(t0, undefined, keyPair);
+
+        let line = new Line();
+        line.addAtoms(t1.getAtoms());
+        let i = new Interpreter(line, undefined);
+        await i.verifyReqSat(SECP256r1.requirementTypeHash, t0, t1);
+    });
+
 });
 
 describe("finalize twist", () => {

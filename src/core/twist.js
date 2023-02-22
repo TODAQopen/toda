@@ -95,10 +95,13 @@ class TwistBuilder {
     }
 
     /** Sets the twist satisfactions
-     * @param satisfactions <SignatureSatisfaction>
+     * @param satisfier <RequirementSatisfier>
      */
-    setSatisfactions(satisfactions) {
-        this.satisfactions = satisfactions;
+    async satisfy(satisfier) {
+        let body = this.getBodyPacket();
+        let bodyHash = this.hashImp.fromPacket(body);
+        let satisfaction = await satisfier.satisfy(this.prev(), bodyHash);
+        this.satisfactions = satisfaction;
     }
 
     /** Sets the twist tether

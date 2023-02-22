@@ -32,10 +32,10 @@ class KeyPair extends RequirementSatisfier {
         return requirementPacket.getShapedValue().equals(await this.exportPublicKey());
     }
 
-    async satisfy(prevTwist) {
+    async satisfy(prevTwist, newBodyHash) {
         return new SignatureSatisfaction(prevTwist.getHashImp(),
                                          this.constructor.requirementTypeHash,
-                                         await this.signBytes(prevTwist.getBodyHash().serialize()));
+                                         await this.signBytes(newBodyHash.serialize()));
     }
 }
 

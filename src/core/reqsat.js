@@ -219,6 +219,12 @@ class RequirementSatisfier {
     static isSatisfiable(requirementTypeHash, requirementPacket) {
         throw new ReqSatError('not implemented');
     }
+
+    /** Returns a SignatureSatisfaction
+     */
+    async satisfy(prevTwist, newBodyHash) {
+        throw new Error("Not implemented!");
+    }
 }
 
 exports.ReqSatError = ReqSatError;
