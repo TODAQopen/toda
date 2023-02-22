@@ -200,10 +200,8 @@ class TwistBuilder {
 
         if (this.riggingPacket || this.rigging.size > 0) {
             if (this.riggingPacket && this.rigging.size > 0) {
-                // TODO(acg): this was written in 0.5 seconds.  pls review:
-                // quick hack merge:
                 for (let k of this.rigging.keys()) {
-                    this.riggingPacket.set(k, this.rigging.get(k));
+                    this.riggingPacket = this.riggingPacket.set(k, this.rigging.get(k));
                 }
             }
             let rigging = this.getRiggingPacket(hashImp);

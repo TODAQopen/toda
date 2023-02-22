@@ -12,9 +12,11 @@ const { SECP256r1 } = require("../../src/client/secp256r1");
 const { LocalInventoryClient, VirtualInventoryClient } = require("../../src/client/inventory");
 const { Interpreter } = require("../../src/core/interpret");
 
+const { HashMap } = require("../../src/core/map");
 const { Atoms } = require("../../src/core/atoms");
 const { ByteArray } = require("../../src/core/byte-array");
 const { Hash, Sha256 } = require("../../src/core/hash");
+const { PairTriePacket } = require("../../src/core/packet");
 
 const { Line } = require("../../src/core/line");
 
@@ -86,6 +88,37 @@ describe("append", () => {
         let latestLocal = Line.fromAtoms(toda.inv.get(localLine.getHash()));
         assert(hoist.getHash().equals(latestLocal.latestTwist()));
     });
+
+     it("should append to a twist with the specified rigging and make a post", async () => {
+         let keyPair = await SECP256r1.generate();
+         let toda = new TodaClient(new LocalInventoryClient("./files"));
+         toda.shieldSalt = path.resolve(__dirname, "./files/salt");
+         toda.addSatisfier(keyPair);
+         let localLine = await toda.create();
+
+         let a = await toda.create(localLine.getHash(), keyPair);
+
+         let externalTetherHash = Sha256.fromBytes(ByteArray.fromStr("foobar"));
+
+         let b = await toda.append(a, localLine.getHash(), keyPair);
+
+         let hoist = (await toda.getRelay(a).getHoist(a));
+
+         let rigging = new HashMap();
+         let h0 = Sha256.fromBytes(ByteArray.fromStr("h0"));
+         let h1 = Sha256.fromBytes(ByteArray.fromStr("h1"));
+         let h2 = Sha256.fromBytes(ByteArray.fromStr("h2"));
+         let h3 = Sha256.fromBytes(ByteArray.fromStr("h3"));
+         rigging.set(h0, h1);
+         rigging.set(h2, h3);
+
+         let c = await toda.append(b, externalTetherHash, keyPair, undefined, () => {},
+                                   new PairTriePacket(rigging));
+
+         assert(h1.equals(c.rig(h0)));
+         assert(h3.equals(c.rig(h2)));
+         assert(hoist.getHash().equals(c.rig(a.getHash())));
+     });
 
         // TODO(acg): Not sure what's up with the below.
 
