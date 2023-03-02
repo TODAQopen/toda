@@ -1,6 +1,6 @@
 {
   "name": "todajs",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "",
   "author": "TodaQ",
   "license": "Apache License 2.0",
@@ -28,8 +28,7 @@
     "test": "mocha --recursive --timeout 60000",
     "build": "cd ./build && NODE_ENV=production npx webpack && cd ..",
     "test-only": "mocha --timeout 60000",
-    "server": "cd ./src/inventory && node app",
-    "prepublishOnly": "./build.sh"
+    "server": "cd ./src/inventory && node app"
   },
   "dependencies": {
     "@peculiar/webcrypto": "^1.3.3",

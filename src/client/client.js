@@ -38,6 +38,8 @@ class TodaClient {
 
         this.retryTimes = 3;
         this.retryInterval = 1000;
+
+        this.appendLocks = {};
     }
 
     addSatisfier(rs) {
@@ -373,17 +375,8 @@ class TodaClient {
         return true;
     }
 
-    // FIXME(acg): perf
     listLatest() {
-        let res = [];
-        for (let hash of this.inv.list()) {
-            let tw = this.get(hash);
-            if (tw && tw.getHash().equals(hash)) {
-                // FIXME - these shouldn't be giving me hex
-                res.push(Hash.fromHex(hash));
-            }
-        }
-        return res;
+        return this.inv.listLatest();
     }
 }
 

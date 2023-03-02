@@ -145,6 +145,12 @@ class LocalInventoryClient extends InventoryClient {
         this._addAtoms(atoms);
     }
 
+    // Returns latest hashes of each file in inv
+    listLatest() {
+        return Array.from(this.files, ([h, l]) => l.latestTwist());
+    }
+
+    // FIXME(acg): Remove - currently only used by cli
     list() {
         return this._listPaths().map(this._filePathToHash.bind(this));
     }
