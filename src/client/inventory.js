@@ -102,6 +102,12 @@ class LocalInventoryClient extends InventoryClient {
         return path.join(this.invRoot, `${hash}.toda`);
     }
 
+    tmpFilePathForHash(hash) {
+        let tmpDir = path.join(this.invRoot, 'tmp');
+        fs.mkdirSync(tmpDir, {recursive:true});
+        return path.join(tmpDir, `${hash}.toda`);
+    }
+
     _filePathToHash(f) {
         return f.split(".")[0];
     }
@@ -130,8 +136,12 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     put(atoms, explicitPath) {
+        let tmpPath = this.tmpFilePathForHash(atoms.lastAtomHash());
+        fs.outputFileSync(tmpPath, atoms.toBytes());
+
         let destPath = explicitPath || this.filePathForHash(atoms.lastAtomHash());
-        fs.outputFileSync(destPath, atoms.toBytes());
+        // for atomic mv
+        fs.renameSync(tmpPath, destPath);
         this._addAtoms(atoms);
     }
 
