@@ -8,6 +8,7 @@
 const {ByteArray} = require("./byte-array");
 const {fourByteInt} = require("./util");
 const {Hash} = require("./hash");
+const {HashMap} = require("./map");
 
 /**
  * Describes a (data) packet.
@@ -40,8 +41,8 @@ class Packet {
 
     // lazy packet expansion
     get shapedVal() {
-        Object.defineProperty(this, "shapedVal", { value: this.getShapedValueFromContent(), writable: false, configurable: true })
-        return this.shapedVal
+        Object.defineProperty(this, "shapedVal", { value: this.getShapedValueFromContent(), writable: false, configurable: true });
+        return this.shapedVal;
     }
 
     /**
@@ -63,7 +64,10 @@ class Packet {
 
     static parse(bytes) {
         let packetLength = ByteArray.from(bytes.subarray(this.PACKET_LENGTH_OFFSET,
-            this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH)).toInt();
+                                                         this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH)).toInt();
+        if (bytes.length - Packet.PACKET_CONTENT_OFFSET < packetLength) {
+            throw new ShapeException("Packet length does not match specified length.");
+        }
         return Packet.createFromShapeCode(bytes[this.PACKET_SHAPE_OFFSET],
             ByteArray.from(bytes.subarray(this.PACKET_CONTENT_OFFSET,
                 this.PACKET_CONTENT_OFFSET + packetLength)));
@@ -109,14 +113,6 @@ class Packet {
         return this.registeredShapeByCode[shapeCode] || null;
     }
 
-
-    getShapedValue() {
-        // TODO: THINK: both .shapedVal and .getShapedValue() are used to access this property
-        //              might want to remove .getShapedValue() and just use .shapedVal...
-        return this.shapedVal;
-        // throw new Error("abstract method not implemented in class Packet");
-    }
-
     /**
      * @returns <Array.<Hash>> All hashes inside this packet
      */
@@ -135,6 +131,10 @@ class Packet {
 
     isTwist(){
         return this instanceof BasicTwistPacket;
+    }
+
+    getShapedValue() {
+        return this.shapedVal;
     }
 
     static getShapeCode() {
@@ -235,8 +235,10 @@ class HashPairPacket extends HashPacket {
 
     getShapedValueFromContent() {
         let hs = super.getShapedValueFromContent();
-        if (hs.length % 2 != 0)
-            throw ShapeException("HashPairPacket does not contain even number of hashes.");
+        if (hs.length % 2 != 0) {
+            throw new ShapeException("HashPairPacket does not contain even number of hashes.");
+        }
+
         return hs.reduce((pairs, hash, index) => {
             // xxx(acg): seriously js has no built-in array chunkifier?
             if (index % 2 == 0) pairs.push([]);
@@ -288,7 +290,7 @@ class PairTriePacket extends HashPairPacket {
      */
     static createFromUnsorted(hashMap) {
         let keys = [...hashMap.keys()].sort();
-        let m = new Map();
+        let m = new HashMap();
         keys.forEach((k) => {
             m.set(k, hashMap.get(k));
         });
@@ -314,15 +316,17 @@ class PairTriePacket extends HashPairPacket {
 
     getShapedValueFromContent() {
         let pairs = super.getShapedValueFromContent();
-        let trie = new Map();
+        let trie = new HashMap();
 
         for (let [k,v] of pairs) {
-            // FIXME(acg): this logic should perhaps be in the constructor
             if (trie.has(k)) {
                 throw new ShapeException("SHAPE_DUPLICATE",
                     "Shape Error: duplicate key detected: " + k);
             }
             trie.set(k,v);
+        }
+        if (!PairTriePacket.isSorted(trie)) {
+            throw new ShapeException("SHAPE_ORDER", "Map not sorted");
         }
         return trie;
     }
@@ -357,7 +361,7 @@ class PairTriePacket extends HashPairPacket {
      */
     set(keyHash, valHash) {
         //FML batman
-        let shapedValue = new Map(this.getShapedValue());
+        let shapedValue = new HashMap(this.getShapedValue());
         for (let key of shapedValue.keys()) {
             if (key.equals(keyHash)) {
                 shapedValue.delete(key);
@@ -423,11 +427,11 @@ class BasicTwistPacket extends HashPacket {
 
     getShapedValueFromContent() {
         let shapedValue = super.getShapedValueFromContent();
-        if(shapedValue.length != 2)
-            throw ShapeException("Basic twist contains " + shapedValue.length + " hashes, not 2.");
+        if(shapedValue.length != 2) {
+            throw new ShapeException("Basic twist contains " + shapedValue.length + " hashes, not 2.");
+        }
         return shapedValue;
     }
-
     // helpful shortcuts
     getBodyHash() {
         return this.getShapedValue()[0];
@@ -467,8 +471,9 @@ class BasicBodyPacket extends HashPacket {
 
     getShapedValueFromContent() {
         let shapedValue = super.getShapedValueFromContent();
-        if(shapedValue.length != 6)
-            throw ShapeException("Basic body contains " + shapedValue.length + " hashes, not 6.");
+        if(shapedValue.length != 6) {
+            throw new ShapeException("Basic body contains " + shapedValue.length + " hashes, not 6.");
+        }
         return shapedValue;
     }
 

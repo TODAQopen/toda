@@ -280,15 +280,42 @@ class Symbol extends Hash {
     isSymbol() {
         return true;
     }
+}
 
+class UnitHash extends Hash {
+    static algoCode = 0xff;
+    static MONIKER = "Unit Hash";
+    static DESCRIPTION = "Represents an special hash";
+
+    constructor() {
+        super(new ByteArray());
+    }
+
+    static hash() {
+        throw new Error("cannot hash data with null algo");
+    }
+
+    static getHashValueLength() {
+        return 0;
+    }
+
+    static parse() {
+        return new this();
+    }
+
+    isNull() {
+        return false;
+    }
 }
 
 Hash.registerType(Sha256);
 Hash.registerType(NullHash);
+Hash.registerType(UnitHash);
 Hash.registerType(Symbol);
 
 
 exports.Hash = Hash;
 exports.Sha256 = Sha256;
 exports.NullHash = NullHash;
+exports.UnitHash = UnitHash;
 exports.Symbol = Symbol;
