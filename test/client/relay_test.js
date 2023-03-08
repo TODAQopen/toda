@@ -22,7 +22,7 @@ const url = "https://localhost:8080";
 
 describe("hoist", async () => {
     it("should make a post request to the specified line server with the provided data", () => {
-        let scope = nock(url).post("/hoist");
+        let scope = nock(url).post("/");
         scope.reply(200);
 
         let relay = new RemoteRelayClient(url);
@@ -34,7 +34,7 @@ describe("hoist", async () => {
 
 describe("submitHoist", () => {
     it("should make a hoist request with the correct data", async () => {
-        let scope = nock(url).post("/hoist");
+        let scope = nock(url).post("/");
         scope.reply(200, (uri, requestBody) => requestBody);
 
         let toda = new TodaClient(new VirtualInventoryClient());

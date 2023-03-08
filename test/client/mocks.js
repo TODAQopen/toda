@@ -102,7 +102,7 @@ class MockSimpleHistoricRelay
         nock(baseUrl)
             .persist()
             .get('/')
-            .reply(200, async (uri, requestBody) => { 
+            .reply(200, async (uri, requestBody) => {
                   let response = Buffer.from(this.latest().getAtoms().toBytes());
                   this.logs.push({method: "get", uri, requestBody, response});
                   return response;
@@ -136,7 +136,7 @@ class MockSimpleHistoricRelay
         let server = this;
         nock(baseUrl)
             .persist()
-            .post('/hoist')
+            .post('/')
             .query({})
             .reply(200, async function (uri, requestBodyHex) {
                        let riggingPacket = Atoms.fromBytes(this.req.requestBodyBuffers[0]).lastPacket();

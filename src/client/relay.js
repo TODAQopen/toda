@@ -53,8 +53,7 @@ class RemoteRelayClient extends RelayClient {
         console.log("Hoisting to: ", this.url.toString());
         return axios({
             method: "POST",
-            //XXX(acg): I **HATE** this.
-            url: this.url.toString() + "hoist",
+            url: this.url.toString(),
             headers: {
                 "Content-Type": "application/octet-stream"
             },
