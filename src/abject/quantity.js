@@ -102,8 +102,29 @@ class DQ extends DelegableActionable {
         return x;
     }
 
+    /**
+       Determines whether or not the value has the correct precision for this dq
+        ie. if units = 10, then value = 0.2 is valid, but value = 0.21 is not, since
+        it has more precision than the units
+      */
+    isValueDelegable(value) {
+        return (value * this.getUnits()) % 1 == 0;
+    }
+
     // Returns a new first twist of a DQ which _must_ be confirmed, then completed.
     delegateValue(value) {
+        if (!this.isValueDelegable(value)) {
+            throw new Error("Value specified is not able to be delegated.");
+        }
+
+        if (DQ.safeQuantity(value) <= 0) {
+            throw new Error("Value must be a positive number");
+        }
+
+        if (this.value() < value) {
+            throw new Error("Value is greater than this DQ's value");
+        }
+
         let x = this.createDelegate();
         let c = new DI();
         c.setAssetClass(DQ.context);

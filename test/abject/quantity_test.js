@@ -57,6 +57,39 @@ describe("Delegate value", () => {
 
     });
 
+    it("can't delegate amounts that have more precision than the bill", async () => {
+        let top = new TwistBuilder();
+        top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
+
+        let master = DQ.mint(42, 10);
+
+        master.setPopTop(top.getHash());
+
+        assert.throws(() => master.delegateValue(4.11));
+    });
+
+    it("can't delegate amounts that are greater than the bill", async () => {
+        let top = new TwistBuilder();
+        top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
+
+        let master = DQ.mint(42);
+
+        master.setPopTop(top.getHash());
+
+        assert.throws(() => master.delegateValue(43));
+    });
+
+    it("can't delegate amounts that are non-positive", async () => {
+        let top = new TwistBuilder();
+        top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
+
+        let master = DQ.mint(42, 10);
+
+        master.setPopTop(top.getHash());
+
+        assert.throws(() => master.delegateValue(0));
+        assert.throws(() => master.delegateValue(-1));
+    });
 });
 
 describe("Check some math", () => {
