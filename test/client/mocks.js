@@ -149,3 +149,4 @@ class MockSimpleHistoricRelay
 }
 
 exports.MockSimpleHistoricRelay = MockSimpleHistoricRelay;
+exports.isolateTwist = isolateTwist;

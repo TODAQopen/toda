@@ -14,13 +14,14 @@ const { Interpreter } = require("../../src/core/interpret");
 
 const { HashMap } = require("../../src/core/map");
 const { Atoms } = require("../../src/core/atoms");
+const { Twist } = require("../../src/core/twist");
 const { ByteArray } = require("../../src/core/byte-array");
 const { Hash, Sha256 } = require("../../src/core/hash");
 const { PairTriePacket } = require("../../src/core/packet");
 
 const { Line } = require("../../src/core/line");
 
-const { MockSimpleHistoricRelay } = require("./mocks");
+const { MockSimpleHistoricRelay, isolateTwist } = require("./mocks");
 const assert = require("assert");
 const fs = require("fs-extra");
 const path = require("path");
@@ -474,6 +475,120 @@ describe("Multi-remote pull test", () => {
 //TODO(acg): I think we require more detailed tests on when shieldPackets are
 //included.
 
-describe("multiple local layers should work", async() => {
+describe("Deep recursive pull tests", async() => {
+    // For all of these tests, 'a' represents the footline, 'b' represents the line above, ... etc.
+    it("Remote recursive pull, no loose twists", async() =>
+        {
+            nock.cleanAll();
 
+            let remote_e = new MockSimpleHistoricRelay("http://localhost:8094");
+            remote_e.nockEndpoints("http://localhost:8094");
+            await remote_e.initialize();
+            await remote_e.append();
+
+            let remote_d = new MockSimpleHistoricRelay("http://localhost:8093", "http://localhost:8094");
+            remote_d.nockEndpoints("http://localhost:8093");
+            await remote_d.initialize();
+            await remote_d.append(remote_e.latest().getHash());
+            await remote_d.append(remote_e.latest().getHash());
+            await remote_d.append(remote_e.latest().getHash());
+
+            let remote_c = new MockSimpleHistoricRelay("http://localhost:8092", "http://localhost:8093");
+            remote_c.nockEndpoints("http://localhost:8092");
+            await remote_c.initialize();
+            await remote_c.append(remote_d.latest().getHash());
+
+            let remote_b = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
+            remote_b.nockEndpoints("http://localhost:8091");
+            await remote_b.initialize();
+            await remote_b.append(remote_c.latest().getHash());
+
+            let aKp = await SECP256r1.generate();
+            let a = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
+            a.shieldSalt = path.resolve(__dirname, "./files/salt");
+            a.addSatisfier(aKp);
+            a.defaultTopLineHash = remote_d.latest().getHash();
+
+            let a0_abj = new SimpleHistoric();
+            a0_abj.set(new Date().toISOString(), "http://localhost:8091");
+            let a0 = await a.finalizeTwist(a0_abj.buildTwist(), remote_b.latest().getHash(), aKp);
+
+            let a1_abj = Abject.fromTwist(a0).createSuccessor();
+            a1_abj.set(new Date().toISOString(), "http://localhost:8091");
+            let a1 = await a.finalizeTwist(a1_abj.buildTwist(), remote_b.latest().getHash(), aKp);
+
+            let a2_abj = Abject.fromTwist(a1).createSuccessor();
+            a2_abj.set(new Date().toISOString(), "http://localhost:8091");
+            let a2 = await a.finalizeTwist(a2_abj.buildTwist(), remote_b.latest().getHash(), aKp);
+
+            // isolate the twists in the bottom line S.T. we can test pull in complete isolation
+            let a0_isolated = isolateTwist(a0);
+            let a1_isolated = isolateTwist(a1);
+            let a2_isolated = isolateTwist(a2);
+            a2_isolated = new Atoms([...a0_isolated, ...a1_isolated, ...a2_isolated]);
+            let a2_isolated_twist = new Twist(a2_isolated, a2.getHash());
+
+            await a.pull(a2_isolated_twist, remote_d.first().getHash());
+            await a.isCanonical(a2_isolated_twist, remote_d.first().getHash());
+        });
+
+    // TODO(cs): This fails! Yay!
+    xit("Remote recursive pull, with intermediary loose twists", async() =>
+        {
+            nock.cleanAll();
+
+            let remote_e = new MockSimpleHistoricRelay("http://localhost:8094");
+            remote_e.nockEndpoints("http://localhost:8094");
+            await remote_e.initialize();
+            await remote_e.append();
+
+            let remote_d = new MockSimpleHistoricRelay("http://localhost:8093", "http://localhost:8094");
+            remote_d.nockEndpoints("http://localhost:8093");
+            await remote_d.initialize();
+            await remote_d.append(remote_e.latest().getHash());
+            await remote_d.append(remote_e.latest().getHash());
+            await remote_d.append(remote_e.latest().getHash());
+
+            let remote_c = new MockSimpleHistoricRelay("http://localhost:8092", "http://localhost:8093");
+            remote_c.nockEndpoints("http://localhost:8092");
+            await remote_c.initialize();
+            await remote_c.append(remote_d.latest().getHash());
+            await remote_c.append();
+            await remote_c.append(); // A couple of loose twists for added spice
+
+            let remote_b = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
+            remote_b.nockEndpoints("http://localhost:8091");
+            await remote_b.initialize();
+            await remote_b.append(remote_c.latest().getHash());
+            await remote_b.append();
+            await remote_b.append(); // A couple of loose twists for added spice
+
+            let aKp = await SECP256r1.generate();
+            let a = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
+            a.shieldSalt = path.resolve(__dirname, "./files/salt");
+            a.addSatisfier(aKp);
+            a.defaultTopLineHash = remote_d.latest().getHash();
+
+            let a0_abj = new SimpleHistoric();
+            a0_abj.set(new Date().toISOString(), "http://localhost:8091");
+            let a0 = await a.finalizeTwist(a0_abj.buildTwist(), remote_b.latest().getHash(), aKp);
+
+            let a1_abj = Abject.fromTwist(a0).createSuccessor();
+            a1_abj.set(new Date().toISOString(), "http://localhost:8091");
+            let a1 = await a.finalizeTwist(a1_abj.buildTwist(), remote_b.latest().getHash(), aKp);
+
+            let a2_abj = Abject.fromTwist(a1).createSuccessor();
+            a2_abj.set(new Date().toISOString(), "http://localhost:8091");
+            let a2 = await a.finalizeTwist(a2_abj.buildTwist(), remote_b.latest().getHash(), aKp);
+
+            // isolate the twists in the bottom line S.T. we can test pull in complete isolation
+            let a0_isolated = isolateTwist(a0);
+            let a1_isolated = isolateTwist(a1);
+            let a2_isolated = isolateTwist(a2);
+            a2_isolated = new Atoms([...a0_isolated, ...a1_isolated, ...a2_isolated]);
+            let a2_isolated_twist = new Twist(a2_isolated, a2.getHash());
+
+            await a.pull(a2_isolated_twist, remote_d.first().getHash());
+            await a.isCanonical(a2_isolated_twist, remote_d.first().getHash());
+        });
 });
