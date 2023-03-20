@@ -521,6 +521,8 @@ describe("Deep recursive pull tests", async() => {
             a2_abj.set(new Date().toISOString(), "http://localhost:8091");
             let a2 = await a.finalizeTwist(a2_abj.buildTwist(), remote_b.latest().getHash(), aKp);
 
+            await a.isCanonical(a2, remote_d.first().getHash());
+
             // isolate the twists in the bottom line S.T. we can test pull in complete isolation
             let a0_isolated = isolateTwist(a0);
             let a1_isolated = isolateTwist(a1);
@@ -532,8 +534,7 @@ describe("Deep recursive pull tests", async() => {
             await a.isCanonical(a2_isolated_twist, remote_d.first().getHash());
         });
 
-    // TODO(cs): This fails! Yay!
-    xit("Remote recursive pull, with intermediary loose twists", async() =>
+    it("Remote recursive pull, with intermediary loose twists", async() =>
         {
             nock.cleanAll();
 
@@ -553,12 +554,14 @@ describe("Deep recursive pull tests", async() => {
             remote_c.nockEndpoints("http://localhost:8092");
             await remote_c.initialize();
             await remote_c.append(remote_d.latest().getHash());
+            await remote_c.append(remote_d.latest().getHash());
             await remote_c.append();
             await remote_c.append(); // A couple of loose twists for added spice
 
             let remote_b = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
             remote_b.nockEndpoints("http://localhost:8091");
             await remote_b.initialize();
+            await remote_b.append(remote_c.latest().getHash());
             await remote_b.append(remote_c.latest().getHash());
             await remote_b.append();
             await remote_b.append(); // A couple of loose twists for added spice
@@ -567,7 +570,7 @@ describe("Deep recursive pull tests", async() => {
             let a = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
             a.shieldSalt = path.resolve(__dirname, "./files/salt");
             a.addSatisfier(aKp);
-            a.defaultTopLineHash = remote_d.latest().getHash();
+            a.defaultTopLineHash = remote_d.first().getHash();
 
             let a0_abj = new SimpleHistoric();
             a0_abj.set(new Date().toISOString(), "http://localhost:8091");
@@ -580,6 +583,8 @@ describe("Deep recursive pull tests", async() => {
             let a2_abj = Abject.fromTwist(a1).createSuccessor();
             a2_abj.set(new Date().toISOString(), "http://localhost:8091");
             let a2 = await a.finalizeTwist(a2_abj.buildTwist(), remote_b.latest().getHash(), aKp);
+
+            await a.isCanonical(a2, remote_d.first().getHash());
 
             // isolate the twists in the bottom line S.T. we can test pull in complete isolation
             let a0_isolated = isolateTwist(a0);

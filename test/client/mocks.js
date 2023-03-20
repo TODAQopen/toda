@@ -139,12 +139,15 @@ class MockSimpleHistoricRelay
             .post('/')
             .query({})
             .reply(200, async function (uri, requestBodyHex) {
-                       let riggingPacket = Atoms.fromBytes(this.req.requestBodyBuffers[0]).lastPacket();
-                       // TODO: this is a bit gross; theoretically it could be the latest but it doesn't really matter :shrug:
-                       let tether = server.latest().getTetherHash();
-                       let next = await server.append(tether, riggingPacket);
-                       server.logs.push({method: "post", uri, requestBodyHex});
-                });
+                let riggingPacket = Atoms.fromBytes(this.req.requestBodyBuffers[0]).lastPacket();
+                // TODO: this is a bit gross; theoretically it could be the latest but it doesn't really matter :shrug:
+                let tether = server.latest().getTetherHash();
+                if (!tether || tether.isNull()) {
+                    tether = server.latest().lastFast()?.getTetherHash();
+                }
+                let next = await server.append(tether, riggingPacket);
+                server.logs.push({method: "post", uri, requestBodyHex});
+            });
     }
 }
 

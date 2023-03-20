@@ -243,7 +243,7 @@ class TodaClient {
 
         const nextTwist = next.twist();
         const lastFast = nextTwist.lastFast();
-        if (tether && lastFast && !noHoist) {
+        if (tether && !tether.isNull() && lastFast && !noHoist) {
             // TODO(acg): ensure this is FIRMLY written before hoisting.
             try {
                 let r = this.getRelay(lastFast);
