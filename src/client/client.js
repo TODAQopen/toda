@@ -64,6 +64,10 @@ class TodaClient {
      */
     getRelay(twist) {
         if (twist.getTetherHash().isNull()) {
+            let lastFast = twist.lastFast();
+            if (lastFast) {
+                return this.getRelay(lastFast);
+            }
             return undefined;
         }
         console.log("getting relay for:", twist.getHash().toString(), "tethered to:",
