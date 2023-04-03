@@ -1,14 +1,7 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const {DI, DIAssetClassClass, AssetClassField} = require("../../src/abject/di");
-const {Primitive, P1String, P1Float, P1Date, P1Boolean} = require("../../src/abject/primitive");
-const {Media} = require("../../src/abject/media");
-const assert = require("assert");
+import { DI, DIAssetClassClass, AssetClassField } from "../../src/abject/di.js";
+import { Primitive, P1String, P1Float, P1Date, P1Boolean } from "../../src/abject/primitive.js";
+import { Media } from "../../src/abject/media.js";
+import assert from 'node:assert/strict'
 
 // Output key values for our use
 describe("Give me hashes", () => {

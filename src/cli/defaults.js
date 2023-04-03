@@ -5,7 +5,7 @@
 * Apache License 2.0
 *************************************************************/
 
-const os = require("os");
+import os from 'os';
 
 const defaults = {
     store: `${os.homedir()}/.toda/store`,
@@ -18,4 +18,4 @@ const defaults = {
     invPort: 3000
 };
 
-exports.defaults = defaults;
+export { defaults };

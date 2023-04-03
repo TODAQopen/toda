@@ -5,13 +5,14 @@
 * Apache License 2.0
 *************************************************************/
 
-const { Hash } = require("../core/hash");
-const { Abject } = require("./abject");
-const { Actionable } = require("./actionable");
-const { HashMap } = require("../core/map");
-const { AssetClassField, DI, DIAssetClassClass } = require("./di");
-const { P1String } = require("./primitive");
-const { TwistBuilder } = require("../core/twist");
+import { Hash } from '../core/hash.js';
+
+import { Abject } from './abject.js';
+import { Actionable } from './actionable.js';
+import { HashMap } from '../core/map.js';
+import { AssetClassField, DI, DIAssetClassClass } from './di.js';
+import { P1String } from './primitive.js';
+import { TwistBuilder } from '../core/twist.js';
 
 //todo(mje): Presumably we need a way to set requirements on this
 class SimpleHistoric extends Abject {
@@ -153,4 +154,4 @@ SimpleHistoric.AC.addACField(SimpleHistoric.AC.fieldSyms.thisUrl, fThisUrl);
 SimpleHistoric.AC.addACField(SimpleHistoric.AC.fieldSyms.infoUrl, fInfoUrl);
 SimpleHistoric.AC.addACField(SimpleHistoric.AC.fieldSyms.moniker, fMoniker);
 
-exports.SimpleHistoric = SimpleHistoric;
+export { SimpleHistoric };

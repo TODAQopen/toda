@@ -5,11 +5,15 @@
 * Apache License 2.0
 *************************************************************/
 
-const path = require("path");
-const express = require("express");
-const cors = require("cors");
-const { hostnameRouting } = require("./middleware");
-const { putFile, listFiles, getFile } = require("./files");
+import { hostnameRouting } from './middleware.js';
+import { putFile, listFiles, getFile } from './files.js';
+import express from 'express';
+import cors from 'cors';
+
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  *
@@ -78,4 +82,4 @@ function app(invPath=__dirname, config={}) {
     return express().use("/files", expressapp);
 }
 
-exports.app = app;
+export { app };

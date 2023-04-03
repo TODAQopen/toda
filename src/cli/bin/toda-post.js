@@ -6,15 +6,25 @@
 * Apache License 2.0
 *************************************************************/
 
-const { default: axios } = require("axios");
-const { Atoms } = require("../../core/atoms");
-const { handleProcessException } = require("./helpers/process-exception");
-const { getArgs, getFileOrInput, formatInputs, parseAbjectOrTwist, getAtomsFromPath } = require("./util");
-const { refresh } = require("./helpers/control");
-const { Twist } = require("../../core/twist");
-const { Line } = require("../../core/line");
-const chalk = require("chalk");
-const DraftLog = require("draftlog").into(console);
+import { default as axios } from 'axios';
+
+import { Atoms } from '../../core/atoms';
+import { handleProcessException } from './helpers/process-exception';
+
+import {
+    getArgs,
+    getFileOrInput,
+    formatInputs,
+    parseAbjectOrTwist,
+    getAtomsFromPath,
+} from './util';
+
+import { refresh } from './helpers/control';
+import { Twist } from '../../core/twist';
+import { Line } from '../../core/line';
+import chalk from 'chalk';
+import DraftLog from "draftlog";
+DraftLog(console);
 
 void async function () {
 

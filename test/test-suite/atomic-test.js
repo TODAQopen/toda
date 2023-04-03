@@ -1,15 +1,8 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-require("../../src/abject/di");
-require("../../src/abject/primitive");
-const {Atoms} = require("../../src/core/atoms");
-const util = require('./util');
-const assert = require("assert");
+import "../../src/abject/di.js";
+import "../../src/abject/primitive.js";
+import { Atoms } from "../../src/core/atoms.js";
+import { listTests, loadTest } from './util.js';
+import assert from "assert";
 
 function runParse(b)
 {
@@ -56,13 +49,13 @@ function testFilter(testName) {
     return false;
 }
 
-let testNames = util.listTests().filter(testFilter);
+let testNames = listTests().filter(testFilter);
 
 describe("test-suite/atomic-test", () => {
     it("Make sure at least one test was loaded.", () => assert(testNames.length > 0));
 });
 
 testNames.forEach(function (s) {
-    let test = util.loadTest(s);
+    let test = loadTest(s);
     runTest(test);
 });

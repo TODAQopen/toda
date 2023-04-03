@@ -1,20 +1,13 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
-
-const { ByteArray } = require("../../src/core/byte-array");
-const { Twist } = require("../../src/core/twist");
-const { Atoms } = require("../../src/core/atoms");
-const { getAtomsFromPath } = require("../../src/cli/bin/util");
-const { initTestEnv, getTodaPath, getConfigPath, getConfig, cleanupTestEnv } = require("./test-utils");
-const { execSync } = require("child_process");
-const assert = require("assert");
+import { ByteArray } from "../../src/core/byte-array.js";
+import { Twist } from "../../src/core/twist.js";
+import { Atoms } from "../../src/core/atoms.js";
+import { getAtomsFromPath } from "../../src/cli/bin/util.js";
+import { getTodaPath, getConfigPath, getConfig, cleanupTestEnv } from "./test-utils.js";
+import { execSync } from "child_process";
+import assert from "assert";
 
 xdescribe("toda-list", async() => {
-    beforeEach(initTestEnv);
+    // beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 
     it("Should display the list of twists", async() => {

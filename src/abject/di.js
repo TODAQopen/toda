@@ -5,14 +5,14 @@
 * Apache License 2.0
 *************************************************************/
 
-const {ByteArray} = require("../core/byte-array");
-const {Hash} = require("../core/hash");
-const {Packet,PairTriePacket} = require("../core/packet");
-const {HashMap} = require("../core/map");
-const {Atoms} = require("../core/atoms");
+import { ByteArray } from '../core/byte-array.js';
 
-const {Abject, AbjectError} = require("./abject");
-const {P1String, P1Float, P1Date, P1Boolean} = require("./primitive");
+import { Hash } from '../core/hash.js';
+import { Packet, PairTriePacket } from '../core/packet.js';
+import { HashMap } from '../core/map.js';
+import { Atoms } from '../core/atoms.js';
+import { Abject, AbjectError } from './abject.js';
+import { P1String, P1Float, P1Date, P1Boolean } from './primitive.js';
 
 class DI extends Abject {
 
@@ -334,7 +334,6 @@ let EmptyAssetClass = new DIAssetClassClass();
 
 Abject.registerInterpreter(DI);
 
-exports.DI = DI;
-exports.AssetClassField = AssetClassField;
-//exports.DIAssetClass = DIAssetClass;
-exports.DIAssetClassClass = DIAssetClassClass;
+export { DI };
+export { AssetClassField };
+export { DIAssetClassClass };

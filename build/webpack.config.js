@@ -6,7 +6,7 @@ const isProduction = process.env.NODE_ENV == "production";
 const config = {
     entry: "./toda.web.js",
     output: {
-        path: path.resolve(__dirname, "../dist"),
+        path: new URL('../dist', import.meta.url),
         filename: "toda.web.dist.js",
         library: "toda",
     },

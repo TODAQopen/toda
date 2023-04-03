@@ -6,11 +6,9 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, formatInputs, getFileOrInput, getClient, write } = require("./util");
-const { handleProcessException } = require("./helpers/process-exception");
-const { Atoms } = require("../../core/atoms");
-
-const DraftLog = require("draftlog");
+import { getArgs, formatInputs, getFileOrInput, getClient, write } from './util.js';
+import { handleProcessException } from './helpers/process-exception.js';
+import { Atoms } from '../../core/atoms.js';
 
 /** Creates a .toda file with the specified details.
  * toda create

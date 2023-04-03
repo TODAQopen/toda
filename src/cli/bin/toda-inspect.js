@@ -6,15 +6,31 @@
 * Apache License 2.0
 *************************************************************/
 
-const { Atoms } = require("../../core/atoms");
-const { Twist } = require("../../core/twist");
-const { Hash } = require("../../core/hash");
-const { ArbitraryPacket, HashPacket, PairTriePacket, BasicBodyPacket, BasicTwistPacket } = require("../../core/packet");
-const { ByteArray } = require("../../core/byte-array");
-const { getFileOrInput, getArgs, getPacketSize } = require("./util");
-const { handleProcessException } = require("./helpers/process-exception");
-const { stringifyValues, hydrateHash, formatTabDelimited,
-    formatBodyPacket, formatTwistPacket, logFormatted } = require("./helpers/formatters");
+import { Atoms } from '../../core/atoms';
+
+import { Twist } from '../../core/twist';
+import { Hash } from '../../core/hash';
+
+import {
+    ArbitraryPacket,
+    HashPacket,
+    PairTriePacket,
+    BasicBodyPacket,
+    BasicTwistPacket,
+} from '../../core/packet';
+
+import { ByteArray } from '../../core/byte-array';
+import { getFileOrInput, getArgs, getPacketSize } from './util';
+import { handleProcessException } from './helpers/process-exception';
+
+import {
+    stringifyValues,
+    hydrateHash,
+    formatTabDelimited,
+    formatBodyPacket,
+    formatTwistPacket,
+    logFormatted,
+} from './helpers/formatters';
 
 const arbDisplayBytes = 32;
 const formattingFns = {

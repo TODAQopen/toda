@@ -1,17 +1,14 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
+// import { setConfig } from "../../src/cli/bin/util";
+import { SECP256r1 } from "../../src/client/secp256r1.js";
+import { LocalInventoryClient } from "../../src/client/inventory.js";
+import { TodaClient } from "../../src/client/client.js";
+import fs from "fs-extra";
+import yaml from "yaml";
 
-const { setConfig } = require("../../src/cli/bin/util");
-const { SECP256r1 } = require("../../src/client/secp256r1");
-const { LocalInventoryClient } = require("../../src/client/inventory");
-const { TodaClient } = require("../../src/client/client");
-const fs = require("fs-extra");
-const path = require("path");
-const yaml = require("yaml");
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Initializes the poptop if the path is local
 /*async function initPoptop(poptop, shield, req, tether, pk, cargo) {
@@ -56,9 +53,8 @@ function cleanupTestEnv() {
     fs.emptyDirSync(getConfig().store);
 }
 
-exports.getTodaPath = getTodaPath;
-exports.getConfigPath = getConfigPath;
-exports.getConfig = getConfig;
-//exports.initTestEnv = initTestEnv;
-exports.cleanupTestEnv = cleanupTestEnv;
-exports.getClient = getClient;
+export { getTodaPath };
+export { getConfigPath };
+export { getConfig };
+export { cleanupTestEnv };
+export { getClient };

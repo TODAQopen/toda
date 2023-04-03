@@ -5,7 +5,7 @@
 * Apache License 2.0
 *************************************************************/
 
-const chalk = require("chalk");
+import chalk from 'chalk';
 
 class ProcessException {
     constructor(exitCode, reason) {
@@ -32,5 +32,5 @@ function handleProcessException(pe) {
     }
 }
 
-exports.ProcessException = ProcessException;
-exports.handleProcessException = handleProcessException;
+export { ProcessException };
+export { handleProcessException };

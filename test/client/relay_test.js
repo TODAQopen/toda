@@ -1,21 +1,12 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const { Hash } = require("../../src/core/hash");
-const { Atoms } = require("../../src/core/atoms");
-const { ByteArray } = require("../../src/core/byte-array");
-const { RemoteRelayClient } = require("../../src/client/relay");
-const { TodaClient, WaitForHitchError } = require("../../src/client/client");
-const { VirtualInventoryClient } = require("../../src/client/inventory");
-
-const nock = require("nock");
-const assert = require("assert");
-const fs = require("fs-extra");
-const path = require("path");
+import { Hash } from "../../src/core/hash.js";
+import { Atoms } from "../../src/core/atoms.js";
+import { RemoteRelayClient } from "../../src/client/relay.js";
+import { TodaClient, WaitForHitchError } from "../../src/client/client.js";
+import { VirtualInventoryClient } from "../../src/client/inventory.js";
+import nock from "nock";
+import assert from "assert";
+import fs from "fs-extra";
+import path from "path";
 
 
 const url = "https://localhost:8080";
@@ -65,10 +56,10 @@ describe("submitHoist", () => {
 describe("getHoist", () => {
     it("should verify that a hoist hitch exists for the provided lead on the specified line server", async () => {
         let toda = new TodaClient(new VirtualInventoryClient());
-        let x = await toda.getExplicitPath(path.resolve(__dirname, "./files/test.toda"));
+        let x = await toda.getExplicitPath( new URL('./files/test.toda', import.meta.url));
 
         let scope = nock(url).get("/");
-        scope.reply(200, fs.readFileSync(path.resolve(__dirname, "./files/line.toda")));
+        scope.reply(200, fs.readFileSync( new URL('./files/line.toda', import.meta.url)));
 
         let relay = new RemoteRelayClient(url);
         return relay.getHoist(x.lastFast()).then(r => {
@@ -80,7 +71,7 @@ describe("getHoist", () => {
 
 /*
 describe("isValidAndControlled", async () => {
-    let store = path.resolve(__dirname, "./files");
+    let store = new URL('./files', import.meta.url)
     let linePath = path.resolve(store, "cap-line.toda");
     let keyPair, acTwist, poptop;
 

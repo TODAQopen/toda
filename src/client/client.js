@@ -6,15 +6,16 @@
  *************************************************************/
 
 //const { keysPaired, SignatureRequirement } = require("../core/reqsat");
-const { Abject } = require("../abject/abject");
-const { ByteArray } = require("../core/byte-array");
-const { LocalRelayClient, RemoteRelayClient } = require("./relay");
-const { Hash, Sha256, NullHash } = require("../core/hash");
-const { ArbitraryPacket } = require("../core/packet");
-const { TwistBuilder, Twist } = require("../core/twist");
-const { Interpreter } = require("../core/interpret");
-const { Line } = require("../core/line");
-const fs = require("fs-extra");
+import { Abject } from '../abject/abject.js';
+
+import { ByteArray } from '../core/byte-array.js';
+import { LocalRelayClient, RemoteRelayClient } from './relay.js';
+import { Hash, Sha256, NullHash } from '../core/hash.js';
+import { ArbitraryPacket } from '../core/packet.js';
+import { TwistBuilder, Twist } from '../core/twist.js';
+import { Interpreter } from '../core/interpret.js';
+import { Line } from '../core/line.js';
+import fs from 'fs-extra';
 
 class TodaClient {
 
@@ -362,7 +363,7 @@ class TodaClient {
                  Array.from(twist.reqs().getShapedValue().entries())) { //eew
                 for (let satisfier of this.requirementSatisfiers) {
                     let reqPacket = twist.get(reqPacketHash);
-                    if (!await satisfier.isSatisfiable(reqTypeHash, reqPacket)) {
+                    if (!(await satisfier.isSatisfiable(reqTypeHash, reqPacket))) {
                         return false;
                     }
                 }
@@ -388,6 +389,6 @@ class TodaClientError extends Error {}
 class WaitForHitchError extends TodaClientError {}
 class CannotSatisfyError extends TodaClientError {}
 
-exports.TodaClient = TodaClient;
-exports.WaitForHitchError = WaitForHitchError;
-exports.CannotSatisfyError = CannotSatisfyError;
+export { TodaClient };
+export { WaitForHitchError };
+export { CannotSatisfyError };

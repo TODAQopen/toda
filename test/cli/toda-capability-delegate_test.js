@@ -1,22 +1,15 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
-
-const { Abject } = require("../../src/abject/abject");
-const { Atoms } = require("../../src/core/atoms");
-const { Twist } = require("../../src/core/twist");
-const { ByteArray } = require("../../src/core/byte-array");
-const { getAtomsFromPath, filePathForHash, getConfig } = require("../../src/cli/bin/util");
-const { initTestEnv, getTodaPath, getConfigPath, cleanupTestEnv } = require("./test-utils");
-const { execSync } = require("child_process");
-const fs = require("fs-extra");
-const assert = require("assert");
+import { Abject } from "../../src/abject/abject.js";
+import { Atoms } from "../../src/core/atoms.js";
+import { Twist } from "../../src/core/twist.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import { getAtomsFromPath, filePathForHash, getConfig } from "../../src/cli/bin/util.js";
+import { getTodaPath, getConfigPath, cleanupTestEnv } from "./test-utils.js";
+import { execSync } from "child_process";
+import fs from "fs-extra";
+import assert from "assert";
 
 xdescribe("toda-capability-delegate", async() => {
-    beforeEach(initTestEnv);
+    // beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 
     it("Should create a capability delegate with the correct properties", async() => {

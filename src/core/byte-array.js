@@ -46,4 +46,4 @@ class ByteArray extends Uint8Array {
 
 }
 
-exports.ByteArray = ByteArray;
+export { ByteArray };

@@ -1,20 +1,18 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
+import { Atoms } from "../../src/core/atoms.js";
+import { Sha256 } from "../../src/core/hash.js";
+import { ArbitraryPacket } from "../../src/core/packet.js";
+import { TwistBuilder, Twist } from "../../src/core/twist.js";
+import { bafs, sbh } from "../util.js";
+import { app } from "../../src/inventory/src/server.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import fs from "fs/promises";
+import assert from "assert";
+import axios from "axios";
 
-const fs = require("fs/promises");
-const assert = require("assert");
-const axios = require("axios");
-const { Atoms } = require("../../src/core/atoms");
-const { Sha256 } = require("../../src/core/hash");
-const { ArbitraryPacket } = require("../../src/core/packet");
-const { TwistBuilder, Twist } = require("../../src/core/twist");
-const { bafs, sbh } = require("../util");
-const { app } = require("../../src/inventory/src/server");
-const { ByteArray } = require("../../src/core/byte-array");
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe("POST /files", async () => {
     it("Should return an error when body is not a valid toda file", async () => {

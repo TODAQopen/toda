@@ -1,15 +1,13 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
+import { defaults } from "../../src/cli/defaults.js";
+import { getConfig, initConfig } from "../../src/cli/bin/util.js";
+import assert from "assert";
+import fs from "fs-extra";
+import yaml from "yaml";
 
-const { defaults } = require("../../src/cli/defaults");
-const { getConfig, initConfig } = require("../../src/cli/bin/util");
-const assert = require("assert");
-const fs = require("fs-extra");
-const yaml = require("yaml");
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe("getConfig", () => {
     it("should read the specified config file and use the correct defaults ", async () => {

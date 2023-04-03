@@ -1,25 +1,19 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
+import { app as invServer } from "../../src/inventory/src/server.js";
+import { Atoms } from "../../src/core/atoms.js";
+import { Twist, TwistBuilder } from "../../src/core/twist.js";
+import { ArbitraryPacket } from "../../src/core/packet.js";
+import { bafs, sbh } from "../util.js";
+import { Sha256 } from "../../src/core/hash.js";
+import { getTodaPath, getConfigPath, cleanupTestEnv } from "./test-utils.js";
 
-const fs = require("fs/promises");
-const util = require("node:util");
-const exec = util.promisify(require("node:child_process").exec);
-const assert = require("assert");
-const { app: invServer } = require("../../src/inventory/src/server");
-const { Atoms } = require("../../src/core/atoms");
-const { Twist, TwistBuilder } = require("../../src/core/twist");
-const { ArbitraryPacket } = require("../../src/core/packet");
-const { bafs, sbh } = require("../util");
-const { Sha256 } = require("../../src/core/hash");
-const path = require("path");
-const { getTodaPath, getConfigPath, initTestEnv, cleanupTestEnv } = require("./test-utils");
+import fs from "fs/promises";
+import assert from "assert";
+import { exec as unpromisedExec } from "child_process";
+import util from "node:util";
+const exec = util.promisify(unpromisedExec);
 
 xdescribe('toda-get', async() => {
-  beforeEach(initTestEnv);
+  // beforeEach(initTestEnv);
   afterEach(cleanupTestEnv);
 
   it('Should get a file from the configured inventory', async() => {
@@ -35,14 +29,14 @@ xdescribe('toda-get', async() => {
     }
 
     let invPort = 3211;
-    let server = invServer(__dirname).listen(invPort, () => console.log(`Test inventory is listening on ${invPort}`));
+    let server = invServer(new URL('./', import.meta.url)).listen(invPort, () => console.log(`Test inventory is listening on ${invPort}`));
 
 
     let twist = simpleTwist('one', 'two', 'three');
 
     let fileHash = twist.getHash();
-    let inFilePath = path.resolve(__dirname, ".toda", "store", `${fileHash}.toda`);
-    let outFilePath = path.resolve(__dirname, `${fileHash}.toda` );
+    let inFilePath = new URL(`./.toda/store/${fileHash}.toda`, import.meta.url)
+    let outFilePath = new URL(`${fileHash}.toda`, import.meta.url)
 
     let todaBin = `${getTodaPath()}/toda`;
 
@@ -69,7 +63,7 @@ xdescribe('toda-get', async() => {
       assert(!err);
     } finally {
       await new Promise(res => server.close(() => res()));
-      await fs.rm(path.resolve(__dirname, "localhost", `${fileHash}.toda`), { force: true });
+      await fs.rm(new URL(`localhost/${fileHash}.toda`, import.meta.url));
       await fs.rm(inFilePath, { force: true });
       await fs.rm(outFilePath, { force: true });
     }

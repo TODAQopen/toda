@@ -5,12 +5,20 @@
 * Apache License 2.0
 *************************************************************/
 
-const { Hash, NullHash } = require("../../../core/hash");
-const { ArbitraryPacket, PairTriePacket, HashPacket, BasicTwistPacket, BasicBodyPacket } = require("../../../core/packet");
-const { RequirementMonikers } = require("../../../core/reqsat");
-const { ProcessException } = require("./process-exception");
-require("node-json-color-stringify");
-const chalk = require("chalk");
+import { Hash, NullHash } from '../../../core/hash.js';
+
+import {
+    ArbitraryPacket,
+    PairTriePacket,
+    HashPacket,
+    BasicTwistPacket,
+    BasicBodyPacket,
+} from '../../../core/packet.js';
+
+import { RequirementMonikers } from '../../../core/reqsat.js';
+import { ProcessException } from './process-exception.js';
+import 'node-json-color-stringify';
+import chalk from 'chalk';
 const DisplayRows = 20;
 
 /**
@@ -214,14 +222,12 @@ function logFormatted(data, isJson) {
     }
 }
 
-exports.stringifyValues = stringifyValues;
-exports.toPagedString = toPagedString;
-exports.hydrateHash = hydrateHash;
-
-exports.formatReqSats = formatReqSats;
-exports.formatTabDelimited = formatTabDelimited;
-exports.formatBodyPacket = formatBodyPacket;
-exports.formatTwistPacket = formatTwistPacket;
-exports.formatBytes = formatBytes;
-
-exports.logFormatted = logFormatted;
+export { stringifyValues };
+export { toPagedString };
+export { hydrateHash };
+export { formatReqSats };
+export { formatTabDelimited };
+export { formatBodyPacket };
+export { formatTwistPacket };
+export { formatBytes };
+export { logFormatted };

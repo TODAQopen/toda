@@ -1,5 +1,5 @@
-const { app } = require("../src/server");
+import { app } from '../src/server';
 
-exports.app = app;
+export { app };
 
 export default {};

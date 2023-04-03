@@ -6,14 +6,13 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, formatInputs, getClient } = require("./util");
-const { handleProcessException } = require("./helpers/process-exception");
-const { Abject } = require("../../abject/abject");
-const { Line } = require("../../core/line");
-const { Twist } = require("../../core/twist");
-const { Hash } = require("../../core/hash");
-const chalk = require("chalk");
-const DraftLog = require("draftlog").into(console);
+import { getArgs, formatInputs, getClient } from './util.js';
+import { handleProcessException } from './helpers/process-exception.js';
+import { Abject } from '../../abject/abject.js';
+import { Hash } from '../../core/hash.js';
+import chalk from 'chalk';
+import DraftLog from "draftlog";
+DraftLog(console);
 
 // Verifies integrity and control of the specified Twist
 void async function () {

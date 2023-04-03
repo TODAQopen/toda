@@ -1,22 +1,15 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const { getHistory } = require("../../../src/cli/bin/helpers/history");
-const { Atoms } = require("../../../src/core/atoms");
-const { Twist } = require("../../../src/core/twist");
-const { NullHash, Hash } = require("../../../src/core/hash");
-const { ByteArray } = require("../../../src/core/byte-array");
-const fs = require("fs-extra");
-const path = require("path");
-const assert = require("assert");
+import { getHistory } from "../../../src/cli/bin/helpers/history.js";
+import { Atoms } from "../../../src/core/atoms.js";
+import { Twist } from "../../../src/core/twist.js";
+import { NullHash, Hash } from "../../../src/core/hash.js";
+import { ByteArray } from "../../../src/core/byte-array.js";
+import fs from "fs-extra";
+import path from "path";
+import assert from "assert";
 
 describe("getHistory", () => {
     it("should return an array of objects representing the twist and all of its prevs", () => {
-        let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/test.toda")));
+        let bytes = new ByteArray(fs.readFileSync(new URL('./files/test.toda', import.meta.url)));
         let twist = new Twist(Atoms.fromBytes(bytes));
 
         let expected = [{

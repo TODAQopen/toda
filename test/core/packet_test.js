@@ -1,18 +1,8 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const {ByteArray} = require("../../src/core/byte-array");
-const {Sha256} = require("../../src/core/hash");
-const {beq} = require("../util");
-const {Packet,
-    ArbitraryPacket,
-    HashPacket,
-    PairTriePacket} = require("../../src/core/packet");
-const assert = require("assert");
+import { ByteArray } from "../../src/core/byte-array.js";
+import { Sha256 } from "../../src/core/hash.js";
+import { beq } from "../util.js";
+import { Packet, ArbitraryPacket, HashPacket, PairTriePacket } from "../../src/core/packet.js";
+import assert from "assert";
 
 describe("ArbitraryPacket", () => {
     it("can be created, serialized, parsed", () => {

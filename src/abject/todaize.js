@@ -5,10 +5,11 @@
  * Apache License 2.0
  *************************************************************/
 
-const {DI, DIAssetClassClass, AssetClassField} = require('./di');
-const {SimpleRigged} = require('./actionable');
-const {P1String, P1Float} = require('./primitive');
-const {ArbitraryPacket} = require("../core/packet");
+import { DI, DIAssetClassClass, AssetClassField } from './di';
+
+import { SimpleRigged } from './actionable';
+import { P1String, P1Float } from './primitive';
+import { ArbitraryPacket } from '../core/packet';
 
 /**
  * Creates a todaized file
@@ -89,5 +90,5 @@ Todaized.addACField(Todaized.fieldSyms.fFileContent, fFileContent);
 Todaized.addACField(Todaized.fieldSyms.fFileCreated, fFileCreated);
 Todaized.addACField(Todaized.fieldSyms.fFileModified, fFileModified);
 
-exports.Todaized = Todaized;
-exports.todaize = todaize;
+export { Todaized };
+export { todaize };

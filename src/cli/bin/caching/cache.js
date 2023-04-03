@@ -33,4 +33,4 @@ class Cache extends Map {
     }
 }
 
-exports.cache = new Cache();
+export const cache = new Cache();

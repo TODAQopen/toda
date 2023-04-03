@@ -5,13 +5,13 @@
 * Apache License 2.0
 *************************************************************/
 
-const fs = require("fs");
-const yaml = require("yaml");
-const path = require("path");
+import fs from 'fs';
+import yaml from 'yaml';
 
 // Retrieves the config file
 function getConfig() {
-    const configFile = fs.readFileSync(path.resolve(__dirname, "../../../config.yml"), "utf8");
+    const url = new URL('../../../config.yml', import.meta.url)
+    const configFile = fs.readFileSync(url, "utf8");
     return yaml.parse(configFile).INVENTORY;
 }
 
@@ -20,6 +20,6 @@ function pfn(fn) {
     return (...ARGS) => new Promise((res,rej) => fn(...ARGS,(e,d)=>e?rej(e):res(d)));
 }
 
-exports.getConfig = getConfig;
-exports.pfn = pfn;
+export { getConfig };
+export { pfn };
 

@@ -1,17 +1,11 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
+import { ByteArray } from "../../src/core/byte-array.js";
+import { Sha256 } from "../../src/core/hash.js";
+import { Twist } from "../../src/core/twist.js";
+import { getTodaPath, getConfigPath, getConfig, getClient } from "./test-utils.js";
+import { execSync } from "child_process";
+import path from "path";
+import assert from "assert";
 
-const { ByteArray } = require("../../src/core/byte-array");
-const { Sha256 } = require("../../src/core/hash");
-const { Twist } = require("../../src/core/twist");
-const { getTodaPath, getConfigPath, getConfig, getClient  } = require("./test-utils");
-const { execSync } = require("child_process");
-const path = require("path");
-const assert = require("assert");
 
 describe("toda-control", async() => {
 
@@ -28,7 +22,7 @@ describe("toda-control", async() => {
                 "The Local Line integrity has been verified. This system has control of this file as of") > -1);
 
     });
-/** FIXME(acg): move to different test etc 
+/** FIXME(acg): move to different test etc
     it("Should validate a capability is controlled", async() => {
         let out = path.resolve(getConfig().store, "toda-control.toda");
 

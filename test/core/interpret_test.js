@@ -1,19 +1,26 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
+import {
+    Interpreter,
+    MissingHoistError,
+    MissingPrevious,
+    MissingSuccessor,
+    MissingPostEntry,
+    LooseTwistError,
+} from "../../src/core/interpret.js";
 
-const {Interpreter, MissingHoistError, MissingPrevious, MissingSuccessor, MissingPostEntry, LooseTwistError} = require("../../src/core/interpret");
-const {Line} = require("../../src/core/line");
-const {SerialStore} = require("../../src/core/store");
-const {Twist, MissingHashPacketError} = require("../../src/core/twist");
-const {Hash} = require("../../src/core/hash");
-const {ReqSatError} = require("../../src/core/reqsat");
-const {ByteArray} = require("../../src/core/byte-array");
-const assert = require("assert");
-const fs = require("fs");
+import { Line } from "../../src/core/line.js";
+import { SerialStore } from "../../src/core/store.js";
+import { Twist, MissingHashPacketError } from "../../src/core/twist.js";
+import { Hash } from "../../src/core/hash.js";
+import { ReqSatError } from "../../src/core/reqsat.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import assert from "assert";
+import fs from "fs";
+
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 describe("Runs pickled rig tests (v1)", () => {
 

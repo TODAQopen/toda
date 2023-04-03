@@ -6,12 +6,14 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, getConfig, formatInputs, getClient } = require("./util");
-const { Atoms } = require("../../core/atoms");
-const { Twist } = require("../../core/twist");
-const fs = require("fs-extra");
-const chalk = require("chalk");
-const DraftLog = require("draftlog").into(console);
+import { getArgs, getConfig, formatInputs, getClient } from './util';
+
+import { Atoms } from '../../core/atoms';
+import { Twist } from '../../core/twist';
+import fs from 'fs-extra';
+import chalk from 'chalk';
+import DraftLog from "draftlog";
+DraftLog(console);
 
 // Lists the twists contained in the specified directory or toda file, including tethers.
 // toda list [directory_path|file_path]

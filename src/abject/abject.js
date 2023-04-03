@@ -5,11 +5,12 @@
 * Apache License 2.0
 *************************************************************/
 
-const {ByteArray} = require("../core/byte-array");
-const {NullHash, Sha256, Symbol} = require("../core/hash");
-const {BasicTwistPacket, PairTriePacket, HashPacket} = require("../core/packet");
-const {HashMap} = require("../core/map");
-const {Atoms} = require("../core/atoms");
+import { ByteArray } from '../core/byte-array.js';
+
+import { NullHash, Sha256, Symbol } from '../core/hash.js';
+import { BasicTwistPacket, PairTriePacket, HashPacket } from '../core/packet.js';
+import { HashMap } from '../core/map.js';
+import { Atoms } from '../core/atoms.js';
 
 const NULL = new NullHash();
 
@@ -365,6 +366,6 @@ class AbjectMissingBodyPacket extends AbjectError {}
 class AbjectMissingCargoPacket extends AbjectError {}
 
 
-exports.Abject = Abject;
-exports.AbjectError = AbjectError;
-exports.AbjectAtomMissingError = AbjectAtomMissingError;
+export { Abject };
+export { AbjectError };
+export { AbjectAtomMissingError };

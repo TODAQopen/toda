@@ -1,18 +1,10 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const {DQ} = require("../../src/abject/quantity");
-const {Sha256} = require("../../src/core/hash");
-
-const {TwistBuilder} = require("../../src/core/twist");
-const {ByteArray} = require("../../src/core/byte-array");
-const {Shield} = require("../../src/core/shield");
-const {ArbitraryPacket} = require("../../src/core/packet");
-const assert = require("assert");
+import { DQ } from "../../src/abject/quantity.js";
+import { Sha256 } from "../../src/core/hash.js";
+import { TwistBuilder } from "../../src/core/twist.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import { Shield } from "../../src/core/shield.js";
+import { ArbitraryPacket } from "../../src/core/packet.js";
+import assert from 'node:assert/strict'
 
 function sbh (x) {
     return Sha256.fromBytes(new ByteArray(Buffer.from(x)));

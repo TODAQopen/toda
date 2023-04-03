@@ -6,11 +6,12 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, formatInputs, writeToFile } = require("./util");
-const { authorize } = require("./helpers/capability");
-const { verifyControl } = require("./helpers/control");
-const { handleProcessException } = require("./helpers/process-exception");
-const axios = require("axios");
+import { getArgs, formatInputs, writeToFile } from './util';
+
+import { authorize } from './helpers/capability';
+import { verifyControl } from './helpers/control';
+import { handleProcessException } from './helpers/process-exception';
+import axios from 'axios';
 
 //todo(mje): Perhaps we want to generate some master Capability and use that by default?
 /** Generates a request using the specified Capability

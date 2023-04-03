@@ -5,18 +5,17 @@
 * Apache License 2.0
 *************************************************************/
 
-const path = require("path");
+import path from 'path';
 
 const config = {
     mode: "production",
     entry: {
-        app: path.resolve(__dirname, "..", "app.js"),
+        app: new URL('../app.js', import.meta.url),
         lib: "./todainv.js"
     },
     output: {
-        path: path.resolve(__dirname, "../dist"),
+        path: new URL('../dist', import.meta.url),
         filename: "todainv.[name].dist.js"
-
     },
     module: {
         rules: [{
@@ -27,4 +26,4 @@ const config = {
     target: "node"
 };
 
-module.exports = [config];
+export default [config];

@@ -5,9 +5,10 @@
 * Apache License 2.0
 *************************************************************/
 
-const { Abject } = require("../../../abject/abject");
-const { Capability } = require("../../../abject/capability");
-const { getAtomsFromPath } = require("../util");
+import { Abject } from '../../../abject/abject.js';
+
+import { Capability } from '../../../abject/capability.js';
+import { getAtomsFromPath } from '../util.js';
 
 /**
  * Builds a Capability
@@ -87,6 +88,6 @@ async function delegate(capability, url, verbs, expiry, shield, tether, pk, conf
     return [capabilityNext, delegate];
 }
 
-exports.capability = capability;
-exports.authorize = authorize;
-exports.delegate = delegate;
+export { capability };
+export { authorize };
+export { delegate };

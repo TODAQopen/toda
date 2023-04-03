@@ -5,10 +5,11 @@
 * Apache License 2.0
 *************************************************************/
 
-let os = require("os");
-let path = require("path");
+import os from 'os';
+
+import path from 'path';
 let { port, inventory } = require("./src/util").getConfig();
-let { app } = require("./src/server");
+import { app } from './src/server';
 
 let server = app(path.join(os.homedir(), inventory)).listen(port, () => {
     console.log(`Inventory server running on port http://localhost:${port}`);

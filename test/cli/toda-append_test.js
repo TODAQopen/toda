@@ -1,20 +1,13 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
-
-const { Twist } = require("../../src/core/twist");
-const { ByteArray } = require("../../src/core/byte-array");
-const { Sha256 } = require("../../src/core/hash");
-const { SignatureRequirement } = require("../../src/core/reqsat");
-const { ArbitraryPacket } = require("../../src/core/packet");
-const { getTodaPath, getConfigPath, getConfig, getClient } = require("./test-utils");
-const { execSync } = require("child_process");
-const path = require("path");
-const fs = require("fs-extra");
-const assert = require("assert");
+import { Twist } from "../../src/core/twist.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import { Sha256 } from "../../src/core/hash.js";
+import { SignatureRequirement } from "../../src/core/reqsat.js";
+import { ArbitraryPacket } from "../../src/core/packet.js";
+import { getTodaPath, getConfigPath, getConfig, getClient } from "./test-utils.js";
+import { execSync } from "child_process";
+import path from "path";
+// import fs from "fs-extra";
+import assert from "assert";
 
 describe("toda-append", async () => {
 
@@ -70,7 +63,7 @@ describe("toda-append", async () => {
     /** FIXME(acg): MERGE: where did this come from? */
     xit("Should not append if requirements cannot be satisfied", async () => {
         let out = path.resolve(getConfig().store, "toda-append.toda");
-        let invalidKeyPath = `${__dirname}/.toda/secure/id_secp256r1_v2`;
+        let invalidKeyPath = new URL('./.toda/secure/id_secp256r1_v2', import.meta.url)
 
         try {
             execSync(`${getTodaPath()}/toda create --empty --config ${getConfigPath()} --out ${out} --secp256r1 ${getConfig().publicKey}`);

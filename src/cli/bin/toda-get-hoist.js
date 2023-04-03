@@ -6,12 +6,13 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getLead, getHoist } = require("./helpers/rigging");
-const { getFileOrInput, getArgs, getConfig } = require("./util");
-const { logFormatted } = require("./helpers/formatters");
-const { handleProcessException } = require("./helpers/process-exception");
-const { Atoms } = require("../../core/atoms");
-const { Twist } = require("../../core/twist");
+import { getLead, getHoist } from './helpers/rigging';
+
+import { getFileOrInput, getArgs, getConfig } from './util';
+import { logFormatted } from './helpers/formatters';
+import { handleProcessException } from './helpers/process-exception';
+import { Atoms } from '../../core/atoms';
+import { Twist } from '../../core/twist';
 
 // Hoists the specified file up to the specified line
 void async function () {

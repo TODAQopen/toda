@@ -24,7 +24,7 @@ function isNode() {
     return ((typeof document === "undefined") && (typeof navigator === "undefined" || navigator.product !== "ReactNative"));
 }
 
-exports.fourByteInt = fourByteInt;
-exports.noop = noop;
-exports.identity = identity;
-exports.isNode = isNode;
+export { fourByteInt };
+export { noop };
+export { identity };
+export { isNode };

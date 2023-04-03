@@ -6,13 +6,14 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getFileOrInput, getArgs, getAcceptedInputs } = require("./util");
-const { handleProcessException } = require("./helpers/process-exception");
-const { logFormatted, stringifyValues, formatTabDelimited } = require("./helpers/formatters");
-const { getHistory } = require("./helpers/history");
-const { Atoms } = require("../../core/atoms");
-const { Twist } = require("../../core/twist");
-const { Line } = require("../../core/line");
+import { getFileOrInput, getArgs, getAcceptedInputs } from './util.js';
+
+import { handleProcessException } from './helpers/process-exception.js';
+import { logFormatted, stringifyValues, formatTabDelimited } from './helpers/formatters.js';
+import { getHistory } from './helpers/history.js';
+import { Atoms } from '../../core/atoms.js';
+import { Twist } from '../../core/twist.js';
+import { Line } from '../../core/line.js';
 
 const acceptedFields = {
     twist: "00"

@@ -6,9 +6,10 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, formatInputs, write, writeToFile } = require("./util");
-const { capability } = require("./helpers/capability");
-const { handleProcessException } = require("./helpers/process-exception");
+import { getArgs, formatInputs, write, writeToFile } from './util';
+
+import { capability } from './helpers/capability';
+import { handleProcessException } from './helpers/process-exception';
 
 /** Creates a Capability with the specified details.
  * toda capability

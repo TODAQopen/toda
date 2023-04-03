@@ -5,12 +5,13 @@
 * Apache License 2.0
 *************************************************************/
 
-const { BasicBodyPacket, BasicTwistPacket, PairTriePacket } = require("./packet");
-const { Sha256, NullHash } = require("./hash");
-const { HashMap } = require("./map");
-const { Atoms } = require("./atoms");
-const { Shield } = require("./shield");
-const { SignatureRequirement } = require("./reqsat");
+import { BasicBodyPacket, BasicTwistPacket, PairTriePacket } from './packet.js';
+
+import { Sha256, NullHash } from './hash.js';
+import { HashMap } from './map.js';
+import { Atoms } from './atoms.js';
+import { Shield } from './shield.js';
+import { SignatureRequirement } from './reqsat.js';
 
 class MissingHashPacketError extends Error {
     constructor(hash, message) {
@@ -503,7 +504,7 @@ class Twist {
     }
 }
 
-exports.Twist = Twist;
-exports.TwistBuilder = TwistBuilder;
-exports.MissingHashPacketError = MissingHashPacketError;
-exports.ShapeError = ShapeError;
+export { Twist };
+export { TwistBuilder };
+export { MissingHashPacketError };
+export { ShapeError };

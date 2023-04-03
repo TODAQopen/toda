@@ -1,25 +1,19 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
+import { Abject } from "../../src/abject/abject.js";
+import { TodaClient, WaitForHitchError } from "../../src/client/client.js";
+import { SimpleHistoric } from "../../src/abject/simple-historic.js";
+import { SECP256r1 } from "../../src/client/secp256r1.js";
+import { LocalInventoryClient, VirtualInventoryClient } from "../../src/client/inventory.js";
+import { Atoms } from "../../src/core/atoms.js";
+import { Hash, Sha256 } from "../../src/core/hash.js";
+import { PairTriePacket } from "../../src/core/packet.js";
+import { URL } from 'url';
+import nock from "nock";
+import { v4 as uuidv4 } from 'uuid';
 
-const { Abject } = require("../../src/abject/abject");
-const { TodaClient, WaitForHitchError } = require("../../src/client/client");
-const { SimpleHistoric } = require("../../src/abject/simple-historic");
-const { SECP256r1 } = require("../../src/client/secp256r1");
-const { LocalInventoryClient, VirtualInventoryClient } = require("../../src/client/inventory");
-
-const { Atoms } = require("../../src/core/atoms");
-const { Hash, Sha256 } = require("../../src/core/hash");
-
-const { PairTriePacket } = require("../../src/core/packet");
-const { URL } = require('url');
-
-const path = require("path");
-const nock = require("nock");
-const { v4: uuidv4 } = require('uuid');
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
    Returns an Atoms object that contains *only* this body,
@@ -151,5 +145,5 @@ class MockSimpleHistoricRelay
     }
 }
 
-exports.MockSimpleHistoricRelay = MockSimpleHistoricRelay;
-exports.isolateTwist = isolateTwist;
+export { MockSimpleHistoricRelay };
+export { isolateTwist };

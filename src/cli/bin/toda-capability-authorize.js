@@ -6,12 +6,13 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, getFileOrInput, formatInputs , writeToFile, write } = require("./util");
-const { handleProcessException } = require("./helpers/process-exception");
-const { authorize } = require("./helpers/capability");
-const { verifyControl } = require("./helpers/control");
-const { Atoms } = require("../../core/atoms");
-const { Abject } = require("../../abject/abject");
+import { getArgs, getFileOrInput, formatInputs, writeToFile, write } from './util';
+
+import { handleProcessException } from './helpers/process-exception';
+import { authorize } from './helpers/capability';
+import { verifyControl } from './helpers/control';
+import { Atoms } from '../../core/atoms';
+import { Abject } from '../../abject/abject';
 
 /** Authorizes the specified capability
  * toda capability-authorize

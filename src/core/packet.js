@@ -5,10 +5,11 @@
 * Apache License 2.0
 *************************************************************/
 
-const {ByteArray} = require("./byte-array");
-const {fourByteInt} = require("./util");
-const {Hash} = require("./hash");
-const {HashMap} = require("./map");
+import { ByteArray } from './byte-array.js';
+
+import { fourByteInt } from './util.js';
+import { Hash } from './hash.js';
+import { HashMap } from './map.js';
 
 /**
  * Describes a (data) packet.
@@ -526,11 +527,10 @@ class ShapeException extends Error {
 }
 
 
-exports.Packet = Packet;
-exports.ArbitraryPacket = ArbitraryPacket;
-exports.HashPacket = HashPacket;
-exports.PairTriePacket = PairTriePacket;
-exports.BasicTwistPacket = BasicTwistPacket;
-exports.BasicBodyPacket = BasicBodyPacket;
-
-exports.ShapeException = ShapeException;
+export { Packet };
+export { ArbitraryPacket };
+export { HashPacket };
+export { PairTriePacket };
+export { BasicTwistPacket };
+export { BasicBodyPacket };
+export { ShapeException };

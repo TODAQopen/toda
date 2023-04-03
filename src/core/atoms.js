@@ -5,10 +5,11 @@
 * Apache License 2.0
 *************************************************************/
 
-const { ByteArray } = require("./byte-array");
-const { Hash } = require("./hash");
-const { Packet } = require("./packet");
-const { HashMap } = require("./map");
+import { ByteArray } from './byte-array.js';
+
+import { Hash } from './hash.js';
+import { Packet } from './packet.js';
+import { HashMap } from './map.js';
 
 /**
  * Adds helpful utilities when using HashMap as HashMap<Hash,Packet>
@@ -115,4 +116,4 @@ class Atoms extends HashMap {
 
 }
 
-exports.Atoms = Atoms;
+export { Atoms };

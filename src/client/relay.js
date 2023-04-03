@@ -1,11 +1,10 @@
-const { Atoms } = require("../core/atoms");
-const { ByteArray } = require("../core/byte-array");
-const { Sha256 } = require("../core/hash");
-const { Twist } = require("../core/twist");
-const { Line } = require("../core/line");
-const { Interpreter } = require("../core/interpret");
-
-const axios = require("axios");
+import { Atoms } from '../core/atoms.js';
+import { ByteArray } from '../core/byte-array.js';
+import { Sha256 } from '../core/hash.js';
+import { Twist } from '../core/twist.js';
+import { Line } from '../core/line.js';
+import { Interpreter } from '../core/interpret.js';
+import axios from 'axios';
 
 class RelayClient {
 
@@ -109,5 +108,5 @@ class LocalRelayClient extends RelayClient {
     }
 }
 
-exports.LocalRelayClient = LocalRelayClient;
-exports.RemoteRelayClient = RemoteRelayClient;
+export { LocalRelayClient };
+export { RemoteRelayClient };

@@ -1,21 +1,13 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
-
-const { Twist } = require("../../src/core/twist");
-const { ByteArray } = require("../../src/core/byte-array");
-const { Sha256 } = require("../../src/core/hash");
-const { ArbitraryPacket } = require("../../src/core/packet");
-const { Atoms } = require("../../src/core/atoms");
-
-const { getTodaPath, getConfigPath, getConfig  } = require("./test-utils");
-const { execSync } = require("child_process");
-const path = require("path");
-const fs = require("fs-extra");
-const assert = require("assert");
+import { Twist } from "../../src/core/twist.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import { Sha256 } from "../../src/core/hash.js";
+// import { ArbitraryPacket } from "../../src/core/packet";
+import { Atoms } from "../../src/core/atoms.js";
+import { getTodaPath, getConfigPath, getConfig } from "./test-utils.js";
+import { execSync } from "child_process";
+import path from "path";
+import fs from "fs-extra";
+import assert from "assert";
 
 describe("toda-create", async() => {
 

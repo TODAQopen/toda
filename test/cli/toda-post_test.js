@@ -1,35 +1,30 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const util = require("node:util");
-const exec = util.promisify(require("node:child_process").exec);
-const assert = require("assert");
-const { app: invServer } = require("../../src/inventory/src/server");
-const { Atoms } = require("../../src/core/atoms");
-const { Twist } = require("../../src/core/twist");
-const { getAtomsFromPath } = require("../../src/cli/bin/util");
-const { initTestEnv, getTodaPath, getConfigPath, cleanupTestEnv } = require("./test-utils");
-const path = require("path");
-const fs = require("fs/promises");
+import { app as invServer } from "../../src/inventory/src/server.js";
+import { Atoms } from "../../src/core/atoms.js";
+import { Twist } from "../../src/core/twist.js";
+import { getAtomsFromPath } from "../../src/cli/bin/util.js";
+import { getTodaPath, getConfigPath, cleanupTestEnv } from "./test-utils.js";
+import assert from "assert";
+import path from "path";
+import fs from "fs/promises";
+import { exec as unpromisedExec } from "child_process";
+import util from "node:util";
+const exec = util.promisify(unpromisedExec);
 
 xdescribe('toda-post', async() => {
 
-  beforeEach(initTestEnv);
+  // beforeEach(initTestEnv);
   afterEach(cleanupTestEnv);
 
   it('Should send a post request to the configured inventory server', async() => {
     // start an inventory server here
     let invPort = 3210;
-    let server = invServer(__dirname).listen(invPort, () => console.log(`Test inventory is listening on ${invPort}`));
+    let server = invServer(new URL('./', import.meta.url)).listen(invPort, () => console.log(`Test inventory is listening on ${invPort}`));
 
-    let filePath = path.resolve(__dirname, "helpers", "files", "test.toda");
+    let filePath = new URL('./helpers/files/test.toda', import.meta.url);
     let fileHash = new Twist(Atoms.fromBytes(await fs.readFile(filePath))).getHash();
 
-    let expectedFilePath = path.resolve(__dirname, "localhost", `${fileHash}.toda`)
+    let expectedFilePath = new URL(`./localhost/${filehash}.toda`, import.meta.url);
+
     try {
       // --server syntax
       await exec(`${getTodaPath()}/toda post --config ${getConfigPath()} --server http://localhost:${invPort} < ${filePath}` ).then(data => console.log(data));

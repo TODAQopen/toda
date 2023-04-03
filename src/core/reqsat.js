@@ -5,10 +5,11 @@
 * Apache License 2.0
 *************************************************************/
 
-const { ByteArray } = require("./byte-array");
-const { Symbol, Sha256 } = require("./hash");
-const { MemorySyncPacketStore } = require("./store");
-const { PairTriePacket, ArbitraryPacket, HashPacket } = require("./packet");
+import { ByteArray } from './byte-array.js';
+
+import { Symbol, Sha256 } from './hash.js';
+import { MemorySyncPacketStore } from './store.js';
+import { PairTriePacket, ArbitraryPacket, HashPacket } from './packet.js';
 
 class Requirement extends MemorySyncPacketStore {
     static DEFAULT_HASH_IMP = Sha256;
@@ -227,12 +228,10 @@ class RequirementSatisfier {
     }
 }
 
-exports.ReqSatError = ReqSatError;
-exports.RequirementList = RequirementList;
-exports.SignatureRequirement = SignatureRequirement;
-exports.SignatureSatisfaction = SignatureSatisfaction;
-exports.DefaultSignatureSatisfaction = DefaultSignatureSatisfaction;
-
-exports.RequirementMonikers = RequirementMonikers;
-
-exports.RequirementSatisfier = RequirementSatisfier;
+export { ReqSatError };
+export { RequirementList };
+export { SignatureRequirement };
+export { SignatureSatisfaction };
+export { DefaultSignatureSatisfaction };
+export { RequirementMonikers };
+export { RequirementSatisfier };

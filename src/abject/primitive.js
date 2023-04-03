@@ -5,10 +5,11 @@
 * Apache License 2.0
 *************************************************************/
 
-const {ArbitraryPacket} = require("../core/packet");
-const {ByteArray} = require("../core/byte-array");
-const {Abject, AbjectError, AbjectAtomMissingError} = require("./abject");
-const {Hash} = require("../core/hash");
+import { ArbitraryPacket } from '../core/packet.js';
+
+import { ByteArray } from '../core/byte-array.js';
+import { Abject, AbjectError, AbjectAtomMissingError } from './abject.js';
+import { Hash } from '../core/hash.js';
 
 class PrimitiveError extends AbjectError {}
 class PrimitiveFieldMissingError extends PrimitiveError {
@@ -164,9 +165,9 @@ Abject.registerInterpreter(P1Float);
 Abject.registerInterpreter(P1Date);
 Abject.registerInterpreter(P1Boolean);
 
-exports.Primitive = Primitive;
-exports.P1String = P1String;
-exports.P1Float = P1Float;
-exports.P1Date = P1Date;
-exports.P1Boolean = P1Boolean;
+export { Primitive };
+export { P1String };
+export { P1Float };
+export { P1Date };
+export { P1Boolean };
 

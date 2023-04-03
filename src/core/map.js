@@ -72,4 +72,4 @@ class HashMap extends Map {
 
 }
 
-exports.HashMap = HashMap;
+export { HashMap };

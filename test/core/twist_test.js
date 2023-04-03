@@ -1,16 +1,8 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2023
- *
- * Apache License 2.0
- *************************************************************/
-
-const {TwistBuilder} = require("../../src/core/twist");
-const {PairTriePacket} = require("../../src/core/packet");
-const {Sha256} = require("../../src/core/hash");
-const {ByteArray} = require("../../src/core/byte-array");
-
-const assert = require("assert");
+import { TwistBuilder } from "../../src/core/twist.js";
+import { PairTriePacket } from "../../src/core/packet.js";
+import { Sha256 } from "../../src/core/hash.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import assert from "assert";
 
 describe("TwistBuilder/getBodyPacket", () => {
     it("properly merges an existing packet with additional rig entries", () => {

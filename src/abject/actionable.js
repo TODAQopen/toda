@@ -5,14 +5,15 @@
 * Apache License 2.0
 *************************************************************/
 
-const {Hash} = require("../core/hash");
-const {HashMap} = require("../core/map");
-const {Abject} = require("./abject");
-const {Interpreter} = require("../core/interpret");
-const {ByteArray} = require("../core/byte-array");
-const {PairTriePacket} = require("../core/packet");
-const {Twist,TwistBuilder} = require("../core/twist");
-const {Line} = require("../core/line");
+import { Hash } from '../core/hash.js';
+
+import { HashMap } from '../core/map.js';
+import { Abject } from './abject.js';
+import { Interpreter } from '../core/interpret.js';
+import { ByteArray } from '../core/byte-array.js';
+import { PairTriePacket } from '../core/packet.js';
+import { Twist, TwistBuilder } from '../core/twist.js';
+import { Line } from '../core/line.js';
 
 class Actionable extends Abject {
 
@@ -287,6 +288,6 @@ class SimpleRigged extends Actionable {
 }
 
 Abject.registerInterpreter(SimpleRigged);
-exports.Actionable = Actionable;
-exports.SimpleRigged = SimpleRigged;
-exports.DelegableActionable = DelegableActionable;
+export { Actionable };
+export { SimpleRigged };
+export { DelegableActionable };

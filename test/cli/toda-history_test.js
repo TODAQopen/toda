@@ -1,15 +1,7 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
-
-const { Twist } = require("../../src/core/twist");
-const { getTodaPath, getConfigPath, getConfig } = require("./test-utils");
-const { execSync } = require("child_process");
-const path = require("path");
-const assert = require("assert");
+import { Twist } from "../../src/core/twist.js";
+import { getTodaPath, getConfigPath, getConfig } from "./test-utils.js";
+import { execSync } from "child_process";
+import assert from "assert";
 
 describe("toda-history", async() => {
 

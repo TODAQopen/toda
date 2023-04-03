@@ -5,11 +5,12 @@
 * Apache License 2.0
 *************************************************************/
 
-const {Hash} = require("../core/hash");
-const {Abject} = require("./abject");
-const {DelegableActionable} = require("./actionable");
-const {P1Float} = require("./primitive");
-const {DI, DIAssetClassClass, AssetClassField} = require("./di");
+import { Hash } from '../core/hash.js';
+
+import { Abject } from './abject.js';
+import { DelegableActionable } from './actionable.js';
+import { P1Float } from './primitive.js';
+import { DI, DIAssetClassClass, AssetClassField } from './di.js';
 
 
 class DQ extends DelegableActionable {
@@ -159,4 +160,4 @@ DQ.context.addACField(DQ.context.fieldSyms.units, fUnits);
 DQ.context.addACField(DQ.context.fieldSyms.mintingInfo, fMintingInfo);
 
 Abject.registerInterpreter(DQ);
-exports.DQ = DQ;
+export { DQ };

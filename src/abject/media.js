@@ -5,8 +5,9 @@
 * Apache License 2.0
 *************************************************************/
 
-const {Abject} = require("./abject");
-const {Primitive} = require("./primitive");
+import { Abject } from './abject.js';
+
+import { Primitive } from './primitive.js';
 
 class Media extends Abject {
 
@@ -19,4 +20,4 @@ class Media extends Abject {
 
 }
 
-exports.Media = Media;
+export { Media };

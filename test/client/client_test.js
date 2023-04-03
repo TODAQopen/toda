@@ -1,32 +1,25 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
+import { Abject } from "../../src/abject/abject.js";
+import { SimpleHistoric } from "../../src/abject/simple-historic.js";
+import { TodaClient, WaitForHitchError } from "../../src/client/client.js";
+import { SECP256r1 } from "../../src/client/secp256r1.js";
+import { LocalInventoryClient, VirtualInventoryClient } from "../../src/client/inventory.js";
+import { Interpreter } from "../../src/core/interpret.js";
+import { HashMap } from "../../src/core/map.js";
+import { Atoms } from "../../src/core/atoms.js";
+import { Twist } from "../../src/core/twist.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import { Hash, Sha256 } from "../../src/core/hash.js";
+import { PairTriePacket } from "../../src/core/packet.js";
+import { Line } from "../../src/core/line.js";
+import { MockSimpleHistoricRelay, isolateTwist } from "./mocks.js";
+import assert from "assert";
+import fs from "fs-extra";
+import nock from "nock";
 
-const { Abject } = require("../../src/abject/abject");
-const { SimpleHistoric } = require("../../src/abject/simple-historic");
-const { TodaClient, WaitForHitchError } = require("../../src/client/client");
-const { SECP256r1 } = require("../../src/client/secp256r1");
-const { LocalInventoryClient, VirtualInventoryClient } = require("../../src/client/inventory");
-const { Interpreter } = require("../../src/core/interpret");
-
-const { HashMap } = require("../../src/core/map");
-const { Atoms } = require("../../src/core/atoms");
-const { Twist } = require("../../src/core/twist");
-const { ByteArray } = require("../../src/core/byte-array");
-const { Hash, Sha256 } = require("../../src/core/hash");
-const { PairTriePacket } = require("../../src/core/packet");
-
-const { Line } = require("../../src/core/line");
-
-const { MockSimpleHistoricRelay, isolateTwist } = require("./mocks");
-const assert = require("assert");
-const fs = require("fs-extra");
-const path = require("path");
-const nock = require("nock");
-const { v4: uuidv4 } = require('uuid');
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe("create", () => {
 
@@ -316,7 +309,7 @@ describe("pull should include all required info", async () => {
         let aNNNext = await toda.append(aNNext, remoteLine.getHash());
         toda2.inv.put(aNNNext.getAtoms());
 
-        assert(! await toda.isSatisfiable(aNNNext));
+        assert(! (await toda.isSatisfiable(aNNNext)));
         assert(await toda2.isSatisfiable(aNNNext));
 
         // append another fast twist, causing a hitch, requiring previous (local) hoist info
@@ -591,7 +584,7 @@ describe("Deep recursive pull tests", async() => {
             await a.pull(a2_isolated_twist, remote_d.first().getHash());
             await a.isCanonical(a2_isolated_twist, remote_d.first().getHash());
         });
-        
+
     it("Remote recursive pull, with intermediary loose twists", async() =>
         {
             nock.cleanAll();

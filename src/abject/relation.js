@@ -5,9 +5,10 @@
 * Apache License 2.0
 *************************************************************/
 
-const {Abject} = require("./abject");
-const {Symbol} = require("./symbol");
-const {Primitive} = require("./primitive");
+import { Abject } from './abject';
+
+import { Symbol } from './symbol';
+import { Primitive } from './primitive';
 
 class Relation extends Abject {
     static interpreter = Symbol.gen("/interpreters/r1");

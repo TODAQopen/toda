@@ -6,10 +6,11 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, formatInputs } = require("./util");
-const { handleProcessException } = require("./helpers/process-exception");
-const { app } = require("../../inventory/src/server");
-const http = require("http");
+import { getArgs, formatInputs } from './util';
+
+import { handleProcessException } from './helpers/process-exception';
+import { app } from '../../inventory/src/server';
+import http from 'http';
 
 // Starts an inventory server
 void async function () {

@@ -1,12 +1,11 @@
-#!/usr/bin/env node
-const fs = require("fs/promises");
-const { default: axios } = require("axios");
-const { logFormatted } = require("./helpers/formatters");
-const { handleProcessException, ProcessException } = require("./helpers/process-exception");
-const { getArgs, formatInputs } = require("./util");
-const { Hash } = require("../../core/hash");
-const { Atoms } = require("../../core/atoms");
-const path = require("path");
+#!/usr/bin/env nodeimport fs from 'fs/promises';
+import { default as axios } from 'axios';
+import { logFormatted } from './helpers/formatters';
+import { handleProcessException, ProcessException } from './helpers/process-exception';
+import { getArgs, formatInputs } from './util';
+import { Hash } from '../../core/hash';
+import { Atoms } from '../../core/atoms';
+import path from 'path';
 
 void async function () {
     try {

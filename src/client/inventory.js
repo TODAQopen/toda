@@ -1,13 +1,12 @@
 
-const axios = require("axios");
-const fs = require("fs-extra");
-const path = require("path");
-const os = require("os");
-
-const { Atoms } = require("../core/atoms");
-const { ByteArray } = require("../core/byte-array");
-const { HashMap } = require("../core/map");
-const { Line } = require("../core/line");
+import axios from 'axios';
+import fs from 'fs-extra';
+import path from 'path';
+import os from 'os';
+import { Atoms } from '../core/atoms.js';
+import { ByteArray } from '../core/byte-array.js';
+import { HashMap } from '../core/map.js';
+import { Line } from '../core/line.js';
 
 
 // Inventories get and put serialized lists of atoms.
@@ -180,6 +179,6 @@ class VirtualInventoryClient extends InventoryClient {
 
 }
 
-exports.LocalInventoryClient = LocalInventoryClient;
-exports.RemoteInventoryClient = RemoteInventoryClient;
-exports.VirtualInventoryClient = VirtualInventoryClient;
+export { LocalInventoryClient };
+export { RemoteInventoryClient };
+export { VirtualInventoryClient };

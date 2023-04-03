@@ -1,12 +1,5 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const {HashMap} = require("../../src/core/map");
-const assert = require("assert");
+import { HashMap } from "../../src/core/map.js";
+import assert from "assert"
 
 describe("HashMap", () => {
     it("can be cloned", () => {

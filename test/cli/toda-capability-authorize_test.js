@@ -1,20 +1,13 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
-
-const { Abject } = require("../../src/abject/abject");
-const { Capability } = require("../../src/abject/capability");
-const { getAtomsFromPath } = require("../../src/cli/bin/util");
-const { initTestEnv, getTodaPath, getConfigPath, getConfig, cleanupTestEnv } = require("./test-utils");
-const { execSync } = require("child_process");
-const path = require("path");
-const assert = require("assert");
+import { Abject } from "../../src/abject/abject.js";
+import { Capability } from "../../src/abject/capability.js";
+import { getAtomsFromPath } from "../../src/cli/bin/util.js";
+import { getTodaPath, getConfigPath, getConfig, cleanupTestEnv } from "./test-utils.js";
+import { execSync } from "child_process";
+import path from "path";
+import assert from "assert";
 
 xdescribe("toda-capability-authorize", async() => {
-    beforeEach(initTestEnv);
+    // beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 
     it("Should authorize a capability with the correct properties", async() => {

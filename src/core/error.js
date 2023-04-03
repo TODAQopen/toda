@@ -16,4 +16,4 @@ class HashNotFoundError extends Error {
     }
 }
 
-exports.HashNotFoundError = HashNotFoundError;
+export { HashNotFoundError };

@@ -1,12 +1,13 @@
 /*************************************************************
 * TODAQ Open: TODA File Implementation
 * Toronto 2022
-* 
+*
 * Apache License 2.0
 *************************************************************/
 
-const { hydrateHash, formatReqSats } = require("./formatters");
-const { NullHash } = require("../../../core/hash");
+import { hydrateHash, formatReqSats } from './formatters.js';
+
+import { NullHash } from '../../../core/hash.js';
 
 function getHistory(twist) {
     let body = twist.getBody();
@@ -29,4 +30,4 @@ function getHistory(twist) {
     return res;
 }
 
-exports.getHistory = getHistory;
+export { getHistory };

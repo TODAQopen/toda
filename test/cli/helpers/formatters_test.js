@@ -1,24 +1,20 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const { stringifyValues,
+import {
+    stringifyValues,
     toPagedString,
     formatBytes,
     hydrateHash,
     formatReqSats,
     formatBodyPacket,
-    formatTwistPacket } = require("../../../src/cli/bin/helpers/formatters");
-const { Sha256, NullHash, Hash } = require("../../../src/core/hash");
-const { Twist } = require("../../../src/core/twist");
-const { Atoms } = require("../../../src/core/atoms");
-const { ByteArray } = require("../../../src/core/byte-array");
-const assert = require("assert");
-const fs = require("fs-extra");
-const path = require("path");
+    formatTwistPacket,
+} from "../../../src/cli/bin/helpers/formatters.js";
+
+import { Sha256, NullHash, Hash } from "../../../src/core/hash.js";
+import { Twist } from "../../../src/core/twist.js";
+import { Atoms } from "../../../src/core/atoms.js";
+import { ByteArray } from "../../../src/core/byte-array.js";
+import assert from "assert";
+import fs from "fs-extra";
+import path from "path";
 
 describe("stringifyValues", () => {
     it("should format Hash values of an object as strings", () => {
@@ -76,8 +72,7 @@ describe("formatBytes", () => {
 
 describe("hydrateHash", () => {
     it("should build an object that includes the packets associated with each hash value", () => {
-        let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/test.toda")));
-
+        let bytes = new ByteArray(fs.readFileSync(new URL('./files/test.toda', import.meta.url)));
         let twist = new Twist(Atoms.fromBytes(bytes));
 
         let expected = {
@@ -95,7 +90,7 @@ describe("hydrateHash", () => {
 
 describe("formatReqSats", () => {
     it("should build an object that represents the expanded reqs/sats trie", () => {
-        let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/reqsats.toda")));
+        let bytes = new ByteArray(fs.readFileSync(new URL('./files/reqsats.toda', import.meta.url)));
         let twist = new Twist(Atoms.fromBytes(bytes));
 
         let sats = {
@@ -147,7 +142,7 @@ describe("formatReqSats", () => {
 
 describe("formatBodyPacket", () => {
     it("should build an object that represents the expanded body packet", () => {
-        let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/test.toda")));
+        let bytes = new ByteArray(fs.readFileSync( new URL('./files/test.toda', import.meta.url)));
         let twist = new Twist(Atoms.fromBytes(bytes));
 
         let expected = {
@@ -165,7 +160,7 @@ describe("formatBodyPacket", () => {
 
 describe("formatTwistPacket", () => {
     it("should build an object that represents the expanded twist packet", () => {
-        let bytes = new ByteArray(fs.readFileSync(path.resolve(__dirname, "./files/test.toda")));
+        let bytes = new ByteArray(fs.readFileSync( new URL('./files/test.toda', import.meta.url)));
         let twist = new Twist(Atoms.fromBytes(bytes));
 
         let expected = {

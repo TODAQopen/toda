@@ -6,10 +6,11 @@
 * Apache License 2.0
 *************************************************************/
 
-const { handleProcessException } = require("./helpers/process-exception");
-const { ProcessException } = require("./helpers/process-exception");
-const { getArgs, getFileOrHashPath } = require("./util");
-const {exec} = require("child_process");
+import { handleProcessException } from './helpers/process-exception';
+
+import { ProcessException } from './helpers/process-exception';
+import { getArgs, getFileOrHashPath } from './util';
+import { exec } from 'child_process';
 
 void async function () {
     try {

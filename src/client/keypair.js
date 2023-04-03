@@ -1,7 +1,9 @@
+import { RequirementSatisfier, SignatureSatisfaction } from '../core/reqsat.js';
+import { ByteArray } from '../core/byte-array.js';
+import { Crypto } from '@peculiar/webcrypto'
+const crypto = new Crypto();
 
-const fs = require("fs-extra");
-const { RequirementSatisfier, SignatureSatisfaction } = require("../core/reqsat");
-const { ByteArray } = require("../core/byte-array");
+import fs from 'fs-extra';
 
 class KeyPair extends RequirementSatisfier {
 
@@ -236,4 +238,4 @@ class KMSKeyPair extends RequirementSatisfier {
     }
 }
 
-exports.LocalKeyPair = LocalKeyPair;
+export { LocalKeyPair };

@@ -5,12 +5,13 @@
 * Apache License 2.0
 *************************************************************/
 
-const fs = require("fs");
-const { Atoms } = require("./atoms");
-const { HashMap } = require("./map");
-const { BasicTwistPacket, BasicBodyPacket } = require("./packet");
-const { ByteArray } = require("./byte-array");
-const { Twist, MissingHashPacketError } = require("./twist");
+// import fs from './fs';
+
+import { Atoms } from './atoms.js';
+import { HashMap } from './map.js';
+import { BasicTwistPacket, BasicBodyPacket } from './packet.js';
+import { ByteArray } from './byte-array.js';
+import { Twist, MissingHashPacketError } from './twist.js';
 
 class Line {
     /**
@@ -329,4 +330,4 @@ class Line {
     }
 }
 
-exports.Line = Line;
+export { Line };

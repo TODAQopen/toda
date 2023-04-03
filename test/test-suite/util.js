@@ -1,17 +1,9 @@
-/*************************************************************
- * TODAQ Open: TODA File Implementation
- * Toronto 2022
- *
- * Apache License 2.0
- *************************************************************/
+import { Atoms } from "../../src/core/atoms.js";
+import { Abject } from "../../src/abject/abject.js";
+import { Hash } from "../../src/core/hash.js";
+import fs from 'fs';
 
-const {Atoms} = require("../../src/core/atoms");
-const {Abject} = require("../../src/abject/abject");
-const {Hash} = require("../../src/core/hash");
-const path = require('path');
-const fs = require('fs');
-
-const descriptionDirectory = path.join(__dirname, './descriptions');
+const descriptionDirectory = new URL('./descriptions', import.meta.url)
 
 function listTests()
 {
@@ -33,15 +25,15 @@ function parseColour(sym)
 
 function loadInput(fileName)
 {
-    return fs.readFileSync(path.join(__dirname, './inputs/' + fileName));
+    return fs.readFileSync(new URL('./inputs/' + fileName, import.meta.url))
 }
 
 function loadTest(fileName)
 {
-    bytes = fs.readFileSync(path.join(__dirname, './descriptions/' + fileName));
-    atoms = Atoms.fromBytes(bytes);
-    abj = Abject.parse(atoms, atoms.lastAtomHash());
-    linkedFile = Abject.parse(atoms, abj.getFieldHash(linkedInputFile));
+    let bytes = fs.readFileSync(new URL('./descriptions/' + fileName, import.meta.url))
+    let atoms = Atoms.fromBytes(bytes);
+    let abj = Abject.parse(atoms, atoms.lastAtomHash());
+    let linkedFile = Abject.parse(atoms, abj.getFieldHash(linkedInputFile));
     return {"colour": parseColour(abj.getFieldHash(colour)),
             "moniker": Abject.parse(atoms, abj.getFieldHash(moniker)),
             "input": loadInput(linkedFile)};
@@ -54,7 +46,7 @@ const red = Hash.fromHex("22e0194bb1db085d3f6675a255febf60620bdfce80ef53f5fe44c2
 const moniker = Hash.fromHex("22e71e2b7b3ca0425254c242a681b3a0d8d63f3d7c2c53bc4f98ad3271b017915d");
 const linkedInputFile = Hash.fromHex("2255fb096446bb57d0f6d5410a61336a7ed4a4b5fad5c37baf1075a7b2a47763b1");
 
-exports.listTests = listTests;
-exports.loadTest = loadTest;
-exports.colour = colour;
-exports.moniker = moniker;
+export { listTests };
+export { loadTest };
+export { colour };
+export { moniker };

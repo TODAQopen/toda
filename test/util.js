@@ -1,13 +1,6 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const {ByteArray} = require("../src/core/byte-array");
-const {Sha256} = require("../src/core/hash");
-const assert = require("assert");
+import { ByteArray } from "../src/core/byte-array.js";
+import { Sha256 } from "../src/core/hash.js";
+import assert from "assert";
 
 // string-bytes-hash
 function sbh (s) {
@@ -24,6 +17,6 @@ function beq (b1, b2) {
     assert(ByteArray.isEqual(b1, b2));
 }
 
-exports.sbh = sbh;
-exports.bafs = bafs;
-exports.beq = beq;
+export { sbh };
+export { bafs };
+export { beq };

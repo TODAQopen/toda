@@ -19,4 +19,4 @@ function hostnameRouting({enableHostnameRouting}) {
     }
 }
 
-exports.hostnameRouting = hostnameRouting;
+export { hostnameRouting };

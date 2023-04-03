@@ -1,21 +1,26 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
+import {
+    Interpreter,
+    MissingHoistError,
+    MissingPrevious,
+    MissingSuccessor,
+    MissingPostEntry,
+    LooseTwistError,
+} from "../../src/core/interpret.js";
 
-const {Interpreter, MissingHoistError, MissingPrevious, MissingSuccessor, MissingPostEntry, LooseTwistError} = require("../../src/core/interpret");
-const {Line} = require("../../src/core/line");
-const {SerialStore} = require("../../src/core/store");
-const { TodaClient, CannotSatisfyError } = require("../../src/client/client");
-const { SECP256r1 } = require("../../src/client/secp256r1");
-const { KeyPair } = require("../../src/client/keypair");
-const { ByteArray } = require("../../src/core/byte-array");
-const { VirtualInventoryClient } = require("../../src/client/inventory");
-const {Twist, MissingHashPacketError} = require("../../src/core/twist");
-const assert = require("assert");
-const fs = require("fs");
+import { Line } from "../../src/core/line.js";
+import { SerialStore } from "../../src/core/store.js";
+import { TodaClient, CannotSatisfyError } from "../../src/client/client.js";
+import { SECP256r1 } from "../../src/client/secp256r1.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import { VirtualInventoryClient } from "../../src/client/inventory.js";
+import { Twist, MissingHashPacketError } from "../../src/core/twist.js";
+import assert from "assert";
+import fs from "fs";
+
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe("setRequirements", () => {
     it("should set the requirements trie on the twistbuilder", async () => {

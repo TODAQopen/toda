@@ -1,14 +1,7 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const {Primitive, P1String, P1Float, P1Date, P1Boolean} = require("../../src/abject/primitive");
-const {Abject} = require("../../src/abject/abject");
-const {Sha256} = require("../../src/core/hash");
-const assert = require("assert");
+import { Primitive, P1String, P1Float, P1Date, P1Boolean } from "../../src/abject/primitive.js";
+import { Abject } from "../../src/abject/abject.js";
+import { Sha256 } from "../../src/core/hash.js";
+import assert from 'node:assert/strict';
 
 // TODO(acg): A lot of edge-testing with various AbjectErrors, etc.
 

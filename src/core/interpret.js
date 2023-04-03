@@ -5,9 +5,10 @@
 * Apache License 2.0
 *************************************************************/
 
-const {Twist} = require("./twist");
-const {Shield} = require("./shield");
-const {RequirementSatisfier, ReqSatError} = require("./reqsat");
+import { Twist } from './twist.js';
+
+import { Shield } from './shield.js';
+import { RequirementSatisfier, ReqSatError } from './reqsat.js';
 
 
 class InterpreterResult extends Error {
@@ -372,9 +373,9 @@ class Interpreter {
     }
 }
 
-exports.Interpreter = Interpreter;
-exports.MissingHoistError = MissingHoistError;
-exports.MissingPrevious = MissingPrevious;
-exports.MissingSuccessor = MissingSuccessor;
-exports.MissingPostEntry = MissingPostEntry;
-exports.LooseTwistError = LooseTwistError;
+export { Interpreter };
+export { MissingHoistError };
+export { MissingPrevious };
+export { MissingSuccessor };
+export { MissingPostEntry };
+export { LooseTwistError };

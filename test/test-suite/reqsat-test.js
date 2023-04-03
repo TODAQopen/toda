@@ -1,19 +1,12 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-require("../../src/abject/di");
-require("../../src/abject/primitive");
-require("../../src/client/secp256r1");
-const {Atoms} = require("../../src/core/atoms");
-const {Interpreter} = require("../../src/core/interpret");
-const {Line} = require("../../src/core/line");
-const {Twist} = require("../../src/core/twist");
-const util = require('./util');
-const assert = require("assert");
+import "../../src/abject/di.js";
+import "../../src/abject/primitive.js";
+import "../../src/client/secp256r1.js";
+import { Atoms } from "../../src/core/atoms.js";
+import { Interpreter } from "../../src/core/interpret.js";
+import { Line } from "../../src/core/line.js";
+import { Twist } from "../../src/core/twist.js";
+import { listTests, loadTest } from './util.js';
+import assert from "assert";
 
 async function checkInterpret(b)
 {
@@ -50,7 +43,7 @@ function runTest(test)
         else
             it ("Reqsat should fail", async() =>
                 {
-                    assert(!await checkInterpret(test["input"]));
+                    assert(!(await checkInterpret(test["input"])));
                 });
     });
 }
@@ -69,13 +62,13 @@ function testFilter(testName) {
 }
 
 
-let testNames = util.listTests().filter(testFilter);
+let testNames = listTests().filter(testFilter);
 
 describe("test-suite/reqsat-test", () => {
     it("Make sure at least one test was loaded.", () => assert(testNames.length > 0));
 });
 
 testNames.forEach(function (s) {
-    let test = util.loadTest(s);
+    let test = loadTest(s);
     runTest(test);
 });

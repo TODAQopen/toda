@@ -5,11 +5,12 @@
 * Apache License 2.0
 *************************************************************/
 
-const {Hash} = require("../core/hash");
-const {Abject, AbjectError} = require("./abject");
-const {DelegableActionable} = require("./actionable");
-const {DI, DIAssetClassClass, AssetClassField} = require("./di");
-const {P1String} = require("./primitive");
+import { Hash } from '../core/hash.js';
+
+import { Abject, AbjectError } from './abject.js';
+import { DelegableActionable } from './actionable.js';
+import { DI, DIAssetClassClass, AssetClassField } from './di.js';
+import { P1String } from './primitive.js';
 
 class CapabilityError extends AbjectError {
     constructor(cap, msg) {
@@ -185,4 +186,4 @@ Capability.simpleRequestAC.addACField(Capability.simpleRequestAC.fieldSyms.fHttp
 Capability.simpleRequestAC.addACField(Capability.simpleRequestAC.fieldSyms.fNonce,
     fNonce);
 
-exports.Capability = Capability;
+export { Capability };

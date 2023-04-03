@@ -5,10 +5,10 @@
 * Apache License 2.0
 *************************************************************/
 
-let fs = require("fs/promises");
-let path = require("path");
-let { ByteArray } = require("../../core/byte-array");
-let { Atoms } = require("../../core/atoms");
+import { ByteArray } from '../../core/byte-array.js';
+import { Atoms } from '../../core/atoms.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 /**
  * Parses input byte-array into atoms and writes a toda file to disk. Returns the focus hash (serialized)
@@ -55,6 +55,6 @@ async function getFile(invPath, id) {
         .catch(e => e.code == "ENOENT" ? new ByteArray() : Promise.reject(e));
 }
 
-exports.putFile = putFile;
-exports.listFiles = listFiles;
-exports.getFile = getFile;
+export { putFile };
+export { listFiles };
+export { getFile };

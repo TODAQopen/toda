@@ -104,3 +104,4 @@ adot-electron-certs.p12
 
 # Test files
 test/client/files/*
+files/

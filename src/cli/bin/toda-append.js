@@ -6,15 +6,23 @@
 * Apache License 2.0
 *************************************************************/
 
-const { getArgs, getFileOrInput, formatInputs, writeToFile, getFileOrHash, write, getClient, getConfig, setConfig } = require("./util");
-const { handleProcessException } = require("./helpers/process-exception");
+import {
+    getArgs,
+    getFileOrInput,
+    formatInputs,
+    write,
+    getClient,
+    getConfig,
+    setConfig,
+} from './util.js';
 
-const { Atoms } = require("../../core/atoms");
-const { Hash } = require("../../core/hash");
-const { Twist } = require("../../core/twist");
+import { handleProcessException } from './helpers/process-exception.js';
+import { Atoms } from '../../core/atoms.js';
+import { Hash } from '../../core/hash.js';
 
+import DraftLog from "draftlog";
 if (process.stdout.isTTY) {
-    const DraftLog = require("draftlog").into(console);
+    DraftLog(console);
 }
 
 /** Creates a .toda file with the specified details that is a successor to prev
@@ -51,7 +59,7 @@ void async function () {
         let prev = toda.get(Hash.fromHex(args["_"][0]));
 
         //TODO(acg): provide other levels of guarantees - e.g. canonicity.
-        if (!await toda.isSatisfiable(prev)) {
+        if (!(await toda.isSatisfiable(prev))) {
             console.error("not satisfiable.");
             return;
         }

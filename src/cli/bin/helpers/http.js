@@ -1,7 +1,7 @@
-const { Atoms } = require("../../../core/atoms");
-const { ByteArray } = require("../../../core/byte-array");
-const axios = require("axios");
-const { cache } = require("../caching/cache");
+import { Atoms } from '../../../core/atoms.js';
+import { ByteArray } from '../../../core/byte-array.js';
+import { cache } from '../caching/cache.js';
+import axios from 'axios';
 
 /**
  * If the path is a file path that exists, use that - otherwise try to ping it as a line server.
@@ -23,4 +23,4 @@ async function getLineAtoms(path, forceRecache) {
     return atoms;
 }
 
-exports.getLineAtoms = getLineAtoms;
+export { getLineAtoms };

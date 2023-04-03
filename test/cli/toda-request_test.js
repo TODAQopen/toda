@@ -1,28 +1,21 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const { Abject } = require("../../src/abject/abject");
-const { Capability } = require("../../src/abject/capability");
-const { getAtomsFromPath } = require("../../src/cli/bin/util");
-const { initTestEnv, getTodaPath, getConfigPath, getConfig, cleanupTestEnv } = require("./test-utils");
-const { app } = require("../../src/inventory/src/server");
-const { Twist } = require("../../src/core/twist");
-const { Hash } = require("../../src/core/hash");
-const { ByteArray } = require("../../src/core/byte-array");
-const { Atoms } = require("../../src/core/atoms");
-const { execSync } = require("child_process");
-const path = require("path");
-const assert = require("assert");
-const http = require("http");
-const util = require("node:util");
-const exec = util.promisify(require("node:child_process").exec);
+import { Abject } from "../../src/abject/abject.js";
+import { Capability } from "../../src/abject/capability.js";
+import { getAtomsFromPath } from "../../src/cli/bin/util.js";
+import { getTodaPath, getConfigPath, getConfig, cleanupTestEnv } from "./test-utils.js";
+import { app } from "../../src/inventory/src/server.js";
+import { Twist } from "../../src/core/twist.js";
+import { Hash } from "../../src/core/hash.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import { Atoms } from "../../src/core/atoms.js";
+import path from "path";
+import assert from "assert";
+import http from "http";
+import { execSync, exec as unpromisedExec } from "child_process";
+import util from "node:util";
+const exec = util.promisify(unpromisedExec);
 
 xdescribe("toda-request", () => {
-    beforeEach(initTestEnv);
+    // beforeEach(initTestEnv);
     afterEach(cleanupTestEnv);
 
     it("Should authorize a Capability and make a request with it", async () => {

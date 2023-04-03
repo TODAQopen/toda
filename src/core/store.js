@@ -5,12 +5,13 @@
 * Apache License 2.0
 *************************************************************/
 
-const {Packet, BasicTwistPacket, BasicBodyPacket} = require("../core/packet");
-const {Atoms} = require("./atoms");
-const {HashMap} = require("./map");
-const {HashNotFoundError} = require("./error");
-const {ByteArray} = require("../core/byte-array");
-const {Hash} = require("../core/hash");
+import { Packet, BasicTwistPacket, BasicBodyPacket } from '../core/packet.js';
+
+import { Atoms } from './atoms.js';
+import { HashMap } from './map.js';
+import { HashNotFoundError } from './error.js';
+import { ByteArray } from '../core/byte-array.js';
+import { Hash } from '../core/hash.js';
 
 class PacketStore {
 
@@ -354,5 +355,5 @@ class MemorySyncPacketStore extends PacketStore {
 
 }
 
-exports.MemorySyncPacketStore = MemorySyncPacketStore;
-exports.SerialStore = SerialStore;
+export { MemorySyncPacketStore };
+export { SerialStore };

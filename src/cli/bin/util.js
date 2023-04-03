@@ -5,32 +5,36 @@
 * Apache License 2.0
 *************************************************************/
 
-const { Abject } = require("../../abject/abject");
-const { Atoms } = require("../../core/atoms");
-const { NullHash, Sha256, Hash } = require("../../core/hash");
-const { ByteArray } = require("../../core/byte-array");
-const { Twist } = require("../../core/twist");
-const { Line  } = require("../../core/line");
-const { ProcessException } = require("./helpers/process-exception");
-const { formatBytes, logFormatted } = require("./helpers/formatters");
-const { defaults } = require("../defaults");
-const { SignatureRequirement } = require("../../core/reqsat");
+import { Abject } from '../../abject/abject.js';
 
-const { TodaClient } = require("../../client/client");
-const { LocalInventoryClient } = require("../../client/inventory");
-const { SECP256r1 } = require("../../client/secp256r1");
-
-const fs = require("fs-extra");
-const parseArgs = require("minimist");
-const yaml = require("yaml");
-const path = require("path");
-const os = require("os");
-const { v4: uuidv4 } = require("uuid");
-const { getLineAtoms } = require("./helpers/http");
-
+import { Atoms } from '../../core/atoms.js';
+import { NullHash, Sha256, Hash } from '../../core/hash.js';
+import { ByteArray } from '../../core/byte-array.js';
+import { Twist } from '../../core/twist.js';
+import { Line } from '../../core/line.js';
+import { ProcessException } from './helpers/process-exception.js';
+import { formatBytes, logFormatted } from './helpers/formatters.js';
+import { defaults } from '../defaults.js';
+import { SignatureRequirement } from '../../core/reqsat.js';
+import { TodaClient } from '../../client/client.js';
+import { LocalInventoryClient } from '../../client/inventory.js';
+import { SECP256r1 } from '../../client/secp256r1.js';
+import fs from 'fs-extra';
+import parseArgs from 'minimist';
+import yaml from 'yaml';
+import os from 'os';
+import { v4 as uuidv4 } from 'uuid';
+import { getLineAtoms } from './helpers/http.js';
 // Needed to include interpreters
-const { Capability } = require("../../abject/capability");
-const { SimpleHistoric } = require("../../abject/simple-historic");
+import { Capability } from '../../abject/capability.js';
+
+import { SimpleHistoric } from '../../abject/simple-historic.js';
+
+import path from "path";
+import { fileURLToPath } from "url";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 /** Parses and returns the process args using minimist, applying defaults and formatting
  * @param argDefaults <Object> A set of defaults to apply when parsing args using minimist
@@ -434,33 +438,28 @@ function releaseLock(path) {
     fs.rmSync(`${path}.line-lock`);
 }
 
-exports.getClient = getClient;
-exports.getArgs = getArgs;
-exports.formatInputs = formatInputs;
-exports.getVersion = getVersion;
-exports.setConfig = setConfig;
-exports.getConfig = getConfig;
-exports.getPrivateKey = getPrivateKey;
-
-exports.initConfig = initConfig;
-exports.initKeys = initKeys;
-exports.initSalt = initSalt;
-
-exports.getAtomsFromPath = getAtomsFromPath;
-exports.getFileOrInput = getFileOrInput;
-exports.getAcceptedInputs = getAcceptedInputs;
-exports.getInputBytes = getInputBytes;
-exports.getDistinct = getDistinct;
-exports.getPacketSize = getPacketSize;
-
-
-exports.filePathForHash = filePathForHash;
-exports.getFileOrHashPath = getFileOrHashPath;
-exports.getFileOrHash = getFileOrHash;
-exports.parseAbjectOrTwist = parseAbjectOrTwist;
-exports.write = write;
-exports.writeToFile = writeToFile;
-
-exports.lockFile = lockFile;
-exports.releaseLock = releaseLock;
+export { getClient };
+export { getArgs };
+export { formatInputs };
+export { getVersion };
+export { setConfig };
+export { getConfig };
+export { getPrivateKey };
+export { initConfig };
+export { initKeys };
+export { initSalt };
+export { getAtomsFromPath };
+export { getFileOrInput };
+export { getAcceptedInputs };
+export { getInputBytes };
+export { getDistinct };
+export { getPacketSize };
+export { filePathForHash };
+export { getFileOrHashPath };
+export { getFileOrHash };
+export { parseAbjectOrTwist };
+export { write };
+export { writeToFile };
+export { lockFile };
+export { releaseLock };
 

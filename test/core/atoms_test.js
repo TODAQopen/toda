@@ -1,15 +1,8 @@
-/*************************************************************
-* TODAQ Open: TODA File Implementation
-* Toronto 2022
-*
-* Apache License 2.0
-*************************************************************/
-
-const assert = require("assert");
-const { Atoms } = require("../../src/core/atoms");
-const { Sha256 } = require("../../src/core/hash");
-const { ArbitraryPacket } = require("../../src/core/packet");
-const { sbh, bafs } = require("../util");
+import { Atoms } from "../../src/core/atoms.js";
+import { Sha256 } from "../../src/core/hash.js";
+import { ArbitraryPacket } from "../../src/core/packet.js";
+import { sbh, bafs } from "../util.js";
+import assert from "assert";
 
 function phpairFromStr(str) {
     let p = new ArbitraryPacket(bafs(str));

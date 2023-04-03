@@ -5,18 +5,19 @@
 * Apache License 2.0
 *************************************************************/
 
-const {DI} = require("../../src/abject/di");
-const {Actionable} = require("../../src/abject/actionable");
-const {Capability} = require("../../src/abject/capability");
-const {P1String, P1Date} = require("../../src/abject/primitive");
-const {Abject} = require("../../src/abject/abject");
-const {Sha256} = require("../../src/core/hash");
+import {DI} from "../../src/abject/di.js"
+import {Actionable} from "../../src/abject/actionable.js"
+import {Capability} from "../../src/abject/capability.js"
+import {P1String, P1Date} from "../../src/abject/primitive.js"
+import {Abject} from "../../src/abject/abject.js"
+import {Sha256} from "../../src/core/hash.js"
 
-const {TwistBuilder} = require("../../src/core/twist");
-const {ByteArray} = require("../../src/core/byte-array");
-const {Shield} = require("../../src/core/shield");
-const {ArbitraryPacket} = require("../../src/core/packet");
-const assert = require("assert");
+import {TwistBuilder} from "../../src/core/twist.js"
+import {ByteArray} from "../../src/core/byte-array.js"
+import {Shield} from "../../src/core/shield.js"
+import {ArbitraryPacket} from "../../src/core/packet.js"
+import assert from 'node:assert/strict'
+
 
 function sbh (x) {
     return Sha256.fromBytes(new ByteArray(Buffer.from(x)));

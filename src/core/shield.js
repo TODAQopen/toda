@@ -5,7 +5,7 @@
 * Apache License 2.0
 *************************************************************/
 
-const {PairTriePacket} = require("./packet");
+import { PairTriePacket } from './packet.js';
 
 // doesn't really need a class
 class Shield {
@@ -47,4 +47,4 @@ class Shield {
     }
 }
 
-exports.Shield = Shield;
+export { Shield };
