@@ -24,7 +24,7 @@ This package contains the library for interacting with low-level structures, as 
 
 ## Command Line Suite
 
-`npm install -g todajs` using node >= 16 LTS
+`npm install -g todajs` using node >= 16 LTS, < 19
 
 See the [command line tools documentation](docs/cli.md)
 
