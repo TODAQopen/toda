@@ -68,7 +68,7 @@ class P1String extends Primitive {
      */
     constructor(str) {
         super();
-        this.setPrimitiveValue(new ArbitraryPacket(new ByteArray(Buffer.from(str, "utf8"))));
+        this.setPrimitiveValue(new ArbitraryPacket(ByteArray.fromUtf8(str)));
     }
 
     /**
@@ -76,7 +76,7 @@ class P1String extends Primitive {
      * @return <String>
      */
     static parsePrimitive(value) {
-        return Buffer.from(value.getShapedValue()).toString();
+        return value.getShapedValue().toUTF8String();
     }
 }
 
@@ -116,7 +116,7 @@ class P1Date extends Primitive {
      */
     constructor(date) {
         super();
-        this.setPrimitiveValue(new ArbitraryPacket(new ByteArray(Buffer.from(date.toISOString(),"utf8"))));
+        this.setPrimitiveValue(new ArbitraryPacket(ByteArray.fromUtf8(date.toISOString())));
     }
 
     /**

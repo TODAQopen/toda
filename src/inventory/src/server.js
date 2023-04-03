@@ -49,7 +49,7 @@ function app(invPath=__dirname, config={}) {
         return putFile(path.join(invPath, req.toda.subdir), req.body)
             .then(data => {
                 res.setHeader("Content-Type", "application/octet-stream");
-                res.status(201).end(Buffer.from(data));
+                res.status(201).end(data);
             }, next);
     });
 
@@ -57,7 +57,7 @@ function app(invPath=__dirname, config={}) {
         return listFiles(path.join(invPath, req.toda.subdir))
             .then(data => {
                 res.setHeader("Content-Type", "application/octet-stream");
-                res.write(Buffer.from(data));
+                res.write(data);
                 res.end();
             }, next);
     });
@@ -66,7 +66,7 @@ function app(invPath=__dirname, config={}) {
         return getFile(path.join(invPath, req.toda.subdir), req.params.hex)
             .then(data => {
                 res.setHeader("Content-Type", "application/octet-stream");
-                res.write(Buffer.from(data));
+                res.write(data);
                 res.end();
             }, next);
     });

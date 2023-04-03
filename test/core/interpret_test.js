@@ -24,7 +24,7 @@ const __dirname = path.dirname(__filename);
 
 describe("Runs pickled rig tests (v1)", () => {
 
-    const toplineField = Hash.parse(new ByteArray(Buffer.from("41f6813114f5c023d2173d5efe39009f302a782456aa5321ffa905f20c6970c5b8","hex")));
+    const toplineField = Hash.fromHex("41f6813114f5c023d2173d5efe39009f302a782456aa5321ffa905f20c6970c5b8");
 
     let getTopline = function(line, hash) {
         let t = new Twist(line.getAtoms(), hash);

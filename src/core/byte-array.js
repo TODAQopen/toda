@@ -8,9 +8,25 @@
 class ByteArray extends Uint8Array {
 
     // Reads binary data from a string into a buffer.
+    // dx: why does this exist? reco is to use utf8 for everything. making it an alias of fromUtf8
     static fromStr(str) {
-        return new ByteArray(Buffer.from(str, "binary"));
+        return ByteArray.fromUtf8(str)
+        // return new ByteArray(Buffer.from(str, "binary"));
     }
+
+    // Reads utf8 string data into a Uint8Array
+    static fromUtf8(str) {
+        return ByteArray.from(str.split("").map(x => x.charCodeAt()))
+    }
+
+    // Reads hex string data into a Uint8Array
+    static fromHex(str) {
+        let result = [];
+        for(let i = 0; i < str.length; i += 2)
+            result.push(parseInt(str.substring(i, i + 2), 16));
+        return ByteArray.from(result);
+    }
+
 
     concat(x) {
         let res = new ByteArray(this.length + x.length);
@@ -20,15 +36,16 @@ class ByteArray extends Uint8Array {
     }
 
     toString() {
-        return Buffer.from(this).toString("hex");
+        // dx: TODO: use the faster version
+        return this.reduce((acc, n) => acc + (n < 16 ? '0' : '') + n.toString(16), '')
     }
 
     toUTF8String() {
-        return Buffer.from(this).toString();
+        return this.reduce((acc, n) => acc + String.fromCharCode(n), '')
     }
 
     toInt() {
-        return Buffer.from(this).readUInt32BE();
+        return new DataView(this.buffer).getUint32(0, false)
     }
 
     equals(x) {

@@ -54,6 +54,7 @@ class LocalKeyPair extends KeyPair {
         return new ByteArray(await this.exportRawPublicKey());
     }
 
+    // dx: TODO: there's no tests for this function, so I don't know if the buffer conversion worked.
     async toDisk(privateKeyPath, publicKeyPath) {
         let publicKey = await crypto.subtle.exportKey(
             "spki",
@@ -64,10 +65,10 @@ class LocalKeyPair extends KeyPair {
             this.privateKey
         );
         fs.outputFileSync(publicKeyPath,
-                          this.constructor._toPEM(Buffer.from(publicKey), "PUBLIC KEY"), {mode: 0o600});
+                          this.constructor._toPEM(publicKey, "PUBLIC KEY"), {mode: 0o600});
 
         fs.outputFileSync(privateKeyPath,
-                          this.constructor._toPEM(Buffer.from(privateKey), "PRIVATE KEY"), {mode: 0o600});
+                          this.constructor._toPEM(privateKey, "PRIVATE KEY"), {mode: 0o600});
     }
 
     static async fromDisk(privateKeyPath, publicKeyPath) {
@@ -109,7 +110,13 @@ class LocalKeyPair extends KeyPair {
         }
 
         let keyString = pem.slice(headerMatch.index + headerMatch[0].length, footerMatch.index).replace(/\s/g, "");
-        return Buffer.from(keyString, "base64");
+        return ByteArray.fromUtf8(this.base64ToUtf8(keyString));
+    }
+
+    static base64ToUtf8(str) {
+        if(atob instanceof Function)
+            return atob(str)
+        return Buffer.from(keyString, "base64").toString()
     }
 
     static _derConstructLength(arr, len) {

@@ -47,7 +47,7 @@ const formattingFns = {
 void async function () {
     try {
         let args = getArgs();
-        let hash = Hash.parse(new ByteArray(Buffer.from(args["_"][0], "hex")));
+        let hash = Hash.fromHex(args["_"][0]);
 
         let bytes = await getFileOrInput(args["_"][1]);
         let twist = new Twist(Atoms.fromBytes(bytes));

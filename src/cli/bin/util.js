@@ -84,7 +84,7 @@ function filePathForHash(hash) {
 async function formatInputs(args, whitelist) {
     let config = getConfig();
 
-    let shield = args["shield"] ? new ByteArray(Buffer.from(args["shield"], "hex")) : null;
+    let shield = args["shield"] ? ByteArray.fromUtf8(args["shield"]) : null;
     let tether = args["tether"];
     if (tether) {
         tether = Hash.fromHex(tether);
@@ -241,7 +241,7 @@ async function getInputBytes() {
         let data = new ByteArray();
 
         stdin.on("data", function (chunk) {
-            data = data.concat(new ByteArray(Buffer.from(chunk)));
+            data = data.concat(ByteArray.fromUtf8(chunk));
         });
 
         stdin.on("end", function () {
@@ -369,7 +369,7 @@ function getAcceptedInputs(args, acceptedFields, base = {}) {
     return Object.keys(acceptedFields).reduce((obj, fieldName) => {
         return {
             ...obj,
-            [fieldName]: Hash.parse(new ByteArray(Buffer.from(args[fieldName], "hex"))),
+            [fieldName]: Hash.fromHex(args[fieldName]),
         };
     }, base);
 }

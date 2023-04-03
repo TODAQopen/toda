@@ -39,7 +39,7 @@ async function listFiles(invPath) {
         .catch(e => e.code == "ENOENT" ? [] : Promise.reject(e))
         .then(files =>
             files.filter(f => f.search(new RegExp(/^\S+\.toda$/, "i")) > -1)
-                .map(f => new ByteArray(Buffer.from(f.replace(".toda", ""), "hex")))
+                .map(f => ByteArray.fromHex(f.replace(".toda", "")))
                 .reduce((acc, bytes) => acc.concat(bytes), new ByteArray()));
 }
 

@@ -18,7 +18,7 @@ import { Line } from '../core/line.js';
 class Actionable extends Abject {
 
     static fieldSyms = {
-        popTop: Hash.parse(new ByteArray(Buffer.from("22c70173874680c58e5c1d32854bd10486aac6f1aa821b56e3d512fd72e45ac72e","hex"))),
+        popTop: Hash.fromHex("22c70173874680c58e5c1d32854bd10486aac6f1aa821b56e3d512fd72e45ac72e"),
         context : Actionable.gensym("field/context")
     };
 
@@ -151,9 +151,9 @@ class Actionable extends Abject {
 
 class DelegableActionable extends Actionable {
     static fieldSyms = {
-        delegateInitiate: Hash.parse(new ByteArray(Buffer.from("22251dbe656f28f8fd46de35a13c1d74921cb73c1c198800b77eb2417f09435a82","hex"))),
-        delegateConfirm: Hash.parse(new ByteArray(Buffer.from("2246de612f227162a3d60819c45d88ba2d88d74aa86d64f865bf371be5ec8c52f0","hex"))),
-        delegateComplete: Hash.parse(new ByteArray(Buffer.from("229b2a6d33408bc08d1af4ec63f0fb8e627d6e3b4d3f208e90390c3d8df789de34","hex"))),
+        delegateInitiate: Hash.fromHex("22251dbe656f28f8fd46de35a13c1d74921cb73c1c198800b77eb2417f09435a82"),
+        delegateConfirm: Hash.fromHex("2246de612f227162a3d60819c45d88ba2d88d74aa86d64f865bf371be5ec8c52f0"),
+        delegateComplete: Hash.fromHex("229b2a6d33408bc08d1af4ec63f0fb8e627d6e3b4d3f208e90390c3d8df789de34"),
     };
 
     createDelegate() {
@@ -283,7 +283,7 @@ class DelegableActionable extends Actionable {
 }
 
 class SimpleRigged extends Actionable {
-    static interpreter = Hash.parse(new ByteArray(Buffer.from("224a77394f604847ace4358961d501d95c19ec9b9572ee877368a274411daf01fb","hex")));
+    static interpreter = Hash.fromHex("224a77394f604847ace4358961d501d95c19ec9b9572ee877368a274411daf01fb");
 
 }
 

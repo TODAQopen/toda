@@ -108,7 +108,7 @@ class Atoms extends HashMap {
    */
     static fromBytes(bytes) {
         let atoms = new Atoms();
-        for (let [h, p] of Atoms.entries(Buffer.from(bytes))) {
+        for (let [h, p] of Atoms.entries(bytes)) {
             atoms.set(h, p);
         }
         return atoms;

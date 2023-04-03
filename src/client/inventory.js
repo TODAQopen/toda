@@ -40,7 +40,7 @@ class RemoteInventoryClient extends InventoryClient {
             headers: { "Content-Type": "application/octet-stream" },
             // TODO(sfertman): add capability header once inventory server supports it
             responseType: "arraybuffer",
-            data: Buffer.from(bytes)
+            data: bytes
         });
     }
 

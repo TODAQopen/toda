@@ -7,7 +7,7 @@ import { ArbitraryPacket } from "../../src/core/packet.js";
 import assert from 'node:assert/strict'
 
 function sbh (x) {
-    return Sha256.fromBytes(new ByteArray(Buffer.from(x)));
+    return Sha256.fromBytes(ByteArray.fromUtf8(x));
 }
 
 describe("Delegate value", () => {
@@ -16,7 +16,7 @@ describe("Delegate value", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(new ByteArray(Buffer.from("shield")));
+        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
 
         let master = DQ.mint(42);
 

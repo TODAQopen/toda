@@ -7,7 +7,7 @@
 
 import { ByteArray } from './byte-array.js';
 
-import { Symbol, Sha256 } from './hash.js';
+import { Sha256, Hash } from './hash.js';
 import { MemorySyncPacketStore } from './store.js';
 import { PairTriePacket, ArbitraryPacket, HashPacket } from './packet.js';
 
@@ -30,17 +30,19 @@ class Requirement extends MemorySyncPacketStore {
 }
 
 class RequirementList extends Requirement {
-    static REQ_LIST = new Symbol(Sha256.hash(ByteArray.fromStr("reqsatlist")));
+    static REQ_LIST = Hash.symbolFromStr("reqsatlist");
     static REQ_LIST_MONIKER = "requirements";
 
-    static REQ_LIST_DEPRECATED = Sha256.fromBytes(ByteArray.fromStr("reqsatlist"));
+    // static REQ_LIST_DEPRECATED = Sha256.fromBytes(ByteArray.fromStr("reqsatlist"));
 
     constructor(hashImp) {
         super(hashImp, new PairTriePacket());
     }
 
+    // dx: this isn't used anywhere, so I don't know if this conversion is correct
     weightToBytes(weight) {
-        return new ByteArray(Buffer.from([weight]));
+        return new ByteArray([weight]);
+        // return new ByteArray(Buffer.from([weight]));
     }
 
     bytesToWeight(bytes) {
@@ -82,13 +84,13 @@ class RequirementList extends Requirement {
 }
 
 class SignatureRequirement extends Requirement {
-    static REQ_SECP256r1 = new Symbol(Sha256.hash(ByteArray.fromStr("secp256r1")));
+    static REQ_SECP256r1 = Hash.symbolFromStr("secp256r1");
     static REQ_SECP256r1_MONIKER = "SECP256r1";
-    static REQ_ED25519 = new Symbol(Sha256.hash(ByteArray.fromStr("ed25519")));
+    static REQ_ED25519 = Hash.symbolFromStr("ed25519");
     static REQ_ED25519_MONIKER = "ED25519";
 
-    static REQ_SECP256r1_DEPRECATED = Sha256.fromBytes(ByteArray.fromStr("secp256r1"));
-    static REQ_ED25519_DEPRECATED = Sha256.fromBytes(ByteArray.fromStr("ed25519"));
+    // static REQ_SECP256r1_DEPRECATED = Sha256.fromBytes(ByteArray.fromStr("secp256r1"));
+    // static REQ_ED25519_DEPRECATED = Sha256.fromBytes(ByteArray.fromStr("ed25519"));
 
 
     /**
@@ -187,11 +189,11 @@ class UnsupportedRequirementError extends ReqSatError {}
 
 const RequirementMonikers = {
     [RequirementList.REQ_LIST]: RequirementList.REQ_LIST_MONIKER,
-    [RequirementList.REQ_LIST_DEPRECATED]: RequirementList.REQ_LIST_MONIKER,
+    // [RequirementList.REQ_LIST_DEPRECATED]: RequirementList.REQ_LIST_MONIKER,
     [SignatureRequirement.REQ_SECP256r1]: SignatureRequirement.REQ_SECP256r1_MONIKER,
-    [SignatureRequirement.REQ_SECP256r1_DEPRECATED]: SignatureRequirement.REQ_SECP256r1_MONIKER,
+    // [SignatureRequirement.REQ_SECP256r1_DEPRECATED]: SignatureRequirement.REQ_SECP256r1_MONIKER,
     [SignatureRequirement.REQ_ED25519]: SignatureRequirement.REQ_ED25519_MONIKER,
-    [SignatureRequirement.REQ_ED25519_DEPRECATED]: SignatureRequirement.REQ_ED25519_MONIKER,
+    // [SignatureRequirement.REQ_ED25519_DEPRECATED]: SignatureRequirement.REQ_ED25519_MONIKER,
     _: "Unknown"
 };
 

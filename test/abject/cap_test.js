@@ -20,7 +20,7 @@ import assert from 'node:assert/strict'
 
 
 function sbh (x) {
-    return Sha256.fromBytes(new ByteArray(Buffer.from(x)));
+    return Sha256.fromBytes(ByteArray.fromUtf8(x));
 }
 
 describe("Provide cap hashes", () => {
@@ -64,7 +64,7 @@ describe("Cap creation", () => {
 
         masterCap.setFieldHash(Actionable.fieldSyms.popTop, top.getHash());
 
-        let shield = new ArbitraryPacket(new ByteArray(Buffer.from("shield")));
+        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
 
         let masterCapTwist = masterCap.buildTwist();
         masterCapTwist.tetherHash = top.getHash();
@@ -91,7 +91,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(new ByteArray(Buffer.from("shield")));
+        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.de", ["GET","POST","INCINERATE"], new Date(42));
@@ -116,7 +116,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(new ByteArray(Buffer.from("shield")));
+        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.lt", ["GET","POST","INCINERATE"], new Date(42));
@@ -159,7 +159,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(new ByteArray(Buffer.from("shield")));
+        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.de", ["GET","POST","INCINERATE"], new Date(42));
@@ -191,7 +191,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(new ByteArray(Buffer.from("shield")));
+        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.de", ["GET","POST","INCINERATE"], new Date(42));
@@ -223,7 +223,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(new ByteArray(Buffer.from("shield")));
+        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.de", ["GET","POST","INCINERATE"], new Date(42));

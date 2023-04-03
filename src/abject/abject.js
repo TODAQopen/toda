@@ -7,7 +7,7 @@
 
 import { ByteArray } from '../core/byte-array.js';
 
-import { NullHash, Sha256, Symbol } from '../core/hash.js';
+import { NullHash, Sha256, Hash } from '../core/hash.js';
 import { BasicTwistPacket, PairTriePacket, HashPacket } from '../core/packet.js';
 import { HashMap } from '../core/map.js';
 import { Atoms } from '../core/atoms.js';
@@ -312,7 +312,7 @@ class Abject {
         }
         sym += seed;
 
-        return new Symbol(Sha256.hash(new ByteArray(Buffer.from(sym))));
+        return Hash.symbolFromStr(sym);
     }
 
     /**

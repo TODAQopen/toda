@@ -45,7 +45,8 @@ describe("toda-append", async () => {
 
             let pubKey = await importPublicKey(getConfig().publicKey);
             let pubKeyBuffer = await crypto.subtle.exportKey("spki", pubKey);
-            let publicKey = new ByteArray(Buffer.from(pubKeyBuffer));
+            let publicKey = new ByteArray(pubKeyBuffer);
+            // let publicKey = ByteArray.fromUtf8(pubKeyBuffer);
             let keyPacket = new ArbitraryPacket(publicKey);
             let keyPacketHash = SignatureRequirement.DEFAULT_HASH_IMP.fromPacket(keyPacket);
 

@@ -39,8 +39,8 @@ describe("create", () => {
         assert.equal(twist.shield().getShapedValue().length, 32);
         assert.equal(twist.reqs().shapedVal.size, 1);
 
-        //let key = Hash.parse(new ByteArray(Buffer.from("2208318633b506017519e9b90b0bdc8451772415ba29144ab7778cb09cc2d2fa6a", "hex")));
-        //let val = Hash.parse(new ByteArray(Buffer.from("41c3b37b9d9eba8478ae44e1d95f3b6de2a40db91ea9d1e7440914b66b6eb6f932", "hex")));
+        //let key = Hash.fromHex("2208318633b506017519e9b90b0bdc8451772415ba29144ab7778cb09cc2d2fa6a");
+        //let val = Hash.fromHex("41c3b37b9d9eba8478ae44e1d95f3b6de2a40db91ea9d1e7440914b66b6eb6f932");
         //assert(twist.cargo(new NullHash()).equals(SimpleRigged.interpreter));
         //assert.equal(twist.get(twist.cargo(Actionable.fieldSyms.popTop)), cargo.get(Actionable.fieldSyms.popTop));
         //assert.deepEqual(twist.get(twist.cargo(key)), cargo.get(val));

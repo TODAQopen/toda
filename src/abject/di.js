@@ -21,19 +21,19 @@ class DI extends Abject {
     static fieldSyms = {
         assetClass: this.gensym("field/asset-class"),
 
-        ACfields: Hash.parse(new ByteArray(Buffer.from("22d29913f7eb9b76f0a1227d0b34465b7adf2236452e20734197e40da790f1f00d","hex"))),
-        ACFieldrequired: Hash.parse(new ByteArray(Buffer.from("22410489d7e5b4d32f75888c24eb20765342e670fc2616969cbb1fd06e3d3324d5","hex"))),
-        ACFieldtype: Hash.parse(new ByteArray(Buffer.from("22dba83636eaa2a14b9cc219669a4f82b7fe6d08cdd4318b5bfa37d51d47a9bf4f","hex"))),
-        ACFieldlist: Hash.parse(new ByteArray(Buffer.from("2299980d10e44dff83b24b80472098e40ff5fee15d70a3a5d2cfac5c47311929f5","hex"))),
-        ACFieldconsolidation: Hash.parse(new ByteArray(Buffer.from("225c499de98d731839873cd66e4d84532e53162328c377d1b7fc057630d03f0436","hex")))
+        ACfields: Hash.fromHex("22d29913f7eb9b76f0a1227d0b34465b7adf2236452e20734197e40da790f1f00d"),
+        ACFieldrequired: Hash.fromHex("22410489d7e5b4d32f75888c24eb20765342e670fc2616969cbb1fd06e3d3324d5"),
+        ACFieldtype: Hash.fromHex("22dba83636eaa2a14b9cc219669a4f82b7fe6d08cdd4318b5bfa37d51d47a9bf4f"),
+        ACFieldlist: Hash.fromHex("2299980d10e44dff83b24b80472098e40ff5fee15d70a3a5d2cfac5c47311929f5"),
+        ACFieldconsolidation: Hash.fromHex("225c499de98d731839873cd66e4d84532e53162328c377d1b7fc057630d03f0436")
 
     };
 
     static consolidations = {
-        append: Hash.parse(new ByteArray(Buffer.from("2295df977c3405f37820d6b03f54785c35beba127da5cc3d5ec442206d54656376","hex"))),
-        remove: Hash.parse(new ByteArray(Buffer.from("2238cb2d3d05737963c33c391a99b06a3db6d24bbfdc18a00f595d7ab0c386c6e7","hex"))),
-        lastWriteWins: Hash.parse(new ByteArray(Buffer.from("221d98c3cedd4c0ff12458b2e22d270fcf6f45ca8ffaf64dd8eca957599d3ff562","hex"))),
-        firstWriteWins: Hash.parse(new ByteArray(Buffer.from("222276108951a0926d11418a8446b01051177d720227ec2a10bd57c1b4e261f4f3","hex")))
+        append: Hash.fromHex("2295df977c3405f37820d6b03f54785c35beba127da5cc3d5ec442206d54656376"),
+        remove: Hash.fromHex("2238cb2d3d05737963c33c391a99b06a3db6d24bbfdc18a00f595d7ab0c386c6e7"),
+        lastWriteWins: Hash.fromHex("221d98c3cedd4c0ff12458b2e22d270fcf6f45ca8ffaf64dd8eca957599d3ff562"),
+        firstWriteWins: Hash.fromHex("222276108951a0926d11418a8446b01051177d720227ec2a10bd57c1b4e261f4f3")
     };
 
     /**
