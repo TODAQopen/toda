@@ -15,21 +15,21 @@ jobs:
       id-token: write
       contents: read
 
-    steps:
+    strategy:
+      matrix:
+        version: [16, 18]
 
-      - name: Use Node.JS 16.x
-        uses: actions/setup-node@v2
+    steps:
+      - name: Use Node.JS ${{ matrix.version }}
+        uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: ${{ matrix.version }}
 
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: '1'
 
       - name: Build toda
-        run: |
-          npm ci
+        run: npm ci
 
       - name: Test
         run: npm test
