@@ -87,7 +87,7 @@ describe("isValidAndControlled", async () => {
         fs.outputFileSync(linePath, tb.serialize().toBytes());
 
         // create a capability with this poptop, append to it, hoist it locally (should be automatic), verify that integrity and matchy matchy
-        let cap = await capability("http://test-url.com", ["GET"], new Date(), ByteArray.fromStr("foo"), linePath, linePath);
+        let cap = await capability("http://test-url.com", ["GET"], new Date(), ByteArray.fromUtf8("foo"), linePath, linePath);
         let ac = await authorize(cap, "http://localhost", "POST", null, null, linePath, keyPair.privateKey);
         let lt = new Twist(Atoms.fromBytes(await getFileOrInput(linePath)));
 

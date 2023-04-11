@@ -6,15 +6,15 @@ import assert from "assert";
 
 describe("ArbitraryPacket", () => {
     it("can be created, serialized, parsed", () => {
-        let p = Packet.parse(new ArbitraryPacket(ByteArray.fromStr("bbq")).serialize());
+        let p = Packet.parse(new ArbitraryPacket(ByteArray.fromUtf8("bbq")).serialize());
         assert.equal(p.constructor.shapeCode, 0x60);
-        beq(p.getShapedValue(), ByteArray.fromStr("bbq"));
+        beq(p.getShapedValue(), ByteArray.fromUtf8("bbq"));
     });
 });
 
 describe("HashPacket", () => {
     it("can be created, serialized, parsed", () => {
-        let hashes = ["b","b","q"].map((x) => Sha256.fromPacket(new ArbitraryPacket(ByteArray.fromStr(x))));
+        let hashes = ["b","b","q"].map((x) => Sha256.fromPacket(new ArbitraryPacket(ByteArray.fromUtf8(x))));
         let p = Packet.parse(new HashPacket(hashes).serialize());
         assert.equal(p.constructor.shapeCode, 0x61);
         let s = p.getShapedValue();
@@ -26,7 +26,7 @@ describe("HashPacket", () => {
 
 describe("PairTriePacket", () => {
     it("can be created, serialized, parsed", () => {
-        let hashes = ["a","b","c","d"].map((x) => Sha256.fromBytes(ByteArray.fromStr(x)));
+        let hashes = ["a","b","c","d"].map((x) => Sha256.fromBytes(ByteArray.fromUtf8(x)));
         let pairs = [[hashes[1], hashes[0]],
             [hashes[0], hashes[1]]];
         let p = Packet.parse(new PairTriePacket(new Map(pairs)).serialize());
@@ -38,7 +38,7 @@ describe("PairTriePacket", () => {
     });
 
     it("throws on incorrect order", () => {
-        let hashes = ["a","b","c","d"].map((x) => Sha256.fromBytes(ByteArray.fromStr(x)));
+        let hashes = ["a","b","c","d"].map((x) => Sha256.fromBytes(ByteArray.fromUtf8(x)));
         let pairs = [[hashes[0], hashes[1]],
             [hashes[1], hashes[0]]];
         assert.throws(() => new PairTriePacket(new Map(pairs)),

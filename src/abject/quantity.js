@@ -118,18 +118,19 @@ class DQ extends DelegableActionable {
             throw new Error("Value specified is not able to be delegated.");
         }
 
-        if (DQ.safeQuantity(value) <= 0) {
-            throw new Error("Value must be a positive number");
-        }
-
         if (this.value() < value) {
             throw new Error("Value is greater than this DQ's value");
+        }
+
+        let quantity = this.valueToQuantity(value)
+        if (DQ.safeQuantity(quantity) <= 0) {
+            throw new Error("Value must be a positive number");
         }
 
         let x = this.createDelegate();
         let c = new DI();
         c.setAssetClass(DQ.context);
-        c.setFieldAbject(DQ.context.fieldSyms.quantity, new P1Float(this.valueToQuantity(value)));
+        c.setFieldAbject(DQ.context.fieldSyms.quantity, new P1Float(quantity));
         x.setContext(c);
         return x;
     }

@@ -66,7 +66,7 @@ describe("append", () => {
 
         let a = await toda.create(localLine.getHash(), keyPair);
 
-        let externalTetherHash = Sha256.fromBytes(ByteArray.fromStr("foobar"));
+        let externalTetherHash = Sha256.fromBytes(ByteArray.fromUtf8("foobar"));
 
         let b = await toda.append(a, externalTetherHash, keyPair);
 
@@ -92,17 +92,17 @@ describe("append", () => {
 
          let a = await toda.create(localLine.getHash(), keyPair);
 
-         let externalTetherHash = Sha256.fromBytes(ByteArray.fromStr("foobar"));
+         let externalTetherHash = Sha256.fromBytes(ByteArray.fromUtf8("foobar"));
 
          let b = await toda.append(a, localLine.getHash(), keyPair);
 
          let hoist = (await toda.getRelay(a).getHoist(a));
 
          let rigging = new HashMap();
-         let h0 = Sha256.fromBytes(ByteArray.fromStr("h0"));
-         let h1 = Sha256.fromBytes(ByteArray.fromStr("h1"));
-         let h2 = Sha256.fromBytes(ByteArray.fromStr("h2"));
-         let h3 = Sha256.fromBytes(ByteArray.fromStr("h3"));
+         let h0 = Sha256.fromBytes(ByteArray.fromUtf8("h0"));
+         let h1 = Sha256.fromBytes(ByteArray.fromUtf8("h1"));
+         let h2 = Sha256.fromBytes(ByteArray.fromUtf8("h2"));
+         let h3 = Sha256.fromBytes(ByteArray.fromUtf8("h3"));
          rigging.set(h0, h1);
          rigging.set(h2, h3);
 

@@ -41,13 +41,6 @@ class Atoms extends HashMap {
         return this.set(hash, packet);
     }
 
-    copy() {
-        let clone = new Atoms(this);
-        clone.hashes = Object.assign({}, this.hashes);
-        return clone;
-    }
-
-
     /**
    * Retrieves the last atom in the hashmap.
    * (Generally the top-level item of interest)

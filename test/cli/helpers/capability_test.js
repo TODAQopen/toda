@@ -17,7 +17,7 @@ xdescribe("append capability", () => {
     let url = "http://test-url.com";
     let verbs = ["GET", "POST"];
     let expiry = new Date(1660591597);
-    let shield = ByteArray.fromStr("foo");
+    let shield = ByteArray.fromUtf8("foo");
 
     beforeEach(() => setConfig({ line: linePath, poptop: linePath, store: store }));
 
@@ -111,7 +111,7 @@ xdescribe("delegate capability", () => {
     let url = "http://test-url.com";
     let verbs = ["GET", "POST"];
     let expiry = new Date(1660591597);
-    let shield = ByteArray.fromStr("foo");
+    let shield = ByteArray.fromUtf8("foo");
 
     beforeEach(() => setConfig({ line: linePath, poptop: linePath, store: store }));
 

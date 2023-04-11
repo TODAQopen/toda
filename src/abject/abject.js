@@ -215,9 +215,7 @@ class Abject {
      * Returns a new abject using the same atom set with a different focus
      */
     getAbject(focusHash) {
-        //XXX(acg): Tired of derived objects screwing around with OG atom store.
-        //Doing a copy instead.
-        return Abject.parse(this.atoms.copy(), focusHash);
+        return Abject.parse(this.atoms, focusHash);
     }
 
     getFieldHash(fieldSym) {
@@ -276,7 +274,7 @@ class Abject {
             }
             cargoHash = body.getCargoHash();
             if (cargoHash.isNull()) {
-                throw new AbjectError("Abject cargo hash cannot be null");
+                throw new AbjectError(this.atoms, "Abject cargo hash cannot be null");
             }
             cargo = atoms.get(cargoHash);
 
@@ -329,8 +327,9 @@ class Abject {
 class AbjectError extends Error {
     static verbose = false;
 
-    constructor(abjectAtoms) {
+    constructor(abjectAtoms, msg) {
         super();
+        this.msg = msg
         if (abjectAtoms) {
             this.abjectHash = abjectAtoms.lastAtomHash();
 

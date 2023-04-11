@@ -17,7 +17,7 @@ describe("toda-append", async () => {
             let c = await getClient();
             c.inv.deleteAll();
             //return;
-            let h = Sha256.fromBytes(ByteArray.fromStr("foo"));
+            let h = Sha256.fromBytes(ByteArray.fromUtf8("foo"));
             let r = execSync(`${getTodaPath()}/toda create --empty --config ${getConfigPath()}`);
             let rawTwist = Twist.fromBytes(r);
 

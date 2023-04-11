@@ -7,13 +7,6 @@
 
 class ByteArray extends Uint8Array {
 
-    // Reads binary data from a string into a buffer.
-    // dx: why does this exist? reco is to use utf8 for everything. making it an alias of fromUtf8
-    static fromStr(str) {
-        return ByteArray.fromUtf8(str)
-        // return new ByteArray(Buffer.from(str, "binary"));
-    }
-
     // Reads utf8 string data into a Uint8Array
     static fromUtf8(str) {
         return ByteArray.from(str.split("").map(x => x.charCodeAt()))
