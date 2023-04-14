@@ -28,8 +28,7 @@ class Atoms extends HashMap {
         }
         // null hash checks performed by superclass.
 
-        // TODO(dxnn): turn this assertion back on (make it fast and lazy)
-        // hash.assertVerifiesPacket(packet); // throws
+        hash.assertVerifiesPacket(packet); // throws
         return super.set(hash, packet);
     }
 
