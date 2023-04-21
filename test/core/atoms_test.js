@@ -1,7 +1,7 @@
 import { Atoms } from "../../src/core/atoms.js";
 import { Sha256 } from "../../src/core/hash.js";
 import { ArbitraryPacket } from "../../src/core/packet.js";
-import { sbh, bafs } from "../util.js";
+import { bafs } from "../util.js";
 import assert from "assert";
 
 function phpairFromStr(str) {

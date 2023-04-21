@@ -5,8 +5,6 @@
 * Apache License 2.0
 *************************************************************/
 
-import { ByteArray } from '../core/byte-array.js';
-
 import { NullHash, Sha256, Hash } from '../core/hash.js';
 import { BasicTwistPacket, PairTriePacket, HashPacket } from '../core/packet.js';
 import { HashMap } from '../core/map.js';

@@ -8,8 +8,6 @@
 
 import { LocalKeyPair } from './keypair.js';
 import { SignatureRequirement, RequirementSatisfier } from '../core/reqsat.js';
-// import fs from 'fs-extra';
-
 import { Crypto } from '@peculiar/webcrypto'
 const crypto = new Crypto();
 

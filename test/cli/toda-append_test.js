@@ -6,7 +6,6 @@ import { ArbitraryPacket } from "../../src/core/packet.js";
 import { getTodaPath, getConfigPath, getConfig, getClient } from "./test-utils.js";
 import { execSync } from "child_process";
 import path from "path";
-// import fs from "fs-extra";
 import assert from "assert";
 
 describe("toda-append", async () => {

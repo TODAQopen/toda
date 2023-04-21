@@ -184,7 +184,7 @@ class DQ extends DelegableActionable {
     get mintingInfo() {
         if (this.cachedMintingInfo === undefined) {
             let c = this.rootContext();
-            this.cachedDisplayPrecision = !c ? 0 : c.getFieldAbject(DQ.context.fieldSyms.mintingInfo);
+            this.cachedMintingInfo = !c ? null : c.getFieldAbject(DQ.context.fieldSyms.mintingInfo);
         }
         return this.cachedMintingInfo;
     }

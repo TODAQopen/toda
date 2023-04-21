@@ -16,6 +16,7 @@ import { HashMap } from './map.js';
  *
  */
 class Atoms extends HashMap {
+
     /**
    * @param {Hash} hash
    * @param {Packet} packet

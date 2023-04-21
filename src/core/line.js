@@ -5,12 +5,9 @@
 * Apache License 2.0
 *************************************************************/
 
-// import fs from './fs';
-
 import { Atoms } from './atoms.js';
 import { HashMap } from './map.js';
 import { BasicTwistPacket, BasicBodyPacket } from './packet.js';
-import { ByteArray } from './byte-array.js';
 import { Twist, MissingHashPacketError } from './twist.js';
 
 class Line {

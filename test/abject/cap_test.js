@@ -10,18 +10,13 @@ import {Actionable} from "../../src/abject/actionable.js"
 import {Capability} from "../../src/abject/capability.js"
 import {P1String, P1Date} from "../../src/abject/primitive.js"
 import {Abject} from "../../src/abject/abject.js"
-import {Sha256} from "../../src/core/hash.js"
 
 import {TwistBuilder} from "../../src/core/twist.js"
 import {ByteArray} from "../../src/core/byte-array.js"
 import {Shield} from "../../src/core/shield.js"
 import {ArbitraryPacket} from "../../src/core/packet.js"
+import { sbh } from "../util.js";
 import assert from 'node:assert/strict'
-
-
-function sbh (x) {
-    return Sha256.fromBytes(ByteArray.fromUtf8(x));
-}
 
 describe("Provide cap hashes", () => {
     it("gives me hashes", () => {

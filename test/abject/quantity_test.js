@@ -41,17 +41,15 @@ describe("Regular minting works", () => {
         assert.equal(DQ.quantityToDisplay(x.quantity, x.displayPrecision), 4.2e-14);
     });
 
-    xit("Can mint with mintingInfo", async () => {
-
-        // TODO: figure out how to make this work (there's extra atoms in x.mintingInfo)
-
+    it("Can mint with mintingInfo", async () => {
         let mi = new DI();
         mi.setAssetClass(DQ.context); // just need some arbitrary abject
+        mi.setFieldAbject(DQ.context.fieldSyms.quantity, new P1Float(1234567890));
 
         let x = DQ.mint(42, 0, mi);
         assert.equal(x.quantity, 42);
         assert.equal(x.displayPrecision, 0);
-        assert.deepEqual(x.mintingInfo, mi);
+        assert.deepEqual(x.mintingInfo.getFieldAbject(DQ.context.fieldSyms.quantity), mi.getFieldAbject(DQ.context.fieldSyms.quantity));
     });
 });
 
@@ -188,6 +186,8 @@ describe("Delegation works correctly", () => {
           if(!rootNext)
             rootNext = del;
         }
+
+        // putFile('tttt', delNext.serialize().toBytes()) // for debugging
 
         await delNext.checkAllRigs();
         assert.equal(delNext.quantity, 1);
@@ -466,8 +466,6 @@ describe("Probe the edges of delegation", () => {
     });
 
     // TODO: then examine the interactions of second level delegates
-
-    // putFile('tttt', root.serialize().toBytes()) // for debugging
 
 });
 
