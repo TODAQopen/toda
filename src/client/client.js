@@ -344,6 +344,7 @@ class TodaClient {
             //necessarily want to be doing this every time.
             let i = new Interpreter(line, popTopHash);
             try {
+                await i.verifyTopline();
                 await i.verifyHitchLine(twist.getHash());
             } catch (e) {
                 console.error(e);
