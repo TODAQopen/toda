@@ -1,5 +1,7 @@
 import { MemorySyncPacketStore, SerialStore } from  "./src/core/store.js";
-import packageJSON from './package.json' assert { type: 'json' };
+
+import * as fs from 'fs';
+const packageJSON = JSON.parse(fs.readFileSync('./package.json'));
 
 export * as reqsat from  "./src/core/reqsat.js";
 export { Packet } from  "./src/core/packet.js";
