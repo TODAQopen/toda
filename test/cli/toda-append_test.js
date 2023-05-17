@@ -6,7 +6,6 @@ import { ArbitraryPacket } from "../../src/core/packet.js";
 import { getTodaPath, getConfigPath, getConfig, getClient } from "./test-utils.js";
 import { execSync } from "child_process";
 import path from "path";
-// import fs from "fs-extra";
 import assert from "assert";
 
 describe("toda-append", async () => {
@@ -17,7 +16,7 @@ describe("toda-append", async () => {
             let c = await getClient();
             c.inv.deleteAll();
             //return;
-            let h = Sha256.fromBytes(ByteArray.fromStr("foo"));
+            let h = Sha256.fromBytes(ByteArray.fromUtf8("foo"));
             let r = execSync(`${getTodaPath()}/toda create --empty --config ${getConfigPath()}`);
             let rawTwist = Twist.fromBytes(r);
 

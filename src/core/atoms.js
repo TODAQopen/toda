@@ -16,6 +16,7 @@ import { HashMap } from './map.js';
  *
  */
 class Atoms extends HashMap {
+
     /**
    * @param {Hash} hash
    * @param {Packet} packet
@@ -28,8 +29,7 @@ class Atoms extends HashMap {
         }
         // null hash checks performed by superclass.
 
-        // TODO(dxnn): turn this assertion back on (make it fast and lazy)
-        // hash.assertVerifiesPacket(packet); // throws
+        hash.assertVerifiesPacket(packet); // throws
         return super.set(hash, packet);
     }
 
@@ -40,13 +40,6 @@ class Atoms extends HashMap {
 
         return this.set(hash, packet);
     }
-
-    copy() {
-        let clone = new Atoms(this);
-        clone.hashes = Object.assign({}, this.hashes);
-        return clone;
-    }
-
 
     /**
    * Retrieves the last atom in the hashmap.

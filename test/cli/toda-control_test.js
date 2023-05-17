@@ -42,7 +42,7 @@ describe("toda-control", async() => {
 
     it("Should validate a file is not controlled", async () => {
         try {
-            let h = Sha256.fromBytes(ByteArray.fromStr("foo"));
+            let h = Sha256.fromBytes(ByteArray.fromUtf8("foo"));
             let r = execSync(`${getTodaPath()}/toda create --empty --tether ${h.serialize()} --config ${getConfigPath()}`);
             let twist = Twist.fromBytes(r);
             let s = execSync(`${getTodaPath()}/toda control ${twist.getHash().toString()} --config ${getConfigPath()}` );

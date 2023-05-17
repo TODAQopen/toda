@@ -42,7 +42,8 @@ describe("Runs pickled rig tests (v1)", () => {
         await s.copyInto(line);
 
         let i = new Interpreter(line, getTopline(line, s.getPrimaryHash()));
-        return i.verifyHitchLine(s.getPrimaryHash());
+        await i.verifyTopline();
+        await i.verifyHitchLine(s.getPrimaryHash());
     };
 
     let runThrowsTest = async (todaFile, f) => {
@@ -56,6 +57,7 @@ describe("Runs pickled rig tests (v1)", () => {
 
         let err;
         try {
+            await i.verifyTopline();
             await i.verifyHitchLine(s.getPrimaryHash());
             console.log("uh oh");
         } catch (e) {

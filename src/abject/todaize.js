@@ -5,11 +5,11 @@
  * Apache License 2.0
  *************************************************************/
 
-import { DI, DIAssetClassClass, AssetClassField } from './di';
+import { DI, DIAssetClassClass, AssetClassField } from './di.js';
 
-import { SimpleRigged } from './actionable';
-import { P1String, P1Float } from './primitive';
-import { ArbitraryPacket } from '../core/packet';
+import { SimpleRigged } from './actionable.js';
+import { P1String, P1Float } from './primitive.js';
+import { ArbitraryPacket } from '../core/packet.js';
 
 /**
  * Creates a todaized file

@@ -63,6 +63,10 @@ class Hash {
         // return this.serialize().toString();
     }
 
+    toJSON() {
+        return this.toString()
+    }
+
     /**
      * @returns <int> The number of bytes needed to hold the serialized version
      *  of this Hash
@@ -86,7 +90,7 @@ class Hash {
     }
 
     /**
-     * @param <string> a hexadecimal string, beginning with an algoCode
+     * @param <string> a utf8 string
      */
     static symbolFromStr(str) {
         return new Symbol(Sha256.hash(ByteArray.fromUtf8(str)));

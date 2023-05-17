@@ -33,8 +33,6 @@ class RequirementList extends Requirement {
     static REQ_LIST = Hash.symbolFromStr("reqsatlist");
     static REQ_LIST_MONIKER = "requirements";
 
-    // static REQ_LIST_DEPRECATED = Sha256.fromBytes(ByteArray.fromStr("reqsatlist"));
-
     constructor(hashImp) {
         super(hashImp, new PairTriePacket());
     }
@@ -88,10 +86,6 @@ class SignatureRequirement extends Requirement {
     static REQ_SECP256r1_MONIKER = "SECP256r1";
     static REQ_ED25519 = Hash.symbolFromStr("ed25519");
     static REQ_ED25519_MONIKER = "ED25519";
-
-    // static REQ_SECP256r1_DEPRECATED = Sha256.fromBytes(ByteArray.fromStr("secp256r1"));
-    // static REQ_ED25519_DEPRECATED = Sha256.fromBytes(ByteArray.fromStr("ed25519"));
-
 
     /**
    * @param hashImp <Class> the hash imp to use

@@ -1,4 +1,5 @@
 import { Abject } from "../../src/abject/abject.js";
+import { ByteArray } from "../../src/core/byte-array.js";
 import { TodaClient, WaitForHitchError } from "../../src/client/client.js";
 import { SimpleHistoric } from "../../src/abject/simple-historic.js";
 import { SECP256r1 } from "../../src/client/secp256r1.js";
@@ -10,6 +11,8 @@ import { URL } from 'url';
 import nock from "nock";
 import { v4 as uuidv4 } from 'uuid';
 
+import axios from 'axios';
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
@@ -48,24 +51,61 @@ function isolateTwist(twist) {
     return isolated;
 }
 
+/**
+  Runs isolateTwist from <earliestHash> to <twist.getHash()>,
+   merging the results
+  */
+function isolateSegment(twist, earliestHash) {
+    let isolated = new Atoms();
+    let prev = twist;
+    while (prev) {
+        isolated.merge(isolateTwist(prev));
+        if (prev.getHash().equals(earliestHash)) {
+            break;
+        }
+        prev = prev.prev();
+    }
+    isolated.forceSetLast(twist.getHash(), twist.getPacket());
+    return isolated;
+}
 
-class MockSimpleHistoricRelay
-{
-    constructor(thisUrl, tetherUrl) {
+// An interface for creating simple historic lines
+//  Use `startNockServer` if you'd like it to behave
+//  as a remote (instant) relay
+class MockSimpleHistoricRelay {
+    constructor(thisUrl, tetherUrl, toplineHash) {
         this.thisUrl = thisUrl;
         this.tetherUrl = tetherUrl;
+        this.toplineHash = toplineHash;
     }
 
     async initialize() {
         this.kp = await SECP256r1.generate();
         this.logs = [];
         this.dirPath = `${__dirname}/files/` + uuidv4();
+        if (!fs.existsSync(this.dirPath)) {
+            fs.mkdirSync(this.dirPath);
+        }
         this.client = new TodaClient(new LocalInventoryClient(this.dirPath));
-        this.client.shieldSalt = path.resolve(__dirname, "./files/salt");
+        this.client.defaultTopLineHash = this.toplineHash;
+        let saltPath = this.dirPath + "/salt";
+        fs.writeFileSync(saltPath, Buffer.from(uuidv4(), 'utf8'));
+        this.client.shieldSalt = saltPath;
         this.client.addSatisfier(this.kp);
         let firstAbj = new SimpleHistoric();
         firstAbj.set(new Date().toISOString(), this.tetherUrl, this.thisUrl);
-        let first = await this.client.finalizeTwist(firstAbj.buildTwist(), undefined, this.kp);
+        let tether;
+        if (this.tetherUrl) {
+            tether = await axios({
+                method: "GET",
+                url: this.tetherUrl + "/latest",
+                responseType: "arraybuffer"
+            })
+                .then(res => new ByteArray(res.data))
+                .then(res => Hash.parse(res));
+        }
+
+        let first = await this.client.finalizeTwist(firstAbj.buildTwist(), tether, this.kp);
         this.index = [first];
     }
 
@@ -92,43 +132,48 @@ class MockSimpleHistoricRelay
         return [...this.index];
     }
 
-    nockEndpoints(baseUrl) {
-        nock(baseUrl)
+    clearLogs() {
+        this.logs = [];
+    }
+
+    serve() {
+        if (!this.thisUrl) {
+            throw new Error("Wasn't initialized with the parameter 'thisUrl'");
+        }
+        nock(this.thisUrl)
+            .persist()
+            .get('/latest')
+            .reply(200, async (uri, requestBody) => {
+                let response = Buffer.from(this.latest().getHash().serialize());
+                this.logs.push({ method: "get", uri, requestBody, response });
+                return response;
+            });
+
+        nock(this.thisUrl)
             .persist()
             .get('/')
             .reply(200, async (uri, requestBody) => {
-                  let response = Buffer.from(this.latest().getAtoms().toBytes());
-                  this.logs.push({method: "get", uri, requestBody, response});
-                  return response;
-                });
+                let response = Buffer.from(this.latest().getAtoms().toBytes());
+                this.logs.push({ method: "get", uri, requestBody, response });
+                return response;
+            });
 
-        nock(baseUrl)
+        nock(this.thisUrl)
             .persist()
             .get('/')
             .query(queries => queries["start-hash"])
             .reply(200, async (uri, requestBody) => {
-                    let queries = new URL(uri, baseUrl).searchParams;
-                    let startHash = Hash.fromHex(queries.get("start-hash"));
-                    let isolated = new Atoms();
-                    let latestH = this.latest().getHash();
-                    let latestP = this.latest().getPacket();
-                    let prev = this.latest();
-                    while(prev) {
-                        isolated.merge(isolateTwist(prev));
-                        if (prev.getHash().equals(startHash)) {
-                            break;
-                        }
-                        prev = prev.prev();
-                    }
-                    isolated.forceSetLast(latestH, latestP);
-                    let response = Buffer.from(isolated.toBytes());
-                    this.logs.push({method: "get", uri, requestBody, response});
-                    return response;
-                });
+                let queries = new URL(uri, this.thisUrl).searchParams;
+                let startHash = Hash.fromHex(queries.get("start-hash"));
+                let isolated = isolateSegment(this.latest(), startHash);
+                let response = Buffer.from(isolated.toBytes());
+                this.logs.push({ method: "get", uri, requestBody, response });
+                return response;
+            });
 
         // note that in the body of the callback function `this` refers to axios
         let server = this;
-        nock(baseUrl)
+        nock(this.thisUrl)
             .persist()
             .post('/')
             .query({})
@@ -136,14 +181,11 @@ class MockSimpleHistoricRelay
                 let riggingPacket = Atoms.fromBytes(this.req.requestBodyBuffers[0]).lastPacket();
                 // TODO: this is a bit gross; theoretically it could be the latest but it doesn't really matter :shrug:
                 let tether = server.latest().getTetherHash();
-                if (!tether || tether.isNull()) {
-                    tether = server.latest().lastFast()?.getTetherHash();
-                }
                 let next = await server.append(tether, riggingPacket);
-                server.logs.push({method: "post", uri, requestBodyHex});
+                server.logs.push({ method: "post", uri, requestBodyHex });
             });
     }
 }
 
 export { MockSimpleHistoricRelay };
-export { isolateTwist };
+export { isolateTwist, isolateSegment };

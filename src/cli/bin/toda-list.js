@@ -8,9 +8,6 @@
 
 import { getArgs, getConfig, formatInputs, getClient } from './util';
 
-import { Atoms } from '../../core/atoms';
-import { Twist } from '../../core/twist';
-import fs from 'fs-extra';
 import chalk from 'chalk';
 import DraftLog from "draftlog";
 DraftLog(console);

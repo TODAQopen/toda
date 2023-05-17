@@ -4,12 +4,12 @@ import assert from "assert";
 
 // string-bytes-hash
 function sbh (s) {
-    return Sha256.fromBytes(ByteArray.fromStr(s));
+    return Sha256.fromBytes(ByteArray.fromUtf8(s));
 }
 
 // byte-array-from-string
 function bafs (s) {
-    return ByteArray.fromStr(s);
+    return ByteArray.fromUtf8(s);
 }
 
 // asserts the two byte arrays are equal

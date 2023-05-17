@@ -10,7 +10,6 @@ import { Twist } from './twist.js';
 import { Shield } from './shield.js';
 import { RequirementSatisfier, ReqSatError } from './reqsat.js';
 
-
 class InterpreterResult extends Error {
 }
 
@@ -92,6 +91,17 @@ class Interpreter {
             return this.isTopline(prev.hash);
         }
         return false;
+    }
+
+    async verifyTopline() {
+        if (!this.line.get(this.topHash)) {
+            throw MissingError(this.topHash, "Missing topline hash")
+        }
+        let stop = this.line.last(this.topHash);
+        if (!stop) {
+            throw MissingError(this.topHash, "Missing topline successor")
+        }
+        await this.verifyLegitSeg(this.topHash, stop);
     }
 
     /**
@@ -268,6 +278,7 @@ class Interpreter {
     }
 
     /**
+     * Assumption: Topline is already verified
      * @return <Twist> meet
      */
     async verifyHitch(hash) {
@@ -283,9 +294,6 @@ class Interpreter {
         let hoist = this.hitchHoist(hash);
 
         if (this.isTopline(hoist.hash)) {
-            if (!hoist.hash.equals(this.topHash)) {
-                await this.verifyLegitSeg(this.topHash, hoist.hash);
-            }
             return; // bueno
         }
         let presumedLead = this.prevTetheredTwist(hoist.hash);
