@@ -20,6 +20,11 @@ class MissingHashPacketError extends Error {
         this.message = message;
     }
 }
+class MissingPrevError extends MissingHashPacketError {
+    constructor(hash) {
+        super(hash, "Missing previous " + hash);
+    }
+}
 class ShapeError extends Error {
     constructor(hash, msg) {
         super();
@@ -263,7 +268,10 @@ class TwistBuilder {
         if (ph.isNull()) {
             return null;
         }
-        return new Twist(this.atoms, ph);
+        if (this.atoms.get(ph)) {
+            return new Twist(this.atoms, ph);
+        }
+        throw new MissingPrevError(ph);
     }
 
 }
@@ -317,12 +325,19 @@ class Twist {
         return !this.body.getTetherHash().isNull();
     }
 
+    getPrevHash() {
+        return this.body.getPrevHash();
+    }
+
     prev() {
-        let ph = this.body.getPrevHash();
+        let ph = this.getPrevHash();
         if (ph.isNull()) {
             return null;
         }
-        return new Twist(this.atoms, ph);
+        if (this.get(ph)) {
+            return new Twist(this.atoms, ph);
+        }
+        throw new MissingPrevError(ph);
     }
 
     /**
@@ -399,11 +414,15 @@ class Twist {
         return rigging.get(hash);
     }
 
+    getShieldHash() {
+        return this.body.getShieldHash();
+    }
+
     /**
      * @returns <ArbitraryPacket>
      */
     shield() {
-        return this.get(this.body.getShieldHash());
+        return this.get(this.getShieldHash());
     }
 
     tether() {
@@ -502,9 +521,16 @@ class Twist {
         this.atoms = new Atoms([...this.atoms, ...atoms]);
         this.atoms.forceSetLast(h,p);
     }
+
+    safeAddAtom(hash, packet) {
+        let [h,p] = this.atoms.lastAtom();
+        this.atoms.set(hash, packet);
+        this.atoms.forceSetLast(h,p);
+    }
 }
 
 export { Twist };
 export { TwistBuilder };
 export { MissingHashPacketError };
 export { ShapeError };
+export { MissingPrevError };
