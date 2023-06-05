@@ -237,16 +237,29 @@ describe("RemoteNextRelayClient", async () => {
     });
 
     it("should make a hoist request with the correct data", async () => {
-        let scope = nock("https://localhost:8080").post("/");
-        scope.reply(200, (_, requestBody) => requestBody);
+        nock.cleanAll();
+        nock("https://localhost:8080")
+            .post("/")
+            .reply(200, (_, requestBody) => requestBody);
 
         let toda = new TodaClient(new VirtualInventoryClient());
-        let a = await toda.create();
+        toda._getSalt = () => ByteArray.fromHex("012345");
+        let tether = Hash.fromHex("41e6e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4cb829ed640be4");
+        let a = await toda.create(tether)
         let b = await toda.append(a);
+        
 
         let relay = new RemoteNextRelayClient("https://localhost:8080", "http://wikipedia.com", null);
-        return relay.hoist(a, b.getHash(), url).then(r => {
-            assert.equal(r.status, 200);
+        let response = await relay.hoist(a, b.getHash());
+        assert.ok(200, response.status);
+
+        let expectedPairtrie = a.hoistPacket(b.getHash());
+        let expectedKvs = {};
+        expectedPairtrie.getShapedValueFromContent().forEach((v, k) => {
+            expectedKvs[k.toString()] = v.toString();
         });
+        assert.deepEqual(expectedKvs, response.data['hoist-request']);
+        assert.ok(response.data['relay-twist'] == tether.toString());
+        nock.cleanAll();
     });
 });

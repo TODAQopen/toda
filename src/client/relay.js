@@ -115,6 +115,16 @@ class NextRelayClient extends RelayClient {
         this.tetherHash = tetherHash;
     }
 
+    async hoist(prevTwist, nextHash) {
+        let hoistPacket = prevTwist.hoistPacket(nextHash);
+        let data = {'relay-twist': prevTwist.getTetherHash().toString(),
+                    'hoist-request': {}};
+        hoistPacket.getShapedValueFromContent().forEach((v, k) => {
+            data['hoist-request'][k.toString()] = v.toString();
+        });
+        return await this._hoist(data);
+    }
+
     async get() {
         let twists = [...(await this._backwards(this.tetherHash)), ...(await this._forwards(this.tetherHash))];
         if (twists.length == 0) {
@@ -129,7 +139,7 @@ class NextRelayClient extends RelayClient {
         let twist = (await this._getNext(prevHash))?.prev();
         if (!twist) {
             return [];
-        } 
+        }
         if (twist.isTethered()) {
             await this._populateShield(twist);
             return [twist]; // no need to go further back
@@ -163,15 +173,15 @@ class RemoteNextRelayClient extends NextRelayClient {
         this.relayUrl = relayUrl;
     }
 
-    _hoist(atoms) {
+    async _hoist(data) {
         console.log("Hoisting to: ", this.relayUrl.toString());
-        return axios({
+        return await axios({
             method: "POST",
             url: this.relayUrl.toString(),
             headers: {
-                "Content-Type": "application/octet-stream"
+                "Content-Type": "application/json"
             },
-            data: atoms.toBytes()
+            data
         });
     }
 
