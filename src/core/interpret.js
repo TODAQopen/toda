@@ -95,11 +95,11 @@ class Interpreter {
 
     async verifyTopline() {
         if (!this.line.get(this.topHash)) {
-            throw MissingError(this.topHash, "Missing topline hash")
+            throw new MissingError(this.topHash, "Missing topline hash");
         }
         let stop = this.line.last(this.topHash);
         if (!stop) {
-            throw MissingError(this.topHash, "Missing topline successor")
+            throw new MissingError(this.topHash, "Missing topline successor");
         }
         await this.verifyLegitSeg(this.topHash, stop);
     }
