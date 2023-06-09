@@ -9,7 +9,7 @@
 import { Abject } from '../abject/abject.js';
 
 import { ByteArray } from '../core/byte-array.js';
-import { LocalRelayClient, RemoteRelayClient } from './relay.js';
+import { LocalRelayClient, RemoteNextRelayClient, RemoteRelayClient } from './relay.js';
 import { Hash, Sha256, NullHash } from '../core/hash.js';
 import { ArbitraryPacket } from '../core/packet.js';
 import { TwistBuilder, Twist } from '../core/twist.js';
@@ -59,6 +59,18 @@ class TodaClient {
         return null;
     }
 
+    _getRelay(fastTwist, tetherUrl) {
+        console.log("getting relay for:", fastTwist.getHash().toString(), "tethered to:",
+                                          fastTwist.getTetherHash().toString());
+        if (tetherUrl) {
+            return new RemoteRelayClient(tetherUrl);
+        }
+        if (this.get(fastTwist.getTetherHash())) {
+            return new LocalRelayClient(this, fastTwist.getTetherHash());
+        }
+        return this._defaultRelay(fastTwist);
+    }
+
     /**
      * FIXME(acg): This needs to make sure the thing retrieved actually does
      * contain the tether.
@@ -71,19 +83,12 @@ class TodaClient {
             }
             return undefined;
         }
-        console.log("getting relay for:", twist.getHash().toString(), "tethered to:",
-                    twist.getTetherHash().toString());
+        let tetherUrl;
         try {
             let abj = Abject.fromTwist(twist);
-            if (abj && abj.tetherUrl && abj.tetherUrl()) { //duck-duck-go
-                return new RemoteRelayClient(abj.tetherUrl());
-            }
+            tetherUrl = abj?.tetherUrl?.();
         } catch (e) {}
-
-        if (this.get(twist.getTetherHash())) {
-            return new LocalRelayClient(this, twist.getTetherHash());
-        }
-        return this._defaultRelay(twist);
+        return this._getRelay(twist, tetherUrl);
     }
 
     getRelayFromString(relayStr) {
@@ -386,10 +391,45 @@ class TodaClient {
     }
 }
 
+class TodaClientV2 extends TodaClient {
+    constructor(inventory, fileServerUrl) {
+        super(inventory);
+        this.fileServerUrl = fileServerUrl;
+        this.retryTimes = 5;
+        this.retryInterval = 1000;
+    }
+
+    _defaultRelay(fastTwist) {
+        if (this.defaultRelayUrl) {
+            console.log("returning default relay url:", this.defaultRelayUrl);
+            return new RemoteNextRelayClient(this.defaultRelayUrl, this.fileServerUrl, fastTwist.getTetherHash());
+        }
+        console.error("No default relay found.");
+        return null;
+    }
+
+    _getRelay(fastTwist, tetherUrl) {
+        console.log("getting relay for:", fastTwist.getHash().toString(), "tethered to:",
+                                          fastTwist.getTetherHash().toString());
+        if (tetherUrl) {
+            return new RemoteNextRelayClient(tetherUrl, this.fileServerUrl, fastTwist.getTetherHash());
+        }
+        if (this.get(fastTwist.getTetherHash())) {
+            return new LocalRelayClient(this, fastTwist.getTetherHash());
+        }
+        return this._defaultRelay(fastTwist);
+    }
+
+    getRelayFromString() {
+        throw new Error("Not implemented; use getRelay instead");
+    }
+}
+
 class TodaClientError extends Error {}
 class WaitForHitchError extends TodaClientError {}
 class CannotSatisfyError extends TodaClientError {}
 
-export { TodaClient };
-export { WaitForHitchError };
-export { CannotSatisfyError };
+export { TodaClient,
+         TodaClientV2,
+         WaitForHitchError,
+         CannotSatisfyError };

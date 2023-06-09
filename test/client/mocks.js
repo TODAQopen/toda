@@ -187,5 +187,28 @@ class MockSimpleHistoricRelay {
     }
 }
 
+function returnFile(directory, uri) {
+    let fileName = path.join(directory, uri);
+    if (fs.existsSync(fileName)) {
+        return [200, fs.readFileSync(fileName), { 'Content-Type': 'application/octet-stream'}];
+    }
+    return [404];
+}
+
+function nockLocalFileServer(directory, port) {
+    nock("http://localhost:" + port)
+    .persist()
+    .get(/.*/)
+    .reply((uri) => returnFile(directory, uri));
+}
+
+function nock404FileServer(port) {
+    nock("http://localhost:" + port)
+    .persist()
+    .get(/.*/)
+    .reply(() => [404]);
+}
+
 export { MockSimpleHistoricRelay };
 export { isolateTwist, isolateSegment };
+export { nockLocalFileServer, nock404FileServer };

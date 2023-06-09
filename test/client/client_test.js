@@ -1,12 +1,12 @@
 import { Abject } from "../../src/abject/abject.js";
 import { SimpleHistoric } from "../../src/abject/simple-historic.js";
-import { TodaClient, WaitForHitchError } from "../../src/client/client.js";
+import { TodaClient, TodaClientV2, WaitForHitchError } from "../../src/client/client.js";
 import { SECP256r1 } from "../../src/client/secp256r1.js";
 import { LocalInventoryClient, VirtualInventoryClient } from "../../src/client/inventory.js";
 import { Interpreter } from "../../src/core/interpret.js";
 import { HashMap } from "../../src/core/map.js";
 import { Atoms } from "../../src/core/atoms.js";
-import { Twist } from "../../src/core/twist.js";
+import { Twist, TwistBuilder } from "../../src/core/twist.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { Hash, Sha256 } from "../../src/core/hash.js";
 import { PairTriePacket } from "../../src/core/packet.js";
@@ -18,6 +18,7 @@ import nock from "nock";
 
 import path from "path";
 import { fileURLToPath } from "url";
+import { LocalRelayClient, RemoteNextRelayClient } from "../../src/client/relay.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -509,5 +510,55 @@ describe("Deep recursive pull tests", async () => {
 
         await a.client.pull(isolated_twist, remote_d.first().getHash());
         await a.client.isCanonical(isolated_twist, remote_d.first().getHash());
+    });
+});
+
+describe("TodaClientV2", async () => {
+    it("getRelay: Twist has a tether url => use RemoteNextRelayClient", async () => {
+        let inv = new LocalInventoryClient("./files");
+        let toda = new TodaClientV2(inv, "http://localhost:8081");
+        let tether = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
+        let abj = new SimpleHistoric();
+        abj.set("SOMETIMESTAMP", "http://localhost:9000");
+        abj.buildTwist().setTetherHash(tether);
+        abj = abj.createSuccessor();
+        let twist = abj.buildTwist().twist();
+        let relay = toda.getRelay(twist);
+        assert.ok(relay instanceof RemoteNextRelayClient);
+        assert.ok(relay.tetherHash.equals(tether));
+        assert.equal(relay.fileServerUrl, "http://localhost:8081");
+        assert.ok(relay.relayUrl == "http://localhost:9000");
+    });
+
+    it("getRelay: No tether url => use LocalRelay", async () => {
+        let inv = new LocalInventoryClient("./files");
+        let toda = new TodaClientV2(inv, "http://localhost:8081");
+        let tb = new TwistBuilder();
+        tb.setTetherHash = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
+        let tether = tb.twist();
+        tb = new TwistBuilder();
+        tb.setTetherHash(tether.getHash());
+        tb = tb.createSuccessor();
+        let twist = tb.twist();
+        inv.put(tether.getAtoms());
+        let relay = toda.getRelay(twist);
+        assert.ok(relay instanceof LocalRelayClient);
+        assert.ok(relay.hash.equals(tether.getHash()));
+    });
+
+    it("getRelay: No tether url => not in local => use DefaultRelay", async () => {
+        let inv = new LocalInventoryClient("./files");
+        let toda = new TodaClientV2(inv, "http://localhost:8081");
+        toda.defaultRelayUrl = "http://localhost:9000";
+        let tether = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
+        let tb = new TwistBuilder();
+        tb.setTetherHash(tether);
+        tb = tb.createSuccessor();
+        let twist = tb.twist();
+        let relay = toda.getRelay(twist);
+        assert.ok(relay instanceof RemoteNextRelayClient);
+        assert.ok(relay.tetherHash.equals(tether));
+        assert.equal(relay.fileServerUrl, "http://localhost:8081");
+        assert.ok(relay.relayUrl == "http://localhost:9000");
     });
 });

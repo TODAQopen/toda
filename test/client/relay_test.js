@@ -1,10 +1,11 @@
 import { Hash } from "../../src/core/hash.js";
 import { Atoms } from "../../src/core/atoms.js";
-import { RemoteRelayClient, RemoteNextRelayClient } from "../../src/client/relay.js";
+import { RemoteRelayClient, RemoteNextRelayClient, LocalRelayClient } from "../../src/client/relay.js";
 import { TodaClient } from "../../src/client/client.js";
-import { VirtualInventoryClient } from "../../src/client/inventory.js";
+import { LocalInventoryClient, VirtualInventoryClient } from "../../src/client/inventory.js";
 import { Twist } from "../../src/core/twist.js";
 import { ByteArray } from "../../src/core/byte-array.js";
+import { nockLocalFileServer, nock404FileServer } from "./mocks.js";
 import nock from "nock";
 import assert from "assert";
 import fs from "fs-extra";
@@ -135,24 +136,9 @@ describe("RemoteNextRelayClient", async () => {
                         "41e1b0a489cf9a8a8e0da57d18a72bd7f4fca0fe507af4cea607eea804b7d93f3b"];
     const twistHashes = twistHexes.map(x => Hash.fromHex(x));
 
-    function returnFile(uri) {
-        let fileName = path.join("test/client/remoteNextRelay_files", uri);
-        if (fs.existsSync(fileName)) {
-            return [200, fs.readFileSync(fileName), { 'Content-Type': 'application/octet-stream'}];
-        }
-        return [404];
-    }
-
-    function nockLocalFileServer() {
-        nock.cleanAll();
-        nock("http://localhost:8080")
-        .persist()
-        .get(/.*/)
-        .reply(returnFile);
-    }
-
     it("next() from twist when .getNext file doesn't exist", async () => {
-        nockLocalFileServer();
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", null);
         let randomH = Hash.fromHex("41ecb829ed640be46e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4");
         assert.ok(!(await relay._getNext(randomH)));
@@ -160,7 +146,8 @@ describe("RemoteNextRelayClient", async () => {
     });
 
     it("next() from twist when .getNext file exists", async () => {
-        nockLocalFileServer();
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", null);
         let twist = await relay._getNext(twistHashes[2]);
         assert.ok(twist);
@@ -172,7 +159,8 @@ describe("RemoteNextRelayClient", async () => {
     });
 
     it("getShield() for twist when .shield file doesn't exist", async () => {
-        nockLocalFileServer();
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", null);
         let randomH = Hash.fromHex("41ecb829ed640be46e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4");
         assert.ok(!(await relay._getShield(randomH)));
@@ -180,7 +168,8 @@ describe("RemoteNextRelayClient", async () => {
     });
 
     it("getShield() for twist when .shield file does exist", async () => {
-        nockLocalFileServer();
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", null);
         let shield = await relay._getShield(twistHashes[2]);
         assert.ok(shield);
@@ -193,7 +182,8 @@ describe("RemoteNextRelayClient", async () => {
     });
 
     it("get() walks backwards + forwards for loose twist", async () => {
-        nockLocalFileServer();
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", twistHashes[4]);
         let twist = await relay.get();
         assert.ok(twist.getHash().equals(twistHashes[8]));
@@ -212,7 +202,8 @@ describe("RemoteNextRelayClient", async () => {
     });
 
     it("get() no backwards when twist is already fast", async () => {
-        nockLocalFileServer();
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", twistHashes[5]);
         let twist = await relay.get();
         assert.ok(twist.getHash().equals(twistHashes[8]));
@@ -229,7 +220,8 @@ describe("RemoteNextRelayClient", async () => {
     });
 
     it("get() returns nil if nothing available", async () => {
-        nockLocalFileServer();
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let randomH = Hash.fromHex("41ecb829ed640be46e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4");
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", randomH);
         assert.ok(!(await relay.get()));

@@ -210,7 +210,6 @@ class RemoteNextRelayClient extends NextRelayClient {
     }
 }
 
-
 export { LocalRelayClient,
          RemoteRelayClient,
          NextRelayClient,
