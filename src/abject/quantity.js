@@ -12,7 +12,6 @@ import { DelegableActionable } from './actionable.js';
 import { P1Float } from './primitive.js';
 import { DI, DIAssetClassClass, AssetClassField } from './di.js';
 
-
 class DQ extends DelegableActionable {
     static interpreter = Hash.fromHex("220a6a20be9131b708b193e1373aa4df209719e1d3f451836fa62245e4aed234a7");
 

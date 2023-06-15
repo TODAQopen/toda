@@ -6,8 +6,6 @@
  *************************************************************/
 
 //const { keysPaired, SignatureRequirement } = require("../core/reqsat");
-import { Abject } from '../abject/abject.js';
-
 import { ByteArray } from '../core/byte-array.js';
 import { LocalRelayClient, RemoteNextRelayClient, RemoteRelayClient } from './relay.js';
 import { Hash, Sha256, NullHash } from '../core/hash.js';
@@ -15,6 +13,8 @@ import { ArbitraryPacket } from '../core/packet.js';
 import { TwistBuilder, Twist } from '../core/twist.js';
 import { Interpreter } from '../core/interpret.js';
 import { Line } from '../core/line.js';
+import { Abject } from "../../src/abject/abject.js";
+import { DQ } from "../../src/abject/quantity.js";
 import fs from 'fs-extra';
 
 class TodaClient {
@@ -41,6 +41,11 @@ class TodaClient {
         this.retryInterval = 1000;
 
         this.appendLocks = {};
+
+        this.dq = {balances: {},
+                   balanceForceRecalc: {},
+                   balanceCalculating: {},
+                   values: {}};
     }
 
     addSatisfier(rs) {
@@ -224,7 +229,6 @@ class TodaClient {
     async _append(prev, next, tether, req, cargo, preSignHook = () => {}, rigging, { noHoist } = {} ) {
         if (req) {
             // TODO: _potentially_ re-introduce check to ensure we control this key?
-
             // At the moment assumes req is a RequirementSatisfier... a bit brittle.
             next.setKeyRequirement(req.constructor.requirementTypeHash,
                                    await req.exportPublicKey());
@@ -388,6 +392,161 @@ class TodaClient {
 
     listLatest() {
         return this.inv.listLatest();
+    }
+
+    getValue(dq) {
+        let h = dq.getHash();
+        if (!this.dq.values[h]) {
+            this.dq.values[h] = DQ.quantityToDisplay(dq.quantity, dq.displayPrecision);
+        }
+        return this.dq.values[h];
+    }
+
+    getCombinedValue(dqs) {
+        return dqs.reduce((v, dq) => v + this.getValue(dq), 0);
+    }
+
+    async getBalance(typeHash, forceRecalculate) {
+
+        if (!forceRecalculate && this.dq.balances[typeHash]) {
+            return {...this.dq.balances[typeHash],
+                    recalculating: this.isCalculating(typeHash)};
+        }
+        if (forceRecalculate && this.isCalculating(typeHash)) {
+            //"queue" it:
+            this.dq.balanceForceRecalc[typeHash] = true;
+            return;
+        }
+
+        this.dq.balanceCalculating[typeHash] = true;
+        this.dq.balanceForceRecalc[typeHash] = false;
+
+        this.dq.balances[typeHash] = await this._calculateBalance(typeHash);
+
+        this.dq.balanceCalculating[typeHash] = false;
+        if (this.dq.balanceForceRecalc[typeHash]) {
+            // check if there was an import/spend while we were busy.
+            this.getBalance(typeHash, true);
+        }
+        return {...this.dq.balances[typeHash], recalculating: this.isCalculating(typeHash)};
+    }
+
+    isCalculating(typeHash) {
+        return this.dq.balanceCalculating[typeHash];
+    }
+
+    async listLatestControlledAbjects() {
+        let abjs = [];
+        for (let hash of this.listLatest()) {
+            let twist = this.get(hash);
+            if (await this.isSatisfiable(twist)) {
+                abjs.push(Abject.fromTwist(twist));
+            }
+        }
+        return abjs;
+    }
+
+    getControlledByType(typeHash) {
+        let pred = function(abj) {
+            if (abj && abj.rootId) {
+                try {
+                    return abj.rootId().equals(typeHash);
+                } catch (e) {
+                    //hack acg - avoid crash on broekn abjcect
+                    return false;
+                }
+            }
+        };
+        return this.listLatestControlledAbjects().then(lca => lca.filter(pred));
+    }
+
+    async _calculateBalance(typeHash) {
+        let files = await this.getControlledByType(typeHash);
+        return { balance: this.getCombinedValue(files),
+                 type: typeHash.toString(),
+                 files: files.map(f => f.getHash().toString()) };
+        // this formatting seems more like something server.js should deal with
+    }
+
+    /**
+     * @param {DQ} dq
+     * @param {Number} amount
+     * @returns {Promise<Array>} [delegated-value, remaining-value]
+     */
+    async delegateValue(dq, amount) {
+
+        // XXX(acg): PERF - some of these can happen locally without hoisting
+        // all the way to poptop.
+
+        // TODO(acg): There's a really weird amount of back-forth between Abj and
+        // Twist we need to sort out.
+
+        let dqTwist = new Twist(dq.serialize());
+        if (!await this.isSatisfiable(dqTwist)) {
+            throw new Error("Cannot delegate; cannot satisfy dqTwist");
+        }
+
+        // create delegate
+        let quantity = DQ.displayToQuantity(amount, dq.displayPrecision);
+        let dqDel = dq.delegate(quantity);
+        let dqDelTwist = await this._append(null, dqDel.buildTwist(), dqTwist.getTetherHash());
+        // PERF(acg): does the above even need to be fast?
+
+        // Append to delegator for CONFIRM
+        let dqNext = dq.createSuccessor();
+        dqNext.confirmDelegate(Abject.fromTwist(dqDelTwist));
+        let dqNextTwist = await this._append(dqTwist, dqNext.buildTwist(), dqTwist.getTetherHash());
+
+        // Append to delegate for COMPLETE
+        let dqDelNext = Abject.fromTwist(dqDelTwist).createSuccessor();
+        dqDelNext.completeDelegate(Abject.fromTwist(dqNextTwist));
+        let dqDelNextTwist = await this._append(dqDelTwist, dqDelNext.buildTwist(), dqTwist.getTetherHash());
+
+        return [dqDelNextTwist, dqNextTwist];
+    }
+
+    async _transfer(typeHash, twists, destHash) {
+        let newTwists = [];
+        for (let t of twists) {
+            newTwists.push(await this._append(t, Abject.fromTwist(t).createSuccessor().buildTwist(), destHash));
+        }
+
+        //TODO(acg): potentially wait for the balance to actually be recalculated.
+        this.getBalance(typeHash, true);
+        return newTwists;
+    }
+
+    async transfer({ amount, typeHash, destHash }) {
+        let dqs = await this.getControlledByType(typeHash);
+
+        let exact = dqs.find(dq => this.getValue(dq) == amount);
+        if (exact) {
+            return this._transfer(typeHash, [exact], destHash);
+        }
+        let excess = dqs.find(dq => this.getValue(dq) > amount);
+        if (excess) {
+            let [delegated, _] = await this.delegateValue(excess, amount);
+            return this._transfer(typeHash, [delegated], destHash);
+        }
+
+        let selected = [];
+        let cv = 0;
+        for (let dq of dqs) { // select bills until we collect just what we need or a bit more
+            if (cv >= amount) break;
+            selected.push(dq);
+            cv = this.getCombinedValue(selected);
+        }
+        if (cv > amount) { // if more than what we need, frac the last one
+            // XXX(acg): we could be smarter about which to frac
+            let lastBill = selected.pop();
+            let [delegated, _] = await this.delegateValue(lastBill, cv - amount);
+            selected.push(delegated);
+        }
+        if (cv >= amount)
+        {
+            return this._transfer(typeHash, selected, destHash);
+        }
+        throw new Error("Insufficient funds");
     }
 }
 
