@@ -353,13 +353,16 @@ describe("Multi-remote pull test", () => {
         // Test the uri requests called
         let midGetRequests = mid.logs.filter(r => r.method === "get").filter(r => r.uri !== "/latest");
 
-        assert.equal(3, midGetRequests.length);
+        assert.equal(6, midGetRequests.length);
         assert.equal("/", midGetRequests[0].uri);
-        assert.equal("/?start-hash=" + mid.twists()[3].getHash(), midGetRequests[1].uri);
-        assert.equal("/?start-hash=" + mid.twists()[4].getHash(), midGetRequests[2].uri);
+        assert.equal("/", midGetRequests[1].uri);
+        assert.equal("/", midGetRequests[2].uri);
+        assert.equal("/?start-hash=" + mid.twists()[3].getHash(), midGetRequests[3].uri);
+        assert.equal("/", midGetRequests[4].uri);
+        assert.equal("/?start-hash=" + mid.twists()[4].getHash(), midGetRequests[5].uri);
 
         // Double check that the mocked server provided the expected outputs
-        let atomsFromMidGet0 = Atoms.fromBytes(midGetRequests[0].response);
+        let atomsFromMidGet0 = Atoms.fromBytes(midGetRequests[1].response);
         assert.ok(atomsFromMidGet0.get(mid.twists()[0].getHash()));
         assert.ok(atomsFromMidGet0.get(mid.twists()[1].getHash()));
         assert.ok(atomsFromMidGet0.get(mid.twists()[2].getHash()));
@@ -368,7 +371,7 @@ describe("Multi-remote pull test", () => {
         assert.ok(!atomsFromMidGet0.get(mid.twists()[4].getHash()));
         assert.ok(!atomsFromMidGet0.get(mid.twists()[5].getHash()));
 
-        let atomsFromMidGet1 = Atoms.fromBytes(midGetRequests[1].response);
+        let atomsFromMidGet1 = Atoms.fromBytes(midGetRequests[3].response);
         assert.ok(!atomsFromMidGet1.get(mid.twists()[0].getHash()));
         assert.ok(!atomsFromMidGet1.get(mid.twists()[1].getHash()));
         assert.ok(!atomsFromMidGet1.get(mid.twists()[2].getHash()));
@@ -378,7 +381,7 @@ describe("Multi-remote pull test", () => {
         // not made yet
         assert.ok(!atomsFromMidGet1.get(mid.twists()[5].getHash()));
 
-        let atomsFromMidGet2 = Atoms.fromBytes(midGetRequests[2].response);
+        let atomsFromMidGet2 = Atoms.fromBytes(midGetRequests[5].response);
         assert.ok(!atomsFromMidGet2.get(mid.twists()[0].getHash()));
         assert.ok(!atomsFromMidGet2.get(mid.twists()[1].getHash()));
         assert.ok(!atomsFromMidGet2.get(mid.twists()[2].getHash()));

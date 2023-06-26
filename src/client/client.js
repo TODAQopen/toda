@@ -152,6 +152,21 @@ class TodaClient {
         }
     }
 
+    async _waitForHoist(lead, relay) {
+        let attempts = 0;
+        while (attempts < this.retryTimes) {
+            attempts++;
+            let hoist = await relay.getHoist(lead);
+            if (hoist) {
+                return hoist;
+            } else {
+                console.warn("Requerying for hoist...");
+                await new Promise(res => setTimeout(res, this.retryInterval));
+            }
+        }
+        throw new WaitForHitchError();
+    }
+
     async _setPost(tb) {
         const lead = tb.twist().lastFast()?.lastFast();
         if (lead) {
@@ -171,19 +186,8 @@ class TodaClient {
                 throw new WaitForHitchError(); //TODO: specialize this error
             }
 
-            let attempts = 0;
-            while (attempts < this.retryTimes) {
-                attempts++;
-                let hitch = await relay.getHoist(lead);
-                if (hitch) {
-                    tb.addRigging(lead.getHash(), hitch.getHash());
-                    return;
-                } else {
-                    console.warn("Requerying for hitch...");
-                    await new Promise(res => setTimeout(res, this.retryInterval));
-                }
-            }
-            throw new WaitForHitchError();
+            let hoist = await this._waitForHoist(lead, relay);
+            tb.addRigging(lead.getHash(), hoist.getHash());
         }
         //TODO(acg): why wouldn't we also not take advantage of having grabbed
         //all those proof atoms and save em?
@@ -268,7 +272,8 @@ class TodaClient {
                 let nth = nextTwist.getHash();
                 await r.hoist(lastFast, nth);
 
-                // FIXME(acg): Clean up this logic.  Works for basic cases for now
+                await this._waitForHoist(lastFast, r);
+
                 if (r.hash || this.defaultTopLineHash) {
                     await this.pull(nextTwist, r.hash || this.defaultTopLineHash);
                 }
