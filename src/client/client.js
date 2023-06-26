@@ -558,10 +558,18 @@ class TodaClientV2 extends TodaClient {
         this.retryInterval = 1000;
     }
 
+    _backwardsStopPredicate = (backwardsTwist) => {
+        // The backwards step does NOT need to keep going once it sees the popTopHash it's looking for.
+        //  This is particularly important if the pop top does not have any fast twists: the backwards
+        //  step will continue until it sees a fast twist by default, so the backwards step could possibly
+        //  go all the way back to the start of the popTop uneccessarily, which is an expensive operation.
+        return this.defaultTopLineHash && this.defaultTopLineHash.equals(backwardsTwist.getHash());
+    }
+
     _defaultRelay(fastTwist) {
         if (this.defaultRelayUrl) {
             console.log("returning default relay url:", this.defaultRelayUrl);
-            return new RemoteNextRelayClient(this.defaultRelayUrl, this.fileServerUrl, fastTwist.getTetherHash());
+            return new RemoteNextRelayClient(this.defaultRelayUrl, this.fileServerUrl, fastTwist.getTetherHash(), this._backwardsStopPredicate);
         }
         console.error("No default relay found.");
         return null;
@@ -571,7 +579,7 @@ class TodaClientV2 extends TodaClient {
         console.log("getting relay for:", fastTwist.getHash().toString(), "tethered to:",
                                           fastTwist.getTetherHash().toString());
         if (tetherUrl) {
-            return new RemoteNextRelayClient(tetherUrl, this.fileServerUrl, fastTwist.getTetherHash());
+            return new RemoteNextRelayClient(tetherUrl, this.fileServerUrl, fastTwist.getTetherHash(), this._backwardsStopPredicate);
         }
         if (this.get(fastTwist.getTetherHash())) {
             return new LocalRelayClient(this, fastTwist.getTetherHash());

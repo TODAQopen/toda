@@ -109,10 +109,15 @@ class LocalRelayClient extends RelayClient {
     }
 }
 
+/**
+ * @param backwardsStopPredicate <fn(twist) => bool>: if specified, get() will stop
+ *          walking backwards when it sees a twist that matches the predicate
+ */
 class NextRelayClient extends RelayClient {
-    constructor(tetherHash) {
+    constructor(tetherHash, backwardsStopPredicate) {
         super();
         this.tetherHash = tetherHash;
+        this.backwardsStopPredicate = backwardsStopPredicate;
     }
 
     async hoist(prevTwist, nextHash) {
@@ -144,6 +149,9 @@ class NextRelayClient extends RelayClient {
             await this._populateShield(twist);
             return [twist]; // no need to go further back
         }
+        if (this.backwardsStopPredicate && this.backwardsStopPredicate(twist)) {
+            return [twist]; // short circuit
+        }
         return [...(await this._backwards(twist.getPrevHash())), twist];
     }
 
@@ -166,9 +174,13 @@ class NextRelayClient extends RelayClient {
     }
 }
 
+/**
+ * @param backwardsStopPredicate <fn(twist) => bool>: if specified, get() will stop
+ *          walking backwards when it sees a twist that matches the predicate
+ */
 class RemoteNextRelayClient extends NextRelayClient {
-    constructor(relayUrl, fileServerUrl, tetherHash) {
-        super(tetherHash);
+    constructor(relayUrl, fileServerUrl, tetherHash, backwardsStopPredicate) {
+        super(tetherHash, backwardsStopPredicate);
         this.fileServerUrl = fileServerUrl;
         this.relayUrl = relayUrl;
     }

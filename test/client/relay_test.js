@@ -201,6 +201,24 @@ describe("RemoteNextRelayClient", async () => {
         nock.cleanAll();
     });
 
+    it("get() with a `backwardsStopPredicate` behaves as expected", async () => {
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
+        let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", twistHashes[4], (t) => twistHashes[3].equals(t.getHash()));
+        let twist = await relay.get();
+        assert.ok(twist.getHash().equals(twistHashes[8]));
+        assert.ok(twist.get(twistHashes[3])); // Went backwards and stopped at the requested predicate
+        assert.ok(!twist.get(twistHashes[1])); // Does not include prior to that (twists[1])
+
+        // Check that all shields have been populated
+        twist = new Twist(twist.getAtoms(), twistHashes[7]);
+        assert.ok(twist.shield());
+        twist = new Twist(twist.getAtoms(), twistHashes[5]);
+        assert.ok(twist.shield());
+
+        nock.cleanAll();
+    });
+
     it("get() no backwards when twist is already fast", async () => {
         nock.cleanAll();
         nockLocalFileServer("test/client/remoteNextRelay_files", 8080);

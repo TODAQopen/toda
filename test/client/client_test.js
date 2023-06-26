@@ -561,4 +561,32 @@ describe("TodaClientV2", async () => {
         assert.equal(relay.fileServerUrl, "http://localhost:8081");
         assert.ok(relay.relayUrl == "http://localhost:9000");
     });
+
+    it("getRelay: remoteNextRelayClient has correct backwardsStopPredicate set", async () => {
+        let inv = new LocalInventoryClient("./files");
+        let toda = new TodaClientV2(inv, "http://localhost:8081");
+
+        let tb = new TwistBuilder();
+        tb.setPrevHash(Hash.fromHex("41383a4192fb411d0b79cf81e3b763eec6c6d56b76dcee2983196380dd5c43208b"));
+        let toplineTwist = tb.twist();
+        tb = new TwistBuilder();
+        tb.setPrevHash(toplineTwist.getHash());
+        let toplineSuccessor = tb.twist();
+        toda.defaultTopLineHash = toplineTwist.getHash();
+
+        let tether = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
+        let abj = new SimpleHistoric();
+        abj.set("SOMETIMESTAMP", "http://localhost:9000");
+        abj.buildTwist().setTetherHash(tether);
+        abj = abj.createSuccessor();
+        let twist = abj.buildTwist().twist();
+        let relay = toda.getRelay(twist);
+        assert.ok(relay instanceof RemoteNextRelayClient);
+        assert.ok(relay.tetherHash.equals(tether));
+        assert.equal(relay.fileServerUrl, "http://localhost:8081");
+        assert.ok(relay.relayUrl == "http://localhost:9000");
+
+        assert.ok(relay.backwardsStopPredicate(toplineTwist));
+        assert.ok(!relay.backwardsStopPredicate(toplineSuccessor));
+    });
 });
