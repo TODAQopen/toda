@@ -9,13 +9,13 @@ import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { v4 as uuid } from "uuid";
 import { P1String } from "../../src/abject/primitive.js";
 
-async function mint(client, qty, precision)
+async function mint(client, qty, precision, tether)
 {
     let req = await SECP256r1.generate();
     let mintingInfo = new P1String(JSON.stringify({uuid: uuid()}));
     let abj = DQ.mint(qty, precision, mintingInfo);
     client.addSatisfier(req);
-    return await client.finalizeTwist(abj.buildTwist(), null, req);
+    return await client.finalizeTwist(abj.buildTwist(), tether, req);
 }
 
 describe("getValue", async () => {
@@ -165,6 +165,24 @@ describe("delegateValue", async () => {
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
         await assert.rejects(toda.delegateValue(dq, "EIGHTEEN"));
+    });
+
+    it("Delegate value updates its tether", async () => {
+        let inv = new LocalInventoryClient("./files/" + uuid());
+        let toda = new TodaClient(inv, "http://localhost:8000");
+        toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
+
+        let relayTwist0 = await toda.create();
+        let relayTwist1 = await toda.append(relayTwist0);
+
+        let twist = await mint(toda, 43, 1, relayTwist0.getHash());
+        twist.safeAddAtoms(relayTwist1.getAtoms());
+        let dq = Abject.fromTwist(twist);
+        let [delegate, delegator] = await toda.delegateValue(dq, 3.4);
+        assert.ok(twist.getTetherHash().equals(relayTwist0.getHash()));
+        // Delegate + delegator now point to a newer twist
+        assert.ok(delegate.getTetherHash().equals(relayTwist1.getHash()));
+        assert.ok(delegator.getTetherHash().equals(relayTwist1.getHash()));
     });
 });
 

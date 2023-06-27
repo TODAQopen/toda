@@ -491,21 +491,27 @@ class TodaClient {
             throw new Error("Cannot delegate; cannot satisfy dqTwist");
         }
 
+        let dqTether = dqTwist.getTetherHash();
+        if (dqTwist.get(dqTether)) {
+            // Update the tether
+            dqTether = Line.fromAtoms(dqTwist.getAtoms(), dqTether).latestTwist();
+        }
+
         // create delegate
         let quantity = DQ.displayToQuantity(amount, dq.displayPrecision);
         let dqDel = dq.delegate(quantity);
-        let dqDelTwist = await this._append(null, dqDel.buildTwist(), dqTwist.getTetherHash());
+        let dqDelTwist = await this._append(null, dqDel.buildTwist(), dqTether);
         // PERF(acg): does the above even need to be fast?
 
         // Append to delegator for CONFIRM
         let dqNext = dq.createSuccessor();
         dqNext.confirmDelegate(Abject.fromTwist(dqDelTwist));
-        let dqNextTwist = await this._append(dqTwist, dqNext.buildTwist(), dqTwist.getTetherHash());
+        let dqNextTwist = await this._append(dqTwist, dqNext.buildTwist(), dqTether);
 
         // Append to delegate for COMPLETE
         let dqDelNext = Abject.fromTwist(dqDelTwist).createSuccessor();
         dqDelNext.completeDelegate(Abject.fromTwist(dqNextTwist));
-        let dqDelNextTwist = await this._append(dqDelTwist, dqDelNext.buildTwist(), dqTwist.getTetherHash());
+        let dqDelNextTwist = await this._append(dqDelTwist, dqDelNext.buildTwist(), dqTether);
 
         return [dqDelNextTwist, dqNextTwist];
     }
