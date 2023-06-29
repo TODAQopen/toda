@@ -121,8 +121,8 @@ class NextRelayClient extends RelayClient {
     }
 
     async hoist(prevTwist, nextHash) {
-        let hoistPacket = prevTwist.hoistPacket(nextHash);
-        let data = {'relay-twist': prevTwist.getTetherHash().toString(),
+        const hoistPacket = prevTwist.hoistPacket(nextHash);
+        const data = {'relay-twist': prevTwist.getTetherHash().toString(),
                     'hoist-request': {}};
         hoistPacket.getShapedValueFromContent().forEach((v, k) => {
             data['hoist-request'][k.toString()] = v.toString();
@@ -131,17 +131,22 @@ class NextRelayClient extends RelayClient {
     }
 
     async get() {
-        let twists = [...(await this._backwards(this.tetherHash)), ...(await this._forwards(this.tetherHash))];
+        let t = Date.now();
+        const backwardsPromise = this._backwards(this.tetherHash);
+        const forwardsPromise = this._forwards(this.tetherHash);
+        const twists = [...(await backwardsPromise), ...(await forwardsPromise)];
         if (twists.length == 0) {
             return null;
         }
-        let twist = twists.slice(-1)[0];
-        twists.forEach(t => twist.safeAddAtoms(t.getAtoms()));
+        const twist = twists.slice(-1)[0];
+        // Significantly more performant than `forEach(twist.safeAdd...`
+        const atoms = new Atoms(twists.flatMap(tw => [...tw.getAtoms().entries()]));
+        twist.safeAddAtoms(atoms);
         return twist;
     }
 
     async _backwards(prevHash) {
-        let twist = (await this._getNext(prevHash))?.prev();
+        const twist = (await this._getNext(prevHash))?.prev();
         if (!twist) {
             return [];
         }
@@ -156,7 +161,7 @@ class NextRelayClient extends RelayClient {
     }
 
     async _forwards(nextHash) {
-        let twist = await this._getNext(nextHash);
+        const twist = await this._getNext(nextHash);
         if (!twist) {
             return [];
         }
@@ -167,7 +172,7 @@ class NextRelayClient extends RelayClient {
     }
 
     async _populateShield(twist) {
-        let shield = await this._getShield(twist.getHash());
+        const shield = await this._getShield(twist.getHash());
         if (shield) {
             twist.safeAddAtom(twist.getShieldHash(), shield);
         }
@@ -198,7 +203,7 @@ class RemoteNextRelayClient extends NextRelayClient {
     }
 
     async _getNext(twistHash) {
-        let resp = await axios({
+        const resp = await axios({
             method: "GET",
             url: "/" + twistHash + ".next.toda",
             baseURL: this.fileServerUrl,
@@ -210,7 +215,7 @@ class RemoteNextRelayClient extends NextRelayClient {
     }
 
     async _getShield(twistHash) {
-        let resp = await axios({
+        const resp = await axios({
             method: "GET",
             url: "/" + twistHash + ".shield",
             baseURL: this.fileServerUrl,
