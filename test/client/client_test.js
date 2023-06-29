@@ -57,7 +57,6 @@ describe("create", async () => {
 });
 
 describe("append", async () => {
-
     it("should append to a twist with the correct properties", async () => {
         let keyPair = await SECP256r1.generate();
         let toda = new TodaClient(new LocalInventoryClient("./files"));
@@ -214,6 +213,23 @@ describe("append", async () => {
         line.addAtoms(t1.getAtoms());
         let i = new Interpreter(line, undefined);
         await i.verifyReqSat(SECP256r1.requirementTypeHash, t0, t1);
+    });
+
+    it("append automatically updates tether where possible", async () => {
+        let keyPair = await SECP256r1.generate();
+        let toda = new TodaClient(new LocalInventoryClient("./files"));
+        toda.shieldSalt = path.resolve(__dirname, "./files/salt");
+        toda.addSatisfier(keyPair);
+        let tetherLine_0 = await toda.create(Hash.fromHex("41b5c5ab593c91b676d6dbae3d561cef0180701099a580dddbf2374b23b138455"));
+        let tetherLine_1 = await toda.append(tetherLine_0);
+        let tetherLine_2 = await toda.append(tetherLine_1);
+
+        let localLine_0 = await toda.create();
+        localLine_0.safeAddAtoms(tetherLine_2.getAtoms());
+        let localLine_1 = await toda.append(localLine_0, tetherLine_0.getHash());
+
+        // Even though we specified an old tether, append is smart enough to use the latest known twist of that specified line
+        assert(localLine_1.getTetherHash().equals(tetherLine_2.getHash()));
     });
 
 });

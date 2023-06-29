@@ -179,6 +179,10 @@ class TwistBuilder {
         return this.riggingPacket || PairTriePacket.createFromUnsorted(this.rigging);
     }
 
+    getAtoms() {
+        return this.atoms;
+    }
+
     getBodyPacket(hashImp) {
         hashImp = hashImp || TwistBuilder.defaultHashImp;
 

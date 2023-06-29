@@ -181,8 +181,8 @@ describe("delegateValue", async () => {
         let [delegate, delegator] = await toda.delegateValue(dq, 3.4);
         assert.ok(twist.getTetherHash().equals(relayTwist0.getHash()));
         // Delegate + delegator now point to a newer twist
-        assert.ok(delegate.getTetherHash().equals(relayTwist1.getHash()));
-        assert.ok(delegator.getTetherHash().equals(relayTwist1.getHash()));
+        assert.ok(delegate.tether().findPrevious(relayTwist1.getHash()));
+        assert.ok(delegator.tether().findPrevious(relayTwist1.getHash()));
     });
 });
 

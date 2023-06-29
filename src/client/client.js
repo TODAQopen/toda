@@ -23,9 +23,6 @@ class TodaClient {
 
         this.inv = inventory;
 
-        /** Always set the tether on a new twist to the old value if none specified. */
-        this.autoTether = false;
-
         /** Use this default for evaluating non-abjects when no top is specified. */
         /** Also use this default when creating new abjects when no top is specified. */
         this.defaultTopLine = "https://slow.line.todaq.net";
@@ -242,6 +239,9 @@ class TodaClient {
             next.setCargo(cargo);
         }
         if (tether) {
+            // Attempts to bump the tether to the latest in its line using local data
+            tether = Line.fromAtoms(next.getAtoms(), tether).latestTwist();
+
             next.setTetherHash(tether);
             this._setShield(next);
 
@@ -492,10 +492,6 @@ class TodaClient {
         }
 
         let dqTether = dqTwist.getTetherHash();
-        if (dqTwist.get(dqTether)) {
-            // Update the tether
-            dqTether = Line.fromAtoms(dqTwist.getAtoms(), dqTether).latestTwist();
-        }
 
         // create delegate
         let quantity = DQ.displayToQuantity(amount, dq.displayPrecision);
