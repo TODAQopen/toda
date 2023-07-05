@@ -42,7 +42,7 @@ class TodaClient {
         this.dq = {balances: {},
                    balanceForceRecalc: {},
                    balanceCalculating: {},
-                   values: {}};
+                   quantities: {}};
     }
 
     addSatisfier(rs) {
@@ -399,16 +399,16 @@ class TodaClient {
         return this.inv.listLatest();
     }
 
-    getValue(dq) {
+    getQuantity(dq) {
         let h = dq.getHash();
-        if (!this.dq.values[h]) {
-            this.dq.values[h] = DQ.quantityToDisplay(dq.quantity, dq.displayPrecision);
+        if (!this.dq.quantities[h]) {
+            this.dq.quantities[h] = dq.quantity;
         }
-        return this.dq.values[h];
+        return this.dq.quantities[h];
     }
 
-    getCombinedValue(dqs) {
-        return dqs.reduce((v, dq) => v + this.getValue(dq), 0);
+    getCombinedQuantity(dqs) {
+        return dqs.reduce((v, dq) => v + this.getQuantity(dq), 0);
     }
 
     async getBalance(typeHash, forceRecalculate) {
@@ -466,8 +466,11 @@ class TodaClient {
     }
 
     async _calculateBalance(typeHash) {
-        let files = await this.getControlledByType(typeHash);
-        return { balance: this.getCombinedValue(files),
+        const files = await this.getControlledByType(typeHash);
+        const qty = this.getCombinedQuantity(files);
+        const value = files.length == 0 ? 0 : DQ.quantityToDisplay(qty, files[0].displayPrecision);
+        return { balance: value,
+                 quantity: qty,
                  type: typeHash.toString(),
                  files: files.map(f => f.getHash().toString()) };
         // this formatting seems more like something server.js should deal with
@@ -475,10 +478,10 @@ class TodaClient {
 
     /**
      * @param {DQ} dq
-     * @param {Number} amount
-     * @returns {Promise<Array>} [delegated-value, remaining-value]
+     * @param {Number} quantity
+     * @returns {Promise<Array>} [delegatedTwist, remainingTwist]
      */
-    async delegateValue(dq, amount) {
+    async delegateQuantity(dq, quantity) {
 
         // XXX(acg): PERF - some of these can happen locally without hoisting
         // all the way to poptop.
@@ -494,7 +497,6 @@ class TodaClient {
         let dqTether = dqTwist.getTetherHash();
 
         // create delegate
-        let quantity = DQ.displayToQuantity(amount, dq.displayPrecision);
         let dqDel = dq.delegate(quantity);
         let dqDelTwist = await this._append(null, dqDel.buildTwist(), dqTether);
         // PERF(acg): does the above even need to be fast?
@@ -512,6 +514,11 @@ class TodaClient {
         return [dqDelNextTwist, dqNextTwist];
     }
 
+    delegateValue(dq, value) {
+        const qty = DQ.displayToQuantity(value, dq.displayPrecision);
+        return this.delegateQuantity(dq, qty);
+    }
+
     async _transfer(typeHash, twists, destHash) {
         let newTwists = [];
         for (let t of twists) {
@@ -526,30 +533,32 @@ class TodaClient {
     async transfer({ amount, typeHash, destHash }) {
         let dqs = await this.getControlledByType(typeHash);
 
-        let exact = dqs.find(dq => this.getValue(dq) == amount);
+        const quantity = DQ.displayToQuantity(amount, dqs[0].displayPrecision);
+
+        let exact = dqs.find(dq => this.getQuantity(dq) == quantity);
         if (exact) {
             return this._transfer(typeHash, [exact], destHash);
         }
-        let excess = dqs.find(dq => this.getValue(dq) > amount);
+        let excess = dqs.find(dq => this.getQuantity(dq) > quantity);
         if (excess) {
-            let [delegated, _] = await this.delegateValue(excess, amount);
+            let [delegated, _] = await this.delegateQuantity(excess, quantity);
             return this._transfer(typeHash, [delegated], destHash);
         }
 
         let selected = [];
         let cv = 0;
         for (let dq of dqs) { // select bills until we collect just what we need or a bit more
-            if (cv >= amount) break;
+            if (cv >= quantity) break;
             selected.push(dq);
-            cv = this.getCombinedValue(selected);
+            cv = this.getCombinedQuantity(selected);
         }
-        if (cv > amount) { // if more than what we need, frac the last one
+        if (cv > quantity) { // if more than what we need, frac the last one
             // XXX(acg): we could be smarter about which to frac
             let lastBill = selected.pop();
-            let [delegated, _] = await this.delegateValue(lastBill, cv - amount);
+            let [delegated, _] = await this.delegateQuantity(lastBill, cv - quantity);
             selected.push(delegated);
         }
-        if (cv >= amount)
+        if (cv >= quantity)
         {
             return this._transfer(typeHash, selected, destHash);
         }

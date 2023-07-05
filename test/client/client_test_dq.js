@@ -18,22 +18,22 @@ async function mint(client, qty, precision, tether)
     return await client.finalizeTwist(abj.buildTwist(), tether, req);
 }
 
-describe("getValue", async () => {
-    it("getValue for DQ", async () =>
+describe("getQuantity", async () => {
+    it("getQuantity for DQ", async () =>
     {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
-        assert.equal(4.3, toda.getValue(dq));
+        assert.equal(43, toda.getQuantity(dq));
 
         // properly cached
-        assert.ok(toda.dq.values[dq.getHash()]);
-        assert.equal(4.3, toda.getValue(dq));
+        assert.ok(toda.dq.quantities[dq.getHash()]);
+        assert.equal(43, toda.getQuantity(dq));
     });
 
-    it("getCombinedValues for DQs", async () =>
+    it("getCombinedQuantities for DQs", async () =>
     {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClient(inv, "http://localhost:8000");
@@ -43,10 +43,10 @@ describe("getValue", async () => {
 
         let [delegate, delegator] = await toda.delegateValue(dq, 3.4);
 
-        assert.equal(3.4, toda.getValue(Abject.fromTwist(delegate)));
-        assert.equal(0.9, toda.getValue(Abject.fromTwist(delegator)));
-        assert.equal(4.3, toda.getCombinedValue([Abject.fromTwist(delegate),
-                                                 Abject.fromTwist(delegator)]));
+        assert.equal(34, toda.getQuantity(Abject.fromTwist(delegate)));
+        assert.equal(9, toda.getQuantity(Abject.fromTwist(delegator)));
+        assert.equal(43, toda.getCombinedQuantity([Abject.fromTwist(delegate),
+                                                    Abject.fromTwist(delegator)]));
     });
 });
 
@@ -57,10 +57,11 @@ describe("getBalance", async () => {
         let toda = new TodaClient(inv, "http://localhost:8000");
         let result = await toda.getBalance(Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5"));
         assert.deepEqual({balance: 0,
+                          quantity: 0,
                           type: "41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5",
                           files: [],
-                        recalculating: false},
-                        result);
+                          recalculating: false},
+                          result);
     });
 
     it("Simple", async () =>
@@ -75,6 +76,7 @@ describe("getBalance", async () => {
         let result = await toda.getBalance(twist.getHash());
 
         assert.deepEqual({balance: 4.3,
+                          quantity: 43,
                           type: twist.getHash().toString(),
                           files: [delegator.getHash().toString(),
                                   delegate.getHash().toString()],
@@ -98,6 +100,7 @@ describe("getBalance", async () => {
         let result = await toda.getBalance(twist.getHash());
 
         assert.deepEqual({balance: 3.4,
+                          quantity: 34,
                           type: twist.getHash().toString(),
                           files: [delegate.getHash().toString()],
                           recalculating: false},
