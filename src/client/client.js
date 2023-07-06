@@ -555,8 +555,8 @@ class TodaClient {
         if (cv > quantity) { // if more than what we need, frac the last one
             // XXX(acg): we could be smarter about which to frac
             let lastBill = selected.pop();
-            let [delegated, _] = await this.delegateQuantity(lastBill, cv - quantity);
-            selected.push(delegated);
+            let [_, delegator] = await this.delegateQuantity(lastBill, cv - quantity);
+            selected.push(delegator);
         }
         if (cv >= quantity)
         {

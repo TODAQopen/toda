@@ -203,6 +203,8 @@ describe("transfer", async () => {
         let newTwist = newTwists[0];
         assert.ok(newTwist.getTetherHash().equals(destHash));
         assert.equal((await toda.getBalance(twist.getHash())).balance, 0);
+        assert.deepEqual(newTwists.map(t => Abject.fromTwist(t).quantity),
+                         [43]);
     });
 
     it("Excess", async () => {
@@ -218,6 +220,8 @@ describe("transfer", async () => {
         let newTwist = newTwists[0];
         assert.ok(newTwist.getTetherHash().equals(destHash));
         assert.equal((await toda.getBalance(twist.getHash())).balance, 1.2);
+        assert.deepEqual(newTwists.map(t => Abject.fromTwist(t).quantity),
+                         [31]);
     });
 
     it("Multiple exact change", async () => {
@@ -225,14 +229,17 @@ describe("transfer", async () => {
         let toda = new TodaClient(inv, "http://localhost:8000");
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
-        let twist = await mint(toda, 43, 1);
-        let [delegate, delegator] = await toda.delegateValue(Abject.fromTwist(twist), 2.6);
-        await toda.delegateValue(Abject.fromTwist(delegate), 1.8);
-        // Now there are three bills: 1.7, 1.8, and 0.8
-        let newTwists = await (await toda.transfer({amount: 2.5, 
+        let twist = await mint(toda, 45, 1);
+        let [delegate, delegator] = await toda.delegateValue(Abject.fromTwist(twist), 3);
+        await toda.delegateValue(Abject.fromTwist(delegate), 1.5);
+        // Now there are three bills: 1.5, 1.5, 1.5
+        let newTwists = await (await toda.transfer({amount: 3, 
                                                     typeHash: twist.getHash(),
                                                     destHash}));
         assert.equal(newTwists.length, 2);
+        assert.equal((await toda.getBalance(twist.getHash())).balance, 1.5);
+        assert.deepEqual(newTwists.map(t => Abject.fromTwist(t).quantity),
+                     [15, 15]);
     });
 
     it("Multiple change", async () => {
@@ -247,5 +254,8 @@ describe("transfer", async () => {
                                                     typeHash: twist.getHash(),
                                                     destHash}));
         assert.equal(newTwists.length, 2);
+        assert.equal((await toda.getBalance(twist.getHash())).balance, 1.2);
+        assert.equal(newTwists.map(t => Abject.fromTwist(t).quantity).reduce((x, y) => x + y, 0),
+                     31);
     });
 });
