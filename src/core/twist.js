@@ -370,17 +370,26 @@ class Twist {
     }
 
     /**
+     * Backwards search of previous twists, looking for the last tether that
+     *  exists in the this.atoms
+     * @returns <Twist>
+     */
+    findLastStoredTether()
+    {
+        if (this.get(this.getTetherHash())) {
+            return this.tether();
+        }
+        return this.lastFast()?.findLastStoredTether();
+    }
+
+    /**
      * Backwards search of previous twists, looking for the hash of the tether
      *  whose twist exists in this.atoms
      * @returns <Hash>
      */
     findLastStoredTetherHash()
     {
-        let tetherHash = this.getTetherHash();
-        if (this.get(tetherHash)) {
-            return tetherHash;
-        }
-        return this.lastFast()?.findLastStoredTetherHash();
+        return this.findLastStoredTether()?.getHash();
     }
 
     /**
@@ -530,6 +539,16 @@ class Twist {
         let [h,p] = this.atoms.lastAtom();
         this.atoms.set(hash, packet);
         this.atoms.forceSetLast(h,p);
+    }
+
+    /**
+     * Determine whether or not the shield of `twistHash` is safe
+     *  to publicize
+     * @param {Hash} otherTwistHash
+     * @returns {Boolean}
+     */
+    shieldIsPublic(otherTwistHash) {
+        return !this.lastFast(true)?.getHash().equals(otherTwistHash);
     }
 }
 
