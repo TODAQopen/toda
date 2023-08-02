@@ -65,7 +65,7 @@ class Interpreter {
      * @return <Twist>
      */
     prev(hash) {
-        if (hash.isNull())
+        if (hash?.isNull?.())
             return null;
         try {
             return this.twist(hash).prev();

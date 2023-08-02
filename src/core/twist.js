@@ -16,7 +16,7 @@ import { SignatureRequirement } from './reqsat.js';
 class MissingHashPacketError extends Error {
     constructor(hash, message) {
         super();
-        this.hash = hash.toString();
+        this.hash = hash?.toString();
         this.message = message;
     }
 }

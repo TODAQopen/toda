@@ -181,6 +181,7 @@ class Hash {
         // return this.toString() == hash.toString();
     }
 
+    // dx: TODO: could be done with a constructor check instead?
     /**
      * Only returns true for the actual null algo implementation.
      */

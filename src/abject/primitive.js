@@ -94,6 +94,7 @@ class P1Float extends Primitive {
         let dv = new DataView(new ArrayBuffer(8));
         dv.setFloat64(0, num);
         this.setPrimitiveValue(new ArbitraryPacket(new ByteArray(dv.buffer)));
+        // TODO: ensure this is not NaN or Infinity or -Infinity
     }
 
     /**
@@ -101,6 +102,7 @@ class P1Float extends Primitive {
      * @return <Number>
      */
     static parsePrimitive(value) {
+        // TODO: ensure this is not NaN or Infinity or -Infinity
         return new DataView(value.getShapedValue().buffer).getFloat64(0);
     }
 }
