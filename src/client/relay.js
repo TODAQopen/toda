@@ -32,6 +32,7 @@ class RelayClient {
      */
     async getHoist(lead) {
         let relay = await this.get();
+        if (!relay) return null; // The requested twist is not present in this relay
         let i = new Interpreter(Line.fromTwist(relay).addAtoms(lead.getAtoms())); //awkward
         try {
             return i.hitchHoist(lead.getHash());
@@ -120,18 +121,11 @@ class NextRelayClient extends RelayClient {
         this.backwardsStopPredicate = backwardsStopPredicate;
     }
 
-    async hoist(prevTwist, nextHash) {
-        const hoistPacket = prevTwist.hoistPacket(nextHash);
-        const data = {'relay-twist': prevTwist.getTetherHash().toString(),
-                    'hoist-request': {}};
-        hoistPacket.getShapedValueFromContent().forEach((v, k) => {
-            data['hoist-request'][k.toString()] = v.toString();
-        });
-        return await this._hoist(data);
+    hoist(prevTwist, nextHash) {
+        return this._hoist(prevTwist, nextHash);
     }
 
     async get() {
-        let t = Date.now();
         const backwardsPromise = this._backwards(this.tetherHash);
         const forwardsPromise = this._forwards(this.tetherHash);
         const twists = [...(await backwardsPromise), ...(await forwardsPromise)];
@@ -179,6 +173,92 @@ class NextRelayClient extends RelayClient {
     }
 }
 
+class LocalNextRelayClient extends NextRelayClient {
+    constructor(todaClient, hash) {
+        super(hash);
+
+        if (!hash) {
+            throw Error('relay requires a line.');
+        }
+        this.client = todaClient;
+    }
+
+    /**
+     * Given a twist, returns an atoms object containing a trimmed version of its graph, containing:
+     *  the twist packet, the body packet, the req packet (and all contents),
+     *  the sat packet (and all contents), and the rigging packet.
+     * Note that the cargo and the shield are omitted
+     * @param {Twist} twist 
+     * @returns {Atoms}
+     */
+    _isolateTwist(twist) {
+        const isolated = new Atoms();
+        isolated.set(twist.getBodyHash(), twist.getBody());
+        // We don't want to expand the rigging: only want the pairtrie itself
+        const rigging = twist.get(twist.getBody().getRiggingHash());
+        if (rigging) 
+            isolated.set(twist.getBody().getRiggingHash(), rigging);
+        function expandHash(twist, hash) {
+            let packet = twist.get(hash);
+            if (!packet) return;
+            isolated.set(hash, packet);
+            packet.getContainedHashes?.().forEach(h => expandHash(twist, h));
+        }
+        // Completely expand reqs + sats
+        expandHash(twist, twist.getBody().getReqsHash());
+        expandHash(twist, twist.getPacket().getSatsHash());
+        isolated.forceSetLast(twist.getHash(), twist.getPacket());
+        return isolated;
+    }
+
+    async _hoist(prevTwist, nextHash) {
+        console.log("Hosting to local: ", this.tetherHash.toString());
+        let relay = await this.client.get(this.tetherHash);
+
+        // heuristic.  use current key if last update was keyed
+        let req = relay.reqs() ? this.client.requirementSatisfiers[0] : null;
+        // heuristic. use last tether if last update was tethered
+        let tether = relay.isTethered() ? relay.getTetherHash() : null;
+
+        const t = await this.client.append(relay, tether, req, undefined, undefined,
+            prevTwist.hoistPacket(nextHash))
+        return t;
+    }
+
+    _getNext(twistHash) {
+        const twist = this.client.get(this.tetherHash);
+        const next = twist?.findLast(t => t.getPrevHash().equals(twistHash));
+        const prev = next?.prev();
+        if (!prev) return null;
+        const isolated = new Twist(this._isolateTwist(next), next.getHash());
+        isolated.safeAddAtoms(this._isolateTwist(prev));
+        return isolated;
+    }
+
+    /**
+     * Determine whether or not the shield of `predecessorHash` is safe
+     *  to publicize
+     * Recall that we need to keep the most recent fast twist's shield private.
+     * @param {Twist} twist
+     * @param {Hash} predecessorHash
+     * @returns {Boolean}
+     */
+    static shieldIsPublic(twist, predecessorHash) {
+        if (twist.isTethered()) {
+            // If this twist is tethered, then any other twist is public
+            return !twist.getHash().equals(predecessorHash);
+        }
+        // Otherwise, any twist other than lastFast is public
+        return !twist.lastFast()?.getHash().equals(predecessorHash);
+    }
+
+    _getShield(twistHash) {
+        const twist = this.client.get(this.tetherHash);
+        if (twist && LocalNextRelayClient.shieldIsPublic(twist, twistHash))
+            return twist.findPrevious(twistHash).shield();
+    }
+}
+
 /**
  * @param backwardsStopPredicate <fn(twist) => bool>: if specified, get() will stop
  *          walking backwards when it sees a twist that matches the predicate
@@ -190,8 +270,14 @@ class RemoteNextRelayClient extends NextRelayClient {
         this.relayUrl = relayUrl;
     }
 
-    async _hoist(data) {
+    async _hoist(prevTwist, nextHash) {
         console.log("Hoisting to: ", this.relayUrl.toString());
+        const hoistPacket = prevTwist.hoistPacket(nextHash);
+        const data = {'relay-twist': prevTwist.getTetherHash().toString(),
+                      'hoist-request': {}};
+        hoistPacket.getShapedValueFromContent().forEach((v, k) => {
+            data['hoist-request'][k] = v.toString();
+        });
         return await axios({
             method: "POST",
             url: this.relayUrl.toString(),
@@ -229,5 +315,5 @@ class RemoteNextRelayClient extends NextRelayClient {
 
 export { LocalRelayClient,
          RemoteRelayClient,
-         NextRelayClient,
+         LocalNextRelayClient,
          RemoteNextRelayClient };

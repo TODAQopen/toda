@@ -183,21 +183,25 @@ describe("append", async () => {
     });
 
     it("append with remote test", async () => {
-        nock.cleanAll();
+        try {
+            nock.cleanAll();
 
-        let top = new MockSimpleHistoricRelay("http://localhost:8090");
-        await top.initialize();
-        top.serve();
+            let top = new MockSimpleHistoricRelay("http://localhost:8090");
+            await top.initialize();
+            top.serve();
 
-        let foot = new MockSimpleHistoricRelay(undefined, "http://localhost:8090", top.latest().getHash());
-        await foot.initialize();
-        await foot.append(top.latest().getHash());
-        await foot.append(top.latest().getHash());
-        await foot.append(top.latest().getHash());
+            let foot = new MockSimpleHistoricRelay(undefined, "http://localhost:8090", top.latest().getHash());
+            await foot.initialize();
+            await foot.append(top.latest().getHash());
+            await foot.append(top.latest().getHash());
+            await foot.append(top.latest().getHash());
 
-        assert.equal(4, foot.twists().length);
-        assert.ok(foot.latest().get(top.latest().getHash()));
-        assert.equal("http://localhost:8090", Abject.fromTwist(foot.latest()).tetherUrl());
+            assert.equal(4, foot.twists().length);
+            assert.ok(foot.latest().get(top.latest().getHash()));
+            assert.equal("http://localhost:8090", Abject.fromTwist(foot.latest()).tetherUrl());
+        } finally {
+            nock.cleanAll();
+        }
     });
 
     it("should have valid req + sats", async () => {
@@ -332,115 +336,123 @@ describe("pull should include all required info", async () => {
 
 describe("Multi-remote pull test", () => {
     it("Should be able to recursively reach up to the topline", async () => {
-        nock.cleanAll();
+        try {
+            nock.cleanAll();
 
-        let top = new MockSimpleHistoricRelay("http://localhost:8090");
-        await top.initialize();
-        await top.serve();
-        await top.append();
+            let top = new MockSimpleHistoricRelay("http://localhost:8090");
+            await top.initialize();
+            await top.serve();
+            await top.append();
 
-        let mid = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8090");
-        await mid.initialize();
-        await mid.serve();
-        await mid.append(top.latest().getHash());
-        await mid.append(top.latest().getHash());
+            let mid = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8090");
+            await mid.initialize();
+            await mid.serve();
+            await mid.append(top.latest().getHash());
+            await mid.append(top.latest().getHash());
 
-        let foot = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", top.latest().getHash());
-        await foot.initialize();
-        let foot0 = foot.latest();
-        let foot1 = await foot.append(mid.latest().getHash());
-        let foot2 = await foot.append(mid.latest().getHash());
+            let foot = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", top.latest().getHash());
+            await foot.initialize();
+            let foot0 = foot.latest();
+            let foot1 = await foot.append(mid.latest().getHash());
+            let foot2 = await foot.append(mid.latest().getHash());
 
-        assert.ok(foot2.get(mid.latest().getHash()));
-        assert.ok(foot2.get(top.latest().getHash()));
+            assert.ok(foot2.get(mid.latest().getHash()));
+            assert.ok(foot2.get(top.latest().getHash()));
 
-        let foot3 = await foot.append(mid.latest().getHash());
+            let foot3 = await foot.append(mid.latest().getHash());
 
-        assert.ok(foot3.get(mid.latest().getHash()));
-        assert.ok(foot3.get(top.latest().getHash()));
+            assert.ok(foot3.get(mid.latest().getHash()));
+            assert.ok(foot3.get(top.latest().getHash()));
 
-        // NOTE: Sorry this test gets a bit much after this; need to double check 'start-hash'
-        //        behaviour and it's 5pm on the last work day of the year so I don't want to
-        //        figure out a better place for this to live
-        // TODO: Move somewhere else? Separate test maybe? Not sure.
+            // NOTE: Sorry this test gets a bit much after this; need to double check 'start-hash'
+            //        behaviour and it's 5pm on the last work day of the year so I don't want to
+            //        figure out a better place for this to live
+            // TODO: Move somewhere else? Separate test maybe? Not sure.
 
-        assert.equal(6, mid.twists().length);
+            assert.equal(6, mid.twists().length);
 
-        // Test the uri requests called
-        let midGetRequests = mid.logs.filter(r => r.method === "get").filter(r => r.uri !== "/latest");
+            // Test the uri requests called
+            let midGetRequests = mid.logs.filter(r => r.method === "get").filter(r => r.uri !== "/latest");
 
-        assert.equal(6, midGetRequests.length);
-        assert.equal("/", midGetRequests[0].uri);
-        assert.equal("/", midGetRequests[1].uri);
-        assert.equal("/", midGetRequests[2].uri);
-        assert.equal("/?start-hash=" + mid.twists()[3].getHash(), midGetRequests[3].uri);
-        assert.equal("/", midGetRequests[4].uri);
-        assert.equal("/?start-hash=" + mid.twists()[4].getHash(), midGetRequests[5].uri);
+            assert.equal(6, midGetRequests.length);
+            assert.equal("/", midGetRequests[0].uri);
+            assert.equal("/", midGetRequests[1].uri);
+            assert.equal("/", midGetRequests[2].uri);
+            assert.equal("/?start-hash=" + mid.twists()[3].getHash(), midGetRequests[3].uri);
+            assert.equal("/", midGetRequests[4].uri);
+            assert.equal("/?start-hash=" + mid.twists()[4].getHash(), midGetRequests[5].uri);
 
-        // Double check that the mocked server provided the expected outputs
-        let atomsFromMidGet0 = Atoms.fromBytes(midGetRequests[1].response);
-        assert.ok(atomsFromMidGet0.get(mid.twists()[0].getHash()));
-        assert.ok(atomsFromMidGet0.get(mid.twists()[1].getHash()));
-        assert.ok(atomsFromMidGet0.get(mid.twists()[2].getHash()));
-        assert.ok(atomsFromMidGet0.get(mid.twists()[3].getHash()));
-        // not made yet
-        assert.ok(!atomsFromMidGet0.get(mid.twists()[4].getHash()));
-        assert.ok(!atomsFromMidGet0.get(mid.twists()[5].getHash()));
+            // Double check that the mocked server provided the expected outputs
+            let atomsFromMidGet0 = Atoms.fromBytes(midGetRequests[1].response);
+            assert.ok(atomsFromMidGet0.get(mid.twists()[0].getHash()));
+            assert.ok(atomsFromMidGet0.get(mid.twists()[1].getHash()));
+            assert.ok(atomsFromMidGet0.get(mid.twists()[2].getHash()));
+            assert.ok(atomsFromMidGet0.get(mid.twists()[3].getHash()));
+            // not made yet
+            assert.ok(!atomsFromMidGet0.get(mid.twists()[4].getHash()));
+            assert.ok(!atomsFromMidGet0.get(mid.twists()[5].getHash()));
 
-        let atomsFromMidGet1 = Atoms.fromBytes(midGetRequests[3].response);
-        assert.ok(!atomsFromMidGet1.get(mid.twists()[0].getHash()));
-        assert.ok(!atomsFromMidGet1.get(mid.twists()[1].getHash()));
-        assert.ok(!atomsFromMidGet1.get(mid.twists()[2].getHash()));
-        // asked for [3] and after
-        assert.ok(atomsFromMidGet1.get(mid.twists()[3].getHash()));
-        assert.ok(atomsFromMidGet1.get(mid.twists()[4].getHash()));
-        // not made yet
-        assert.ok(!atomsFromMidGet1.get(mid.twists()[5].getHash()));
+            let atomsFromMidGet1 = Atoms.fromBytes(midGetRequests[3].response);
+            assert.ok(!atomsFromMidGet1.get(mid.twists()[0].getHash()));
+            assert.ok(!atomsFromMidGet1.get(mid.twists()[1].getHash()));
+            assert.ok(!atomsFromMidGet1.get(mid.twists()[2].getHash()));
+            // asked for [3] and after
+            assert.ok(atomsFromMidGet1.get(mid.twists()[3].getHash()));
+            assert.ok(atomsFromMidGet1.get(mid.twists()[4].getHash()));
+            // not made yet
+            assert.ok(!atomsFromMidGet1.get(mid.twists()[5].getHash()));
 
-        let atomsFromMidGet2 = Atoms.fromBytes(midGetRequests[5].response);
-        assert.ok(!atomsFromMidGet2.get(mid.twists()[0].getHash()));
-        assert.ok(!atomsFromMidGet2.get(mid.twists()[1].getHash()));
-        assert.ok(!atomsFromMidGet2.get(mid.twists()[2].getHash()));
-        assert.ok(!atomsFromMidGet2.get(mid.twists()[3].getHash()));
-        // asked for [4] and after
-        assert.ok(atomsFromMidGet2.get(mid.twists()[4].getHash()));
-        assert.ok(atomsFromMidGet2.get(mid.twists()[5].getHash()));
+            let atomsFromMidGet2 = Atoms.fromBytes(midGetRequests[5].response);
+            assert.ok(!atomsFromMidGet2.get(mid.twists()[0].getHash()));
+            assert.ok(!atomsFromMidGet2.get(mid.twists()[1].getHash()));
+            assert.ok(!atomsFromMidGet2.get(mid.twists()[2].getHash()));
+            assert.ok(!atomsFromMidGet2.get(mid.twists()[3].getHash()));
+            // asked for [4] and after
+            assert.ok(atomsFromMidGet2.get(mid.twists()[4].getHash()));
+            assert.ok(atomsFromMidGet2.get(mid.twists()[5].getHash()));
+        } finally {
+            nock.cleanAll();
+        }
     });
 
     it("Should never pull http://localhost:8094, since 8093 is the topline", async () => {
-        nock.cleanAll();
+        try {
+            nock.cleanAll();
 
-        // A tethers into B (8091), into C (8092), ... into E (8094)
-        let E = new MockSimpleHistoricRelay("http://localhost:8094");
-        await E.initialize();
-        E.serve();
-        let D = new MockSimpleHistoricRelay("http://localhost:8093", "http://localhost:8094");
-        await D.initialize();
-        D.serve();
-        let C = new MockSimpleHistoricRelay("http://localhost:8092", "http://localhost:8093");
-        await C.initialize();
-        C.serve();
-        let B = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
-        await B.initialize();
-        B.serve();
-        // D is declared as A's topline
-        let A = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", D.latest().getHash());
-        await A.initialize();
-        await A.append(B.latest().getHash());
+            // A tethers into B (8091), into C (8092), ... into E (8094)
+            let E = new MockSimpleHistoricRelay("http://localhost:8094");
+            await E.initialize();
+            E.serve();
+            let D = new MockSimpleHistoricRelay("http://localhost:8093", "http://localhost:8094");
+            await D.initialize();
+            D.serve();
+            let C = new MockSimpleHistoricRelay("http://localhost:8092", "http://localhost:8093");
+            await C.initialize();
+            C.serve();
+            let B = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
+            await B.initialize();
+            B.serve();
+            // D is declared as A's topline
+            let A = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", D.latest().getHash());
+            await A.initialize();
+            await A.append(B.latest().getHash());
 
-        E.clearLogs();
-        D.clearLogs();
-        C.clearLogs();
-        B.clearLogs();
+            E.clearLogs();
+            D.clearLogs();
+            C.clearLogs();
+            B.clearLogs();
 
-        await A.client.pull(A.latest(), A.client.defaultTopLineHash);
+            await A.client.pull(A.latest(), A.client.defaultTopLineHash);
 
-        // Pull pinged B, C, and D
-        assert.deepEqual(["get"], B.logs.map(x => x.method));
-        assert.deepEqual(["get"], C.logs.map(x => x.method));
-        assert.deepEqual(["get"], D.logs.map(x => x.method));
-        // Pull did NOT ping E (since D is the topline)
-        assert.deepEqual([], E.logs.map(x => x.method));
+            // Pull pinged B, C, and D
+            assert.deepEqual(["get"], B.logs.map(x => x.method));
+            assert.deepEqual(["get"], C.logs.map(x => x.method));
+            assert.deepEqual(["get"], D.logs.map(x => x.method));
+            // Pull did NOT ping E (since D is the topline)
+            assert.deepEqual([], E.logs.map(x => x.method));
+        } finally {
+            nock.cleanAll();
+        }
     });
 });
 
@@ -450,41 +462,45 @@ describe("Multi-remote pull test", () => {
 describe("Deep recursive pull tests", async () => {
     // For all of these tests, 'a' represents the footline, 'b' represents the line above, ... etc.
     it("Remote recursive pull, no loose twists", async () => {
-        nock.cleanAll();
+        try {
+            nock.cleanAll();
 
-        let remote_e = new MockSimpleHistoricRelay("http://localhost:8094");
-        remote_e.serve();
-        await remote_e.initialize(true);
-        await remote_e.append();
+            let remote_e = new MockSimpleHistoricRelay("http://localhost:8094");
+            remote_e.serve();
+            await remote_e.initialize(true);
+            await remote_e.append();
 
-        let remote_d = new MockSimpleHistoricRelay("http://localhost:8093", "http://localhost:8094");
-        remote_d.serve();
-        await remote_d.initialize();
-        await remote_d.append(remote_e.latest().getHash());
-        await remote_d.append(remote_e.latest().getHash());
-        await remote_d.append(remote_e.latest().getHash());
+            let remote_d = new MockSimpleHistoricRelay("http://localhost:8093", "http://localhost:8094");
+            remote_d.serve();
+            await remote_d.initialize();
+            await remote_d.append(remote_e.latest().getHash());
+            await remote_d.append(remote_e.latest().getHash());
+            await remote_d.append(remote_e.latest().getHash());
 
-        let remote_c = new MockSimpleHistoricRelay("http://localhost:8092", "http://localhost:8093");
-        remote_c.serve();
-        await remote_c.initialize();
-        await remote_c.append(remote_d.latest().getHash());
+            let remote_c = new MockSimpleHistoricRelay("http://localhost:8092", "http://localhost:8093");
+            remote_c.serve();
+            await remote_c.initialize();
+            await remote_c.append(remote_d.latest().getHash());
 
-        let remote_b = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
-        remote_b.serve();
-        await remote_b.initialize();
-        await remote_b.append(remote_c.latest().getHash());
+            let remote_b = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
+            remote_b.serve();
+            await remote_b.initialize();
+            await remote_b.append(remote_c.latest().getHash());
 
-        let a = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", remote_d.latest().getHash());
-        await a.initialize();
-        await a.append(remote_b.latest().getHash());
-        await a.append(remote_b.latest().getHash());
-        await a.append(remote_b.latest().getHash());
+            let a = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", remote_d.latest().getHash());
+            await a.initialize();
+            await a.append(remote_b.latest().getHash());
+            await a.append(remote_b.latest().getHash());
+            await a.append(remote_b.latest().getHash());
 
-        // isolate the twists in the bottom line S.T. we can test pull in complete isolation
-        let isolated_twist = new Twist(isolateSegment(a.latest(), a.first().getHash()), a.latest().getHash());
+            // isolate the twists in the bottom line S.T. we can test pull in complete isolation
+            let isolated_twist = new Twist(isolateSegment(a.latest(), a.first().getHash()), a.latest().getHash());
 
-        await a.client.pull(isolated_twist, remote_d.first().getHash());
-        await a.client.isCanonical(isolated_twist, remote_d.first().getHash());
+            await a.client.pull(isolated_twist, remote_d.first().getHash());
+            await a.client.isCanonical(isolated_twist, remote_d.first().getHash());
+        } finally {
+            nock.cleanAll();
+        }
     });
 
     // TODO(cs): This fails! Yay!
@@ -529,83 +545,5 @@ describe("Deep recursive pull tests", async () => {
 
         await a.client.pull(isolated_twist, remote_d.first().getHash());
         await a.client.isCanonical(isolated_twist, remote_d.first().getHash());
-    });
-});
-
-describe("TodaClientV2", async () => {
-    it("getRelay: Twist has a tether url => use RemoteNextRelayClient", async () => {
-        let inv = new LocalInventoryClient("./files");
-        let toda = new TodaClientV2(inv, "http://localhost:8081");
-        let tether = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
-        let abj = new SimpleHistoric();
-        abj.set("SOMETIMESTAMP", "http://localhost:9000");
-        abj.buildTwist().setTetherHash(tether);
-        abj = abj.createSuccessor();
-        let twist = abj.buildTwist().twist();
-        let relay = toda.getRelay(twist);
-        assert.ok(relay instanceof RemoteNextRelayClient);
-        assert.ok(relay.tetherHash.equals(tether));
-        assert.equal(relay.fileServerUrl, "http://localhost:8081");
-        assert.ok(relay.relayUrl == "http://localhost:9000");
-    });
-
-    it("getRelay: No tether url => use LocalRelay", async () => {
-        let inv = new LocalInventoryClient("./files");
-        let toda = new TodaClientV2(inv, "http://localhost:8081");
-        let tb = new TwistBuilder();
-        tb.setTetherHash = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
-        let tether = tb.twist();
-        tb = new TwistBuilder();
-        tb.setTetherHash(tether.getHash());
-        tb = tb.createSuccessor();
-        let twist = tb.twist();
-        inv.put(tether.getAtoms());
-        let relay = toda.getRelay(twist);
-        assert.ok(relay instanceof LocalRelayClient);
-        assert.ok(relay.hash.equals(tether.getHash()));
-    });
-
-    it("getRelay: No tether url => not in local => use DefaultRelay", async () => {
-        let inv = new LocalInventoryClient("./files");
-        let toda = new TodaClientV2(inv, "http://localhost:8081");
-        toda.defaultRelayUrl = "http://localhost:9000";
-        let tether = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
-        let tb = new TwistBuilder();
-        tb.setTetherHash(tether);
-        tb = tb.createSuccessor();
-        let twist = tb.twist();
-        let relay = toda.getRelay(twist);
-        assert.ok(relay instanceof RemoteNextRelayClient);
-        assert.ok(relay.tetherHash.equals(tether));
-        assert.equal(relay.fileServerUrl, "http://localhost:8081");
-        assert.ok(relay.relayUrl == "http://localhost:9000");
-    });
-
-    it("getRelay: remoteNextRelayClient has correct backwardsStopPredicate set", async () => {
-        let inv = new LocalInventoryClient("./files");
-        let toda = new TodaClientV2(inv, "http://localhost:8081");
-
-        let tb = new TwistBuilder();
-        tb.setPrevHash(Hash.fromHex("41383a4192fb411d0b79cf81e3b763eec6c6d56b76dcee2983196380dd5c43208b"));
-        let toplineTwist = tb.twist();
-        tb = new TwistBuilder();
-        tb.setPrevHash(toplineTwist.getHash());
-        let toplineSuccessor = tb.twist();
-        toda.defaultTopLineHash = toplineTwist.getHash();
-
-        let tether = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
-        let abj = new SimpleHistoric();
-        abj.set("SOMETIMESTAMP", "http://localhost:9000");
-        abj.buildTwist().setTetherHash(tether);
-        abj = abj.createSuccessor();
-        let twist = abj.buildTwist().twist();
-        let relay = toda.getRelay(twist);
-        assert.ok(relay instanceof RemoteNextRelayClient);
-        assert.ok(relay.tetherHash.equals(tether));
-        assert.equal(relay.fileServerUrl, "http://localhost:8081");
-        assert.ok(relay.relayUrl == "http://localhost:9000");
-
-        assert.ok(relay.backwardsStopPredicate(toplineTwist));
-        assert.ok(!relay.backwardsStopPredicate(toplineSuccessor));
     });
 });

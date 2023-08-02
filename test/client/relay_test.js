@@ -1,15 +1,19 @@
-import { Hash } from "../../src/core/hash.js";
+import { Hash, Sha256 } from "../../src/core/hash.js";
 import { Atoms } from "../../src/core/atoms.js";
-import { RemoteRelayClient, RemoteNextRelayClient, LocalRelayClient } from "../../src/client/relay.js";
-import { TodaClient } from "../../src/client/client.js";
+import { RemoteRelayClient, RemoteNextRelayClient, LocalRelayClient, LocalNextRelayClient } from "../../src/client/relay.js";
+import { TodaClient, TodaClientV2 } from "../../src/client/client.js";
 import { LocalInventoryClient, VirtualInventoryClient } from "../../src/client/inventory.js";
 import { Twist } from "../../src/core/twist.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { nockLocalFileServer, nock404FileServer } from "./mocks.js";
+import { randH, uuidCargo } from "../util.js";
 import nock from "nock";
 import assert from "assert";
 import fs from "fs-extra";
 import path from "path";
+import { v4 as uuid } from "uuid";
+import { PairTriePacket } from "../../src/core/packet.js";
+import { HashMap } from "../../src/core/map.js";
 
 const url = "https://localhost:8080";
 
@@ -271,5 +275,70 @@ describe("RemoteNextRelayClient", async () => {
         assert.deepEqual(expectedKvs, response.data['hoist-request']);
         assert.ok(response.data['relay-twist'] == tether.toString());
         nock.cleanAll();
+    });
+});
+
+describe("LocalNextRelayClient", async () => {
+    it("Simple next", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid())
+        const toda = new TodaClientV2(inv, "http://localhost:8009");
+        toda._getSalt = () => ByteArray.fromUtf8("some salty");
+
+        const t0 = await toda.create(null, null, uuidCargo());
+        const t1 = await toda.append(t0);
+        const t2 = await toda.append(t1);
+
+        const relay = new LocalNextRelayClient(toda, t2.getHash());
+        let twist = relay._getNext(t0.getHash());
+        assert.ok(twist);
+        assert.ok(twist.getHash().equals(t1.getHash()));
+        assert.ok(twist.prev());
+        assert.ok(!twist.get(t2.getHash()));
+
+        twist = relay._getNext(t1.getHash());
+        assert.ok(twist);
+        assert.ok(twist.getHash().equals(t2.getHash()));
+        assert.ok(twist.prev());
+        assert.ok(!twist.get(t0.getHash()));
+        assert.throws(() => twist.prev().prev());
+
+        twist = relay._getNext(t2.getHash()); // TOO RECENT! Doesn't have a 'next'
+        assert.ok(!twist);
+    });
+
+    it("Simple .shield, last fast", async() => {
+        const inv = new LocalInventoryClient("./files/" + uuid())
+        const toda = new TodaClientV2(inv, "http://localhost:8009");
+        toda._getSalt = () => ByteArray.fromUtf8("some salty");
+        const t0 = await toda.create(null, null, uuidCargo());
+        const t1 = await toda.append(t0, randH(), null, null, () => {}, null, { noHoist: true });
+        const t2 = await toda.append(t1);
+        const t3 = await toda.append(t2, randH(), null, null, () => {}, null, { noHoist: true });
+
+        const relay = new LocalNextRelayClient(toda, t3.getHash());
+        assert.ok(!relay._getShield(t0.getHash())); // dne: loose
+        assert.ok(relay._getShield(t1.getHash())); // Public!
+        assert.ok((relay._getShield(t1.getHash())).content.equals(t1.shield().content));
+        assert.ok(!relay._getShield(t2.getHash())); // dne: loose
+        assert.ok(!relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
+    });
+
+    it("Simple .shield, last loose", async() => {
+        const inv = new LocalInventoryClient("./files/" + uuid())
+        const toda = new TodaClientV2(inv, "http://localhost:8009");
+        toda._getSalt = () => ByteArray.fromUtf8("some salty");
+        const t0 = await toda.create(null, null, uuidCargo());
+        const t1 = await toda.append(t0, randH(), null, null, () => {}, null, { noHoist: true });
+        const t2 = await toda.append(t1);
+        const t3 = await toda.append(t2, randH(), null, null, () => {}, null, { noHoist: true });
+        const t4 = await toda.append(t3);
+
+        const relay = new LocalNextRelayClient(toda, t3.getHash());
+        assert.ok(!relay._getShield(t0.getHash())); // dne: loose
+        assert.ok(relay._getShield(t1.getHash())); // Public!
+        assert.ok((relay._getShield(t1.getHash())).content.equals(t1.shield().content));
+        assert.ok(!relay._getShield(t2.getHash())); // dne: loose
+        assert.ok(!relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
+        assert.ok(!relay._getShield(t4.getHash())); // dne: loose
     });
 });

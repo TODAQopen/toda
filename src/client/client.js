@@ -7,7 +7,7 @@
 
 //const { keysPaired, SignatureRequirement } = require("../core/reqsat");
 import { ByteArray } from '../core/byte-array.js';
-import { LocalRelayClient, RemoteNextRelayClient, RemoteRelayClient } from './relay.js';
+import { LocalRelayClient, RemoteNextRelayClient, RemoteRelayClient, LocalNextRelayClient } from './relay.js';
 import { Hash, Sha256, NullHash } from '../core/hash.js';
 import { ArbitraryPacket } from '../core/packet.js';
 import { TwistBuilder, Twist } from '../core/twist.js';
@@ -598,13 +598,39 @@ class TodaClientV2 extends TodaClient {
             return new RemoteNextRelayClient(tetherUrl, this.fileServerUrl, fastTwist.getTetherHash(), this._backwardsStopPredicate);
         }
         if (this.get(fastTwist.getTetherHash())) {
-            return new LocalRelayClient(this, fastTwist.getTetherHash());
+            return new LocalNextRelayClient(this, fastTwist.getTetherHash());
         }
         return this._defaultRelay(fastTwist);
     }
 
     getRelayFromString() {
         throw new Error("Not implemented; use getRelay instead");
+    }
+
+    async _setPost(tb) {
+        const lead = tb.twist().lastFast()?.lastFast();
+        if (lead) {
+            // temporary hackitty hack
+            // does this twist already contain the hoisting info?
+            let local = new LocalNextRelayClient(this, lead.getTetherHash());
+            let h = await local.getHoist(lead);
+            if (h) {
+                tb.addRigging(lead.getHash(), h.getHash());
+                return;
+            }
+
+            // orig:
+            let relay = this.getRelay(lead);
+            if (!relay) {
+                console.error("NO RELAY FOUND FOR:", lead.getHash().toString());
+                throw new WaitForHitchError(); //TODO: specialize this error
+            }
+
+            let hoist = await this._waitForHoist(lead, relay);
+            tb.addRigging(lead.getHash(), hoist.getHash());
+        }
+        //TODO(acg): why wouldn't we also not take advantage of having grabbed
+        //all those proof atoms and save em?
     }
 }
 

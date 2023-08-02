@@ -52,7 +52,7 @@ class LocalInventoryClient extends InventoryClient {
         this.invRoot = path;
 
         if (!fs.existsSync(path)) {
-            fs.mkdirSync(path);
+            fs.mkdirSync(path, { recursive: true });
         }
 
         this.files = new HashMap();
