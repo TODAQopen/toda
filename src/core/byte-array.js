@@ -28,9 +28,19 @@ class ByteArray extends Uint8Array {
         return res;
     }
 
+
+    static hexes_helper = Array.from(Array(256)).map((n,i)=>i.toString(16).padStart(2, '0'));
+
     toString() {
-        // dx: TODO: use the faster version
-        return this.reduce((acc, n) => acc + (n < 16 ? '0' : '') + n.toString(16), '')
+        if(this.str)
+            return this.str;
+        let hex = '';
+        let l = this.byteLength;
+        for (let i = 0; i < l; i++)
+            hex += ByteArray.hexes_helper[this[i]];
+        Object.defineProperty(this, 'str', { value: hex } ); // dx: this is slower than setting the string directly, but without it some deep equal tests fail... :/
+        // this.str = hex;
+        return hex;
     }
 
     toUTF8String() {
@@ -53,7 +63,6 @@ class ByteArray extends Uint8Array {
     static isEqual(lhs, rhs) {
         return lhs.toString() == rhs.toString();
     }
-
 }
 
 export { ByteArray };
