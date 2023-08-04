@@ -17,6 +17,8 @@ import { HashMap } from './map.js';
  */
 class Atoms extends HashMap {
 
+    static cache = {}
+
     /**
    * @param {Hash} hash
    * @param {Packet} packet
@@ -29,7 +31,14 @@ class Atoms extends HashMap {
         }
         // null hash checks performed by superclass.
 
-        hash.assertVerifiesPacket(packet); // throws
+        let p = Atoms.cache[hash];
+        if(p) {
+            packet = p; // think: could throw if packet != p already... but then we'd have to do an expensive equality check every time
+        } else {
+            hash.assertVerifiesPacket(packet); // throws
+            Atoms.cache[hash] = packet;
+        }
+
         return super.set(hash, packet);
     }
 
