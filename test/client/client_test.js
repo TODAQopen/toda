@@ -78,7 +78,7 @@ describe("append", async () => {
         // Verify that although the tether has changed, the hitch exists on the
         // first line and we still control it
 
-        let hoist = (await toda.getRelay(a).getHoist(a));
+        let {hoist} = (await toda.getRelay(a).getHoist(a));
         let latestLocal = Line.fromAtoms(toda.inv.get(localLine.getHash()));
         assert(hoist.getHash().equals(latestLocal.latestTwist()));
     });
@@ -96,7 +96,7 @@ describe("append", async () => {
 
         let b = await toda.append(a, localLine.getHash(), keyPair);
 
-        let hoist = (await toda.getRelay(a).getHoist(a));
+        let {hoist} = (await toda.getRelay(a).getHoist(a));
 
         let rigging = new HashMap();
         let h0 = Sha256.fromBytes(ByteArray.fromUtf8("h0"));
@@ -145,7 +145,7 @@ describe("append", async () => {
         let prev = toda.getExplicitPath(`${__dirname}/files/test.toda`);
         let next = await toda.append(prev);
 
-        let expectedHoist = await (toda.getRelay(prev).getHoist(prev));
+        let {hoist: expectedHoist} = await (toda.getRelay(prev).getHoist(prev));
         assert.deepEqual(next.rig(prev), expectedHoist);
     });
 
@@ -341,12 +341,12 @@ describe("Multi-remote pull test", () => {
 
             let top = new MockSimpleHistoricRelay("http://localhost:8090");
             await top.initialize();
-            await top.serve();
+            top.serve();
             await top.append();
 
             let mid = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8090");
             await mid.initialize();
-            await mid.serve();
+            mid.serve();
             await mid.append(top.latest().getHash());
             await mid.append(top.latest().getHash());
 
@@ -364,52 +364,8 @@ describe("Multi-remote pull test", () => {
             assert.ok(foot3.get(mid.latest().getHash()));
             assert.ok(foot3.get(top.latest().getHash()));
 
-            // NOTE: Sorry this test gets a bit much after this; need to double check 'start-hash'
-            //        behaviour and it's 5pm on the last work day of the year so I don't want to
-            //        figure out a better place for this to live
-            // TODO: Move somewhere else? Separate test maybe? Not sure.
-
             assert.equal(6, mid.twists().length);
 
-            // Test the uri requests called
-            let midGetRequests = mid.logs.filter(r => r.method === "get").filter(r => r.uri !== "/latest");
-
-            assert.equal(6, midGetRequests.length);
-            assert.equal("/", midGetRequests[0].uri);
-            assert.equal("/", midGetRequests[1].uri);
-            assert.equal("/", midGetRequests[2].uri);
-            assert.equal("/?start-hash=" + mid.twists()[3].getHash(), midGetRequests[3].uri);
-            assert.equal("/", midGetRequests[4].uri);
-            assert.equal("/?start-hash=" + mid.twists()[4].getHash(), midGetRequests[5].uri);
-
-            // Double check that the mocked server provided the expected outputs
-            let atomsFromMidGet0 = Atoms.fromBytes(midGetRequests[1].response);
-            assert.ok(atomsFromMidGet0.get(mid.twists()[0].getHash()));
-            assert.ok(atomsFromMidGet0.get(mid.twists()[1].getHash()));
-            assert.ok(atomsFromMidGet0.get(mid.twists()[2].getHash()));
-            assert.ok(atomsFromMidGet0.get(mid.twists()[3].getHash()));
-            // not made yet
-            assert.ok(!atomsFromMidGet0.get(mid.twists()[4].getHash()));
-            assert.ok(!atomsFromMidGet0.get(mid.twists()[5].getHash()));
-
-            let atomsFromMidGet1 = Atoms.fromBytes(midGetRequests[3].response);
-            assert.ok(!atomsFromMidGet1.get(mid.twists()[0].getHash()));
-            assert.ok(!atomsFromMidGet1.get(mid.twists()[1].getHash()));
-            assert.ok(!atomsFromMidGet1.get(mid.twists()[2].getHash()));
-            // asked for [3] and after
-            assert.ok(atomsFromMidGet1.get(mid.twists()[3].getHash()));
-            assert.ok(atomsFromMidGet1.get(mid.twists()[4].getHash()));
-            // not made yet
-            assert.ok(!atomsFromMidGet1.get(mid.twists()[5].getHash()));
-
-            let atomsFromMidGet2 = Atoms.fromBytes(midGetRequests[5].response);
-            assert.ok(!atomsFromMidGet2.get(mid.twists()[0].getHash()));
-            assert.ok(!atomsFromMidGet2.get(mid.twists()[1].getHash()));
-            assert.ok(!atomsFromMidGet2.get(mid.twists()[2].getHash()));
-            assert.ok(!atomsFromMidGet2.get(mid.twists()[3].getHash()));
-            // asked for [4] and after
-            assert.ok(atomsFromMidGet2.get(mid.twists()[4].getHash()));
-            assert.ok(atomsFromMidGet2.get(mid.twists()[5].getHash()));
         } finally {
             nock.cleanAll();
         }

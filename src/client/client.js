@@ -153,9 +153,9 @@ class TodaClient {
         let attempts = 0;
         while (attempts < this.retryTimes) {
             attempts++;
-            let hoist = await relay.getHoist(lead);
+            let {hoist, relayTwist} = await relay.getHoist(lead);
             if (hoist) {
-                return hoist;
+                return {hoist, relayTwist};
             } else {
                 console.warn("Requerying for hoist...");
                 await new Promise(res => setTimeout(res, this.retryInterval));
@@ -166,14 +166,15 @@ class TodaClient {
 
     async _setPost(tb) {
         const lead = tb.twist().lastFast()?.lastFast();
+        let hoist, relayTwist;
         if (lead) {
             // temporary hackitty hack
             // does this twist already contain the hoisting info?
             let local = new LocalRelayClient(this, tb.twist().lastFast().getHash());
-            let h = await local.getHoist(lead);
-            if (h) {
-                tb.addRigging(lead.getHash(), h.getHash());
-                return;
+            ({hoist, relayTwist} = await local.getHoist(lead));
+            if (hoist) {
+                tb.addRigging(lead.getHash(), hoist.getHash());
+                return {hoist, relayTwist};
             }
 
             // orig:
@@ -183,11 +184,10 @@ class TodaClient {
                 throw new WaitForHitchError(); //TODO: specialize this error
             }
 
-            let hoist = await this._waitForHoist(lead, relay);
+            ({hoist, relayTwist} = await this._waitForHoist(lead, relay));
             tb.addRigging(lead.getHash(), hoist.getHash());
         }
-        //TODO(acg): why wouldn't we also not take advantage of having grabbed
-        //all those proof atoms and save em?
+        return {hoist, relayTwist}
     }
 
     create(tether, req, cargo, opts) {
@@ -238,6 +238,7 @@ class TodaClient {
         if (cargo) {
             next.setCargo(cargo);
         }
+        let hoist, relayTwist;
         if (tether) {
             // Attempts to bump the tether to the latest in its line using local data
             tether = Line.fromAtoms(next.getAtoms(), tether).latestTwist();
@@ -246,7 +247,8 @@ class TodaClient {
             this._setShield(next);
 
             // XXX(acg): This will fail if we cannot retrieve the hoist.
-            await this._setPost(next);
+            ({hoist, relayTwist} = await this._setPost(next));
+            if (relayTwist) next.addAtoms(relayTwist.getAtoms());
         }
 
         if (rigging) {
@@ -272,10 +274,10 @@ class TodaClient {
                 let nth = nextTwist.getHash();
                 await r.hoist(lastFast, nth);
 
-                await this._waitForHoist(lastFast, r);
+                ({relayTwist} = await this._waitForHoist(lastFast, r));
 
                 if (r.hash || this.defaultTopLineHash) {
-                    await this.pull(nextTwist, r.hash || this.defaultTopLineHash);
+                    await this.pull(nextTwist, r.hash || this.defaultTopLineHash, relayTwist);
                 }
 
             } catch(e) {
@@ -310,16 +312,20 @@ class TodaClient {
 
     /**
      * Given a path retrieves the latest atoms from the tethered up to the specified poptop and
+     * MUTATES ATOMS LIST INSIDE TWIST
+     * Optionally takes the result of a previous get of the same twist to make fewer remote calls
      * @param twist <Twist> The twist whose proof to get more of
      * @param poptop <Hash> The poptop hash
-     * MUTATES ATOMS LIST INSIDE TWIST
+     * @param previousGetResult <Twist> Optional. An optimization.
+     *     A twist from relay.get with the same startHash. If not provided, it'll make an
+     *     additional relay.get
      *
      * FIXME(acg): This isn't very smart. It assumes the last fast twist is
      * tethered to the same thing as everythign along the line. Any given
      * "level" may need to contact multiple relays.
      *
      */
-    async pull(twist, poptopHash) {
+    async pull(twist, poptopHash, previousGetResult) {
         // TODO(acg): investigate what happens if the last twist isn't fast
         let lastFast = twist.lastFast();
         if (!lastFast) {
@@ -327,19 +333,45 @@ class TodaClient {
         }
         console.log("Pulling hitch for", lastFast.getHash().toString());
         let relay = this.getRelay(lastFast);
-        let relayTwist = twist;
 
         while (relay) {
-            let startHash;
+            let startTwist, startHash;
             try {
-                startHash = relayTwist.findLastStoredTetherHash();
+                startTwist = twist.findLastStoredTether();
+                startHash = startTwist?.getHash()
             } catch (err) {
                 if (!err instanceof MissingPrevError)
                     throw err;
             }
-            let upstream = await relay.get(startHash);
+
+            if (startTwist?.isTethered()) {
+                await relay.populateShield?.(startTwist)
+                twist.safeAddAtoms(startTwist.getAtoms())
+            }
+            let prevFastTwist
+            try {
+                prevFastTwist = startTwist?.lastFast();
+            } catch (e) {
+                // There might not be a prev
+                if (!e instanceof MissingPrevError) {
+                    throw e;
+                }
+            }
+            if (prevFastTwist) {
+                await relay.populateShield?.(prevFastTwist)
+                twist.safeAddAtoms(prevFastTwist.getAtoms())
+            }
+
+            let upstream;
+            if (startHash && previousGetResult && previousGetResult.findPrevious(startHash)){
+                upstream = previousGetResult;
+                previousGetResult = undefined; // performance hack to stop calling findPrevious
+            } else {
+                upstream = await relay.get(startHash);
+            }
+
             twist.safeAddAtoms(upstream.getAtoms());
-            relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
+            let relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
 
             try {
                 if (relayTwist.findPrevious(poptopHash))
@@ -584,21 +616,21 @@ class TodaClientV2 extends TodaClient {
         this.retryInterval = 1000;
     }
 
-    _backwardsStopPredicate(fastTwist) {   
+    _backwardsStopPredicate(fastTwist) {
         /* For the sake of performance, there are 3 conditions where we want to stop moving backwards when pulling the relay:
             1) when we reach a fast twist
-            2) when we reach a twist that is known to be the `topline hash` (by definition we do not need any 
+            2) when we reach a twist that is known to be the `topline hash` (by definition we do not need any
                 information prior to this point, assuming the abject is properly defined)
-            3) when we know that the relay line portion we have is loose, we do not want to walk all the way 
-                back looking for the topline hash or a fast twist. Instead, we can stop whenever we see a twist 
-                that has already been gathered in a previous pull. So we: 
-                    a) we locally check whether or not the relay line is loose; then 
-                    b) if it is, locally find the most recent twist we know about on that line; then 
+            3) when we know that the relay line portion we have is loose, we do not want to walk all the way
+                back looking for the topline hash or a fast twist. Instead, we can stop whenever we see a twist
+                that has already been gathered in a previous pull. So we:
+                    a) we locally check whether or not the relay line is loose; then
+                    b) if it is, locally find the most recent twist we know about on that line; then
                     c) walk back until we see that twist
         */
         let lastKnownRelayTwist;
         let relayLineIsFast;
-        try { 
+        try {
             lastKnownRelayTwist = fastTwist.tether() ?? fastTwist.findLastStoredTether();
             relayLineIsFast = lastKnownRelayTwist?.lastFast();
         } catch (err) {
@@ -643,14 +675,15 @@ class TodaClientV2 extends TodaClient {
 
     async _setPost(tb) {
         const lead = tb.twist().lastFast()?.lastFast();
+        let hoist, relayTwist;
         if (lead) {
             // temporary hackitty hack
             // does this twist already contain the hoisting info?
             let local = new LocalNextRelayClient(this, lead.getTetherHash());
-            let h = await local.getHoist(lead);
-            if (h) {
-                tb.addRigging(lead.getHash(), h.getHash());
-                return;
+            ({hoist, relayTwist} = await local.getHoist(lead));
+            if (hoist) {
+                tb.addRigging(lead.getHash(), hoist.getHash());
+                return {hoist, relayTwist};
             }
 
             // orig:
@@ -660,9 +693,10 @@ class TodaClientV2 extends TodaClient {
                 throw new WaitForHitchError(); //TODO: specialize this error
             }
 
-            let hoist = await this._waitForHoist(lead, relay);
+            ({hoist, relayTwist} = await this._waitForHoist(lead, relay));
             tb.addRigging(lead.getHash(), hoist.getHash());
         }
+        return {hoist, relayTwist};
         //TODO(acg): why wouldn't we also not take advantage of having grabbed
         //all those proof atoms and save em?
     }

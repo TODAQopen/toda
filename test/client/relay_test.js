@@ -68,7 +68,7 @@ describe("getHoist", () => {
         scope.reply(200, fs.readFileSync( new URL('./files/line.toda', import.meta.url)));
 
         let relay = new RemoteRelayClient(url);
-        return relay.getHoist(x.lastFast()).then(r => {
+        return relay.getHoist(x.lastFast()).then(({hoist: r}) => {
             assert(r.getHash().equals(
                 Hash.fromHex("41d3b8000e5959b81bcf55a4c4782deab8583f9b4c0624cdf9fec731cd2b06f40e")));
         });
@@ -261,7 +261,7 @@ describe("RemoteNextRelayClient", async () => {
         let tether = Hash.fromHex("41e6e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4cb829ed640be4");
         let a = await toda.create(tether)
         let b = await toda.append(a);
-        
+
 
         let relay = new RemoteNextRelayClient("https://localhost:8080", "http://wikipedia.com", null);
         let response = await relay.hoist(a, b.getHash());

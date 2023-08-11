@@ -6,7 +6,7 @@ import { Interpreter } from "../../src/core/interpret.js";
 import { Line } from "../../src/core/line.js";
 import assert from "assert";
 import { Hash } from "../../src/core/hash.js";
-import { TwistBuilder } from "../../src/core/twist.js";
+import { TwistBuilder, Twist } from "../../src/core/twist.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { SimpleHistoric } from "../../src/abject/simple-historic.js";
 import { RemoteNextRelayClient, LocalNextRelayClient } from "../../src/client/relay.js";
@@ -82,12 +82,12 @@ describe("append", async () => {
         const midRelay = await startRelay(mid, { port: 8091, fileServerRedirects: ["http://localhost:8090/files"] });
         try {
             const t0 = await top.create(null, null, uuidCargo());
-            const t1 = await top.append(t0);
+            await top.append(t0);
             mid.defaultRelayHash = t0.getHash();
             mid.defaultRelayUrl = "http://localhost:8090/hoist";
             mid.defaultTopLineHash = t0.getHash();
             const m0 = await mid.create(t0.getHash(), null, uuidCargo());
-            
+
             const foot = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()),
                                         "http://localhost:8091/files");
             foot._getSalt = () => ByteArray.fromUtf8("some salty");
@@ -102,6 +102,7 @@ describe("append", async () => {
             const f4 = await foot.append(f3, m0.getHash());
 
             const i = new Interpreter(Line.fromTwist(f4), t0.getHash());
+
             await i.verifyHitchLine(f4.getHash());
         } finally {
             await stopRelay(topRelay);
@@ -207,7 +208,7 @@ describe("Stopping conditions", async () => {
             const top2 = await top.append(top1);
             const top3 = await top.append(top2);
             const top4 = await top.append(top3);
-            
+
             const invFoot = new LocalInventoryClient("./files/" + uuid())
             const foot = new TodaClientV2(invFoot, "http://localhost:8090/files");
             foot._getSalt = () => ByteArray.fromUtf8("some salty");
@@ -253,7 +254,7 @@ describe("Stopping conditions", async () => {
             const mid3 = await mid.append(mid2);
             const mid4 = await mid.append(mid3);
             const mid5 = await mid.append(mid4, top3.getHash());
-            
+
             const invFoot = new LocalInventoryClient("./files/" + uuid())
             const foot = new TodaClientV2(invFoot, "http://localhost:8091/files");
             foot._getSalt = () => ByteArray.fromUtf8("some salty");
@@ -283,7 +284,7 @@ describe("Stopping conditions", async () => {
         try {
             const top0 = await top.create(null, null, uuidCargo());
             const top1 = await top.append(top0);
-            
+
             const invFoot = new LocalInventoryClient("./files/" + uuid())
             const foot = new TodaClientV2(invFoot, "http://localhost:8090/files");
             foot._getSalt = () => ByteArray.fromUtf8("some salty");
@@ -325,8 +326,7 @@ describe("Stopping conditions", async () => {
             assert.ok(topRelay.app.requestLogs.includes(`GET /files/${top4.getHash()}.next.toda`));
             assert.ok(topRelay.app.requestLogs.includes(`GET /files/${top5.getHash()}.next.toda`));
             assert.ok(topRelay.app.requestLogs.includes(`GET /files/${top6.getHash()}.next.toda`));
-        }
-        finally {
+        } finally {
             await stopRelay(topRelay);
         }
     });
@@ -356,7 +356,7 @@ describe("Stopping conditions", async () => {
             const mid3 = await mid.append(mid2);
             const mid4 = await mid.append(mid3);
             const mid5 = await mid.append(mid4, top3.getHash());
-            
+
             const invFoot = new LocalInventoryClient("./files/" + uuid())
             const foot = new TodaClientV2(invFoot, "http://localhost:8091/files");
             foot._getSalt = () => ByteArray.fromUtf8("some salty");
@@ -369,7 +369,7 @@ describe("Stopping conditions", async () => {
 
             // Make doubly sure the new data made it into f1 for the sake of this test
             f1.safeAddAtoms(mid5.getAtoms());
-            
+
             // Clear the logs
             midRelay.app.requestLogs = [];
 

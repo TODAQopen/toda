@@ -31,14 +31,14 @@ class RelayClient {
      * @returns Promise<Twist|null> The hash of the hitch hoist if it exists, or null
      */
     async getHoist(lead) {
-        let relay = await this.get();
-        if (!relay) return null; // The requested twist is not present in this relay
-        let i = new Interpreter(Line.fromTwist(relay).addAtoms(lead.getAtoms())); //awkward
+        let relayTwist = await this.get();
+        if (!relayTwist) return {}
+        let i = new Interpreter(Line.fromTwist(relayTwist).addAtoms(lead.getAtoms())); //awkward
         try {
-            return i.hitchHoist(lead.getHash());
+            return {hoist: i.hitchHoist(lead.getHash()), relayTwist};
         } catch (e) {
             //console.warn("Error getting hoist:", e);
-            return null;
+            return {};
         }
     }
 }
@@ -145,7 +145,7 @@ class NextRelayClient extends RelayClient {
             return [];
         }
         if (twist.isTethered()) {
-            await this._populateShield(twist);
+            await this.populateShield(twist);
             return [twist]; // no need to go further back
         }
         if (this.backwardsStopPredicate && this.backwardsStopPredicate(twist)) {
@@ -160,12 +160,16 @@ class NextRelayClient extends RelayClient {
             return [];
         }
         if (twist.isTethered()) {
-            await this._populateShield(twist);
+            await this.populateShield(twist);
         }
         return [twist, ...(await this._forwards(twist.getHash()))];
     }
 
-    async _populateShield(twist) {
+    async populateShield(twist) {
+        if (twist.get(twist.getShieldHash())) {
+            return;
+        }
+
         const shield = await this._getShield(twist.getHash());
         if (shield) {
             twist.safeAddAtom(twist.getShieldHash(), shield);
@@ -188,7 +192,7 @@ class LocalNextRelayClient extends NextRelayClient {
      *  the twist packet, the body packet, the req packet (and all contents),
      *  the sat packet (and all contents), and the rigging packet.
      * Note that the cargo and the shield are omitted
-     * @param {Twist} twist 
+     * @param {Twist} twist
      * @returns {Atoms}
      */
     _isolateTwist(twist) {
@@ -196,7 +200,7 @@ class LocalNextRelayClient extends NextRelayClient {
         isolated.set(twist.getBodyHash(), twist.getBody());
         // We don't want to expand the rigging: only want the pairtrie itself
         const rigging = twist.get(twist.getBody().getRiggingHash());
-        if (rigging) 
+        if (rigging)
             isolated.set(twist.getBody().getRiggingHash(), rigging);
         function expandHash(twist, hash) {
             let packet = twist.get(hash);
@@ -255,7 +259,7 @@ class LocalNextRelayClient extends NextRelayClient {
     _getShield(twistHash) {
         const twist = this.client.get(this.tetherHash);
         if (twist && LocalNextRelayClient.shieldIsPublic(twist, twistHash))
-            return twist.findPrevious(twistHash).shield();
+            return twist.findPrevious(twistHash)?.shield();
     }
 }
 
