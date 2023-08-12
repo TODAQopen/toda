@@ -72,7 +72,7 @@ describe("getBalance", async () => {
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
         let [delegate, delegator] = await toda.delegateValue(dq, 3.4);
-        
+
         let result = await toda.getBalance(twist.getHash());
 
         assert.deepEqual({balance: 4.3,
@@ -92,9 +92,9 @@ describe("getBalance", async () => {
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
         let [delegate, delegator] = await toda.delegateValue(dq, 3.4);
-    
+
         // Delegator is no longer controlled by address
-        await toda.append(delegator, 
+        await toda.append(delegator,
                           Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5"));
 
         let result = await toda.getBalance(twist.getHash());
@@ -150,7 +150,7 @@ describe("delegateValue", async () => {
         toda = new TodaClient(inv, "http://localhost:8000");
         await assert.rejects(toda.delegateValue(dq, 2.2));
     });
-    
+
 
     it("Not enough qty", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
@@ -179,7 +179,7 @@ describe("delegateValue", async () => {
         let relayTwist1 = await toda.append(relayTwist0);
 
         let twist = await mint(toda, 43, 1, relayTwist0.getHash());
-        twist.safeAddAtoms(relayTwist1.getAtoms());
+        twist.addAtoms(relayTwist1.getAtoms());
         let dq = Abject.fromTwist(twist);
         let [delegate, delegator] = await toda.delegateValue(dq, 3.4);
         assert.ok(twist.getTetherHash().equals(relayTwist0.getHash()));
@@ -196,7 +196,7 @@ describe("transfer", async () => {
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
-        let newTwists = await (await toda.transfer({amount: 4.3, 
+        let newTwists = await (await toda.transfer({amount: 4.3,
                                                     typeHash: twist.getHash(),
                                                     destHash}));
         assert.equal(newTwists.length, 1);
@@ -213,7 +213,7 @@ describe("transfer", async () => {
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
-        let newTwists = await (await toda.transfer({amount: 3.1, 
+        let newTwists = await (await toda.transfer({amount: 3.1,
                                                     typeHash: twist.getHash(),
                                                     destHash}));
         assert.equal(newTwists.length, 1);
@@ -233,7 +233,7 @@ describe("transfer", async () => {
         let [delegate, delegator] = await toda.delegateValue(Abject.fromTwist(twist), 3);
         await toda.delegateValue(Abject.fromTwist(delegate), 1.5);
         // Now there are three bills: 1.5, 1.5, 1.5
-        let newTwists = await (await toda.transfer({amount: 3, 
+        let newTwists = await (await toda.transfer({amount: 3,
                                                     typeHash: twist.getHash(),
                                                     destHash}));
         assert.equal(newTwists.length, 2);
@@ -250,7 +250,7 @@ describe("transfer", async () => {
         let twist = await mint(toda, 43, 1);
         // Now there are two bills: 2.6 and 1.7
         await toda.delegateValue(Abject.fromTwist(twist), 2.6);
-        let newTwists = await (await toda.transfer({amount: 3.1, 
+        let newTwists = await (await toda.transfer({amount: 3.1,
                                                     typeHash: twist.getHash(),
                                                     destHash}));
         assert.equal(newTwists.length, 2);

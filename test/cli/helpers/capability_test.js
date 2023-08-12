@@ -34,8 +34,8 @@ xdescribe("append capability", () => {
         assert.equal(cap.url(), url);
         assert.deepEqual(cap.methods(), verbs);
         assert.deepEqual(new Date(cap.expiry()), expiry);
-        assert(cap.popTop().equals(tb.serialize().lastAtomHash()));
-        assert(capTwist.tether().getHash().equals(tb.serialize().lastAtomHash()));
+        assert(cap.popTop().equals(tb.serialize().focus));
+        assert(capTwist.tether().getHash().equals(tb.serialize().focus));
         assert(ByteArray.isEqual(capTwist.shield().getShapedValue(), shield));
     });
 
@@ -61,7 +61,7 @@ xdescribe("append capability", () => {
         assert.equal(authCap.url(), url);
         assert.deepEqual(authCap.methods(), verbs);
         assert.deepEqual(new Date(authCap.expiry()), expiry);
-        assert(authCap.popTop().equals(tb.serialize().lastAtomHash()));
+        assert(authCap.popTop().equals(tb.serialize().focus));
         assert.equal(authCapTwist.shield(), null);
 
         let authorizes = authCap.getAuthorizes();

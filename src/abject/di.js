@@ -73,7 +73,7 @@ class DI extends Abject {
    * Assumes primary atom is last.
    */
     static parse(atoms, focusHash, cargoHash) {
-        focusHash = focusHash || atoms.lastAtomHash();
+        focusHash = focusHash || atoms.focus;
 
         if (cargoHash && !cargoHash.equals(focusHash)) {
             throw new AbjectIllegalTwistError(atoms, this.interpreter);
@@ -237,15 +237,15 @@ class AssetClassField {
         if (this.required !== undefined) {
             let required = new P1Boolean(this.required).serialize(hashImp);
             atoms = required;
-            data.set(DI.fieldSyms.ACFieldrequired, required.lastAtomHash());
+            data.set(DI.fieldSyms.ACFieldrequired, required.focus);
         }
         if (this.type !== undefined) {
             data.set(DI.fieldSyms.ACFieldtype, this.type);
         }
         if (this.list !== undefined) {
-            let list = new P1Boolean(this.list).serialize(hashImp);
-            atoms = new Atoms([...atoms, ...list]);
-            data.set(DI.fieldSyms.ACFieldlist, list.lastAtomHash());
+            let listAtoms = new P1Boolean(this.list).serialize(hashImp);
+            atoms = Atoms.fromAtoms(atoms, listAtoms);
+            data.set(DI.fieldSyms.ACFieldlist, listAtoms.focus);
         }
         if (this.consolidation !== undefined) {
             data.set(DI.fieldSyms.ACFieldconsolidation, this.consolidation);
@@ -253,7 +253,9 @@ class AssetClassField {
 
         //urg - dupliates stuff from Abject
         let packet = PairTriePacket.createFromUnsorted(data);
-        atoms.set(hashImp.fromPacket(packet),packet);
+        let hash = hashImp.fromPacket(packet);
+        atoms.set(hash, packet);
+        atoms.focus = hash;
         return atoms;
     }
 
@@ -307,7 +309,7 @@ class DIAssetClassClass extends DI {
 
     addACField(fieldSym, fieldSpec) {
         let atoms = fieldSpec.serialize(this.preferredHashImp);
-        let fieldSpecHash = atoms.lastAtomHash();
+        let fieldSpecHash = atoms.focus;
         let fields = this.getField(DI.fieldSyms.ACfields);
         if (!fields) {
             fields = new PairTriePacket(new Map());

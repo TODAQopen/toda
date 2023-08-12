@@ -38,7 +38,8 @@ class Primitive extends Abject {
         if (focus) {
             cargo = atoms.get(focus);
         } else {
-            cargo = atoms.lastPacket();
+            // cargo = atoms.lastPacket();
+            cargo = atoms.get(atoms.focus);
         }
 
         let primitiveValueHash = cargo.get(this.fieldSyms.value);

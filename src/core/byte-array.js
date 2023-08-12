@@ -39,7 +39,6 @@ class ByteArray extends Uint8Array {
         for (let i = 0; i < l; i++)
             hex += ByteArray.hexes_helper[this[i]];
         Object.defineProperty(this, 'str', { value: hex } ); // dx: this is slower than setting the string directly, but without it some deep equal tests fail... :/
-        // this.str = hex;
         return hex;
     }
 
@@ -48,7 +47,7 @@ class ByteArray extends Uint8Array {
     }
 
     toInt() {
-        return new DataView(this.buffer).getUint32(0, false)
+        return new DataView(this.buffer, 0, 4).getUint32(0, false)
     }
 
     equals(x) {

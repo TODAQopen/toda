@@ -6,7 +6,7 @@ import assert from "assert";
 
 function runParse(b)
 {
-    let lat = Atoms.fromBytes(b);
+    let lat = Atoms.fromBytes(b).toPairs().map(pair => pair[1]);
     lat.forEach((p) =>
         {
             p.getShapedValue();

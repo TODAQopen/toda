@@ -14,7 +14,7 @@ class RelayClient {
     }
 
     hoistPacket(riggingPacket) {
-        return this._hoist(new Atoms([[Sha256.fromPacket(riggingPacket), riggingPacket]]));
+        return this._hoist(Atoms.fromPairs([[Sha256.fromPacket(riggingPacket), riggingPacket]]));
     }
 
     _hoist(atoms) {
@@ -102,7 +102,8 @@ class LocalRelayClient extends RelayClient {
         let tether = relay.isTethered() ? relay.getTetherHash() : null;
 
         return this.client.append(relay, tether, req, undefined, undefined,
-                           atoms.lastPacket());
+                                  atoms.get(atoms.focus));
+                        //    atoms.lastPacket());
     }
 
     get() {
@@ -132,10 +133,11 @@ class NextRelayClient extends RelayClient {
         if (twists.length == 0) {
             return null;
         }
-        const twist = twists.slice(-1)[0];
+        const twist = twists[twists.length-1];
         // Significantly more performant than `forEach(twist.safeAdd...`
-        const atoms = new Atoms(twists.flatMap(tw => [...tw.getAtoms().entries()]));
-        twist.safeAddAtoms(atoms);
+        // const atoms = new Atoms(twists.flatMap(tw => [...tw.getAtoms().entries()]));
+        const atoms = Atoms.fromAtoms(...twists.flatMap(t => t.atoms||[]));
+        twist.addAtoms(atoms);
         return twist;
     }
 
@@ -172,7 +174,7 @@ class NextRelayClient extends RelayClient {
 
         const shield = await this._getShield(twist.getHash());
         if (shield) {
-            twist.safeAddAtom(twist.getShieldHash(), shield);
+            twist.atoms.set(twist.getShieldHash(), shield);
         }
     }
 }
@@ -211,7 +213,8 @@ class LocalNextRelayClient extends NextRelayClient {
         // Completely expand reqs + sats
         expandHash(twist, twist.getBody().getReqsHash());
         expandHash(twist, twist.getPacket().getSatsHash());
-        isolated.forceSetLast(twist.getHash(), twist.getPacket());
+        isolated.set(twist.getHash(), twist.getPacket())
+        isolated.focus = twist.getHash()
         return isolated;
     }
 
@@ -235,7 +238,7 @@ class LocalNextRelayClient extends NextRelayClient {
         const prev = next?.prev();
         if (!prev) return null;
         const isolated = new Twist(this._isolateTwist(next), next.getHash());
-        isolated.safeAddAtoms(this._isolateTwist(prev));
+        isolated.addAtoms(this._isolateTwist(prev));
         return isolated;
     }
 

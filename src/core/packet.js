@@ -338,6 +338,7 @@ class PairTriePacket extends HashPairPacket {
      */
     getHashMap() {
         //this mutates within a closure.  sry not sry. it's gettign late.
+        // dx: think: maybe this can be optimized
         let obj = Array.from(this.getShapedValue()).reduce((obj, [key, value]) => {
             obj[key] = value;
             return obj;

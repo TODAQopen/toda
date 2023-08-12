@@ -38,7 +38,7 @@ class SimpleHistoric extends Abject {
         let x = new this();
         x.atoms = atoms;
         x.data = new HashMap(atoms.get(cargoHash).getShapedValue());
-        x.twistHash = focusHash || atoms.lastAtomHash();
+        x.twistHash = focusHash || atoms.focus;
         return x;
     }
 

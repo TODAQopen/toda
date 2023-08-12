@@ -13,7 +13,7 @@ function hpp(str) { // hash-packet-pair
 
 function simpleTwist(...strings) {
     let tb = new TwistBuilder();
-    tb.setFieldAtoms(sbh("atoms"), new Atoms(strings.map(s => hpp(s))));
+    tb.setFieldAtoms(sbh("atoms"), Atoms.fromPairs(strings.map(s => hpp(s))));
     return new Twist(tb.serialize());
 }
 

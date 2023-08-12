@@ -105,7 +105,7 @@ class TodaClient {
     // typically used for looking up tethers, where we don't know if the proof
     // is in this file or another.
     getFromAtomsOrInventory(atoms, hash) {
-        if (atoms.has(hash)) {
+        if (atoms.get(hash)) {
             return new Twist(atoms, hash);
         }
         return this.get(hash);
@@ -346,7 +346,7 @@ class TodaClient {
 
             if (startTwist?.isTethered()) {
                 await relay.populateShield?.(startTwist)
-                twist.safeAddAtoms(startTwist.getAtoms())
+                twist.addAtoms(startTwist.getAtoms())
             }
             let prevFastTwist
             try {
@@ -359,7 +359,7 @@ class TodaClient {
             }
             if (prevFastTwist) {
                 await relay.populateShield?.(prevFastTwist)
-                twist.safeAddAtoms(prevFastTwist.getAtoms())
+                twist.addAtoms(prevFastTwist.getAtoms())
             }
 
             let upstream;
@@ -370,7 +370,7 @@ class TodaClient {
                 upstream = await relay.get(startHash);
             }
 
-            twist.safeAddAtoms(upstream.getAtoms());
+            twist.addAtoms(upstream.getAtoms());
             let relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
 
             try {

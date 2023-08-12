@@ -7,7 +7,7 @@
 
 import { BasicBodyPacket, BasicTwistPacket, PairTriePacket } from './packet.js';
 
-import { Sha256, NullHash } from './hash.js';
+import { Sha256, NullHash, Hash } from './hash.js';
 import { HashMap } from './map.js';
 import { Atoms } from './atoms.js';
 import { Shield } from './shield.js';
@@ -38,8 +38,7 @@ class TwistBuilder {
     static defaultHashImp = Sha256;
 
     constructor(atoms, cargo, satisfactions, tether, requirements, shield, rigging) {
-        atoms = atoms || [];
-        this.atoms = new Atoms([...atoms]);
+        this.atoms = atoms ? Atoms.fromAtoms(atoms) : new Atoms();
         this.data = new HashMap(cargo || []);
         this.satisfactions = satisfactions || null;
         this.tether = tether || null;
@@ -136,12 +135,16 @@ class TwistBuilder {
             this.satsHash = hashImp.fromPacket(satisfactions);
             this.atoms.set(this.satsHash, satisfactions);
 
-            this.addAtoms(new Atoms(this.satisfactions.getPairs()));
+            this.addAtoms(Atoms.fromPairs(this.satisfactions.getPairs()));
         }
 
         let twist = new BasicTwistPacket(bodyHash, this.satsHash);
         let twistHash = hashImp.fromPacket(twist);
-        return new Atoms([...this.atoms, [bodyHash, body], [twistHash, twist]]);
+        let atoms = Atoms.fromAtoms(this.atoms);
+        atoms.set(bodyHash, body);
+        atoms.set(twistHash, twist);
+        atoms.focus = twistHash;
+        return atoms;
     }
 
     twist(hashImp) {
@@ -153,7 +156,8 @@ class TwistBuilder {
      */
     setCargo(atoms) {
         this.addAtoms(atoms);
-        this.cargoHash = atoms.lastAtomHash();
+        let thisisdumb = atoms.toPairs(); // dx: todo: remove this! replace with twist.focus
+        this.cargoHash = atoms.focus || thisisdumb[thisisdumb.length-1][0];
     }
 
     setFieldHash(field, hash) {
@@ -163,12 +167,13 @@ class TwistBuilder {
     setFieldPacket(field, packet) {
         let packetHash = TwistBuilder.defaultHashImp.fromPacket(packet);
         this.atoms.set(packetHash, packet);
+        this.atoms.focus = packetHash;
         this.setFieldHash(field, packetHash);
     }
 
     setFieldAtoms(field, atoms) {
         this.addAtoms(atoms);
-        this.setFieldHash(field, atoms.lastAtomHash());
+        this.setFieldHash(field, atoms.focus);
     }
 
     getCargoPacket() {
@@ -199,7 +204,7 @@ class TwistBuilder {
             this.reqsHash = hashImp.fromPacket(requirements);
             this.atoms.set(this.reqsHash, requirements);
 
-            this.addAtoms(new Atoms(this.requirements.getPairs()));
+            this.addAtoms(Atoms.fromPairs(this.requirements.getPairs()));
         }
 
         if (this.data.size > 0) {
@@ -225,6 +230,7 @@ class TwistBuilder {
             //CHECKME: we probably don't always want the shield in here.
             this.atoms.set(this.shieldHash, this.shieldPacket);
         }
+        // dx: think: do we need to set the .focus here?
 
         return new BasicBodyPacket(this.prevHash,
             this.tetherHash,
@@ -234,14 +240,16 @@ class TwistBuilder {
             this.shieldHash);
     }
 
+    // dx: NOTE! changes the focus!! why????
+    // dx: TODO: change this so it doesn't change the focus, do that manually if desired
     addAtoms(atoms) {
-        this.atoms = new Atoms([...this.atoms, ...atoms]);
+        this.atoms.merge(atoms)
     }
 
     createSuccessor() {
         let atoms = this.serialize();
         let next = new TwistBuilder(atoms);
-        next.prevHash = atoms.lastAtomHash();
+        next.prevHash = atoms.focus;
         return next;
     }
 
@@ -263,7 +271,7 @@ class TwistBuilder {
 
     getHash() {
         // we should really memoize this or something
-        return this.serialize().lastAtomHash();
+        return this.serialize().focus;
     }
 
     // kinda redundant
@@ -284,7 +292,7 @@ class Twist {
 
     constructor(atoms, hash) {
         this.atoms = atoms;
-        this.hash = hash || atoms.lastAtomHash();
+        this.hash = hash || atoms.focus;
 
         this.packet = atoms.get(this.hash);
         if (!this.packet) {
@@ -529,16 +537,9 @@ class Twist {
     }
 
     // adds atoms without changing the focus.
-    safeAddAtoms(atoms) {
-        let [h,p] = this.atoms.lastAtom();
-        this.atoms = new Atoms([...this.atoms, ...atoms]);
-        this.atoms.forceSetLast(h,p);
-    }
-
-    safeAddAtom(hash, packet) {
-        let [h,p] = this.atoms.lastAtom();
-        this.atoms.set(hash, packet);
-        this.atoms.forceSetLast(h,p);
+    addAtoms(atoms) {
+        this.atoms.mergeNOFOCUS(atoms);
+        // dx: todo: make this just merge, and lift focus into twist
     }
 
     /**

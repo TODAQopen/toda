@@ -368,7 +368,8 @@ describe("Stopping conditions", async () => {
             const f1 = await foot.append(f0, mid4.getHash());
 
             // Make doubly sure the new data made it into f1 for the sake of this test
-            f1.safeAddAtoms(mid5.getAtoms());
+            f1.addAtoms(mid5.getAtoms());
+
 
             // Clear the logs
             midRelay.app.requestLogs = [];

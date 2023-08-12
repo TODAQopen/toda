@@ -26,7 +26,7 @@ async function capability(url, verbs, expiry, shield, poptop, tether) {
 
     let top = await getAtomsFromPath(poptop);
     master.addAtoms(top);
-    master.setPopTop(top.lastAtomHash());
+    master.setPopTop(top.focus);
 
     if (tether) {
         await setFastFields(tether, master.buildTwist(), shield);

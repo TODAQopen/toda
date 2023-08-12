@@ -65,7 +65,7 @@ void async function () {
         opts.description = args['descr'];
     }
     args = await formatInputs(args);
-    let popTopHash = (await getAtomsFromPath(args.poptop)).lastAtomHash() // fragile
+    let popTopHash = (await getAtomsFromPath(args.poptop)).focus // fragile
 
     let sr = todaize.todaize(ba, popTopHash, opts);
 

@@ -135,10 +135,10 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     put(atoms, explicitPath) {
-        let tmpPath = this.tmpFilePathForHash(atoms.lastAtomHash());
+        let tmpPath = this.tmpFilePathForHash(atoms.focus);
         fs.outputFileSync(tmpPath, atoms.toBytes());
 
-        let destPath = explicitPath || this.filePathForHash(atoms.lastAtomHash());
+        let destPath = explicitPath || this.filePathForHash(atoms.focus);
         // for atomic mv
         fs.renameSync(tmpPath, destPath);
         this._addAtoms(atoms);

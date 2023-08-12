@@ -229,7 +229,7 @@ describe("append", async () => {
         let tetherLine_2 = await toda.append(tetherLine_1);
 
         let localLine_0 = await toda.create();
-        localLine_0.safeAddAtoms(tetherLine_2.getAtoms());
+        localLine_0.addAtoms(tetherLine_2.getAtoms());
         let localLine_1 = await toda.append(localLine_0, tetherLine_0.getHash());
 
         // Even though we specified an old tether, append is smart enough to use the latest known twist of that specified line

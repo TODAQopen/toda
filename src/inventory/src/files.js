@@ -19,7 +19,7 @@ import path from 'path';
 async function putFile(invPath, bytes) {
     try {
         let atoms = Atoms.fromBytes(bytes);
-        let hash = atoms.lastAtomHash();
+        let hash = atoms.focus;
         await fs.mkdir(path.join(invPath), {recursive: true});
         await fs.writeFile(path.join(invPath, `${hash}.toda`), bytes);
         return hash.serializedValue;

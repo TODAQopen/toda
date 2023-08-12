@@ -34,6 +34,8 @@ class Abject {
 
         this.preferredHashImp = Sha256;
 
+        this.focus = null;
+
         // supporting atoms
         this.atoms = new Atoms();
 
@@ -88,7 +90,8 @@ class Abject {
     setFieldAbject(field, abject, hashImp) {
         let atoms = abject.serialize(hashImp);
         this.atoms.merge(atoms);
-        this.setFieldHash(field, atoms.lastAtomHash());
+        this.setFieldHash(field, atoms.focus);
+        // this.setFieldHash(field, abject.focus); // dx: todo: change it to this
     }
 
     /**
@@ -100,7 +103,8 @@ class Abject {
         // wow what an enormous pain
 
         let abjectAtoms = abjects.map(a => a.serialize(hashImp));
-        let abjectHashes = abjectAtoms.map(a => a.lastAtomHash());
+        let abjectHashes = abjectAtoms.map(a => a.focus);
+        // let abjectHashes = abjects.map(a => a.focus); // dx: todo: change it to this
         let packet = new HashPacket(abjectHashes);
 
         for (let atoms of abjectAtoms) {
@@ -126,6 +130,7 @@ class Abject {
      */
     addAtom(h, p) {
         this.atoms.set(h, p);
+        this.atoms.focus = h; // dx: todo: remove this
     }
 
     addAtoms(atoms) {
@@ -163,7 +168,10 @@ class Abject {
      */
     serialize(hashImp) {
         let [h,p] = this.dataAtom(hashImp);
-        return this.atoms.clone().set(h,p);
+        let atoms = Atoms.fromAtoms(this.atoms)
+        atoms.set(h,p);
+        atoms.focus = h; // dx: leaving this for now because it's used for exporting bytes... need to figure out how to do it better
+        return atoms;
     }
 
     /**
@@ -252,7 +260,8 @@ class Abject {
         if (focusHash) {
             focus = atoms.get(focusHash);
         } else {
-            focus = atoms.lastPacket();
+            // focus = atoms.lastPacket();
+            focus = atoms.get(atoms.focus);
         }
 
         // deal with reference to lists
@@ -329,7 +338,7 @@ class AbjectError extends Error {
         super();
         this.msg = msg
         if (abjectAtoms) {
-            this.abjectHash = abjectAtoms.lastAtomHash();
+            this.abjectHash = abjectAtoms.focus;
 
             if (this.verbose) {
                 this.abjectAtoms = abjectAtoms;

@@ -272,12 +272,12 @@ class MemorySyncPacketStore extends PacketStore {
     }
 
     getPairs() {
-        return this.atoms;
+        return this.atoms.toPairs();
     }
 
     static fromAtoms(atoms) {
         let x = new this();
-        for (let [h,p] of atoms) {
+        for (let [h,p] of atoms.toPairs()) {
             x.put(h,p);
         }
         return x;
@@ -304,9 +304,11 @@ class MemorySyncPacketStore extends PacketStore {
         return this.successors.get(hash);
     }
 
+    // dx: think: is this just copied from line.js? is store.js used anywhere? what even is this?
     put(hash, packet) {
         super.put(hash, packet);
         this.atoms.set(hash, packet);
+        this.atoms.focus = hash;
         packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
 
         if (packet instanceof BasicTwistPacket) {

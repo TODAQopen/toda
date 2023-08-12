@@ -36,8 +36,8 @@ void async function () {
 
         // NOTE(sfertman): integrity checks
         let atoms = Atoms.fromBytes(bytes);
-        if (!atoms.lastAtomHash().equals(hash)) {
-            logFormatted("WARNING: focus hash does not match document name");
+        if (!atoms.focus.equals(hash)) {
+            logFormatted("WARNING: focus hash does not match document name"); // dx: think: do we really want this? the filename doesn't matter.
             process.exit(0);
         }
 

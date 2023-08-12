@@ -11,13 +11,6 @@ import { NullHash } from "../../src/core/hash.js";
 import assert from 'node:assert/strict'
 
 
-function safeAddAtoms(thing, atoms) {
-    let [h, p] = thing.atoms.lastAtom();
-    thing.addAtoms(atoms);
-    thing.atoms.forceSetLast(h, p);
-}
-
-
 describe("Regular minting works", () => {
 
     it("Can mint with no displayPrecision", async () => {
@@ -129,11 +122,11 @@ describe("Delegation works correctly", () => {
            [...Shield.rigForHoist(from.getHash(), fromNext.getHash(), NullHash).shapedVal,
             ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), NullHash).shapedVal]);
 
-        safeAddAtoms(delNext, topNext.serialize());
-        safeAddAtoms(delNext, fromNext.serialize());
+        delNext.addAtoms(topNext.serialize());
+        delNext.addAtoms(fromNext.serialize());
 
         fromNext.twistHash = fromNext.getHash();
-        safeAddAtoms(fromNext, delNext.serialize());
+        fromNext.addAtoms(delNext.serialize());
 
         return [fromNext, delNext, topNext]
     }
@@ -249,11 +242,11 @@ describe("Adversarial DQs can't break their invariants", () => {
            [...Shield.rigForHoist(from.getHash(), fromNext.getHash(), NullHash).shapedVal,
             ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), NullHash).shapedVal]);
 
-        safeAddAtoms(delNext, topNext.serialize());
-        safeAddAtoms(delNext, fromNext.serialize());
+        delNext.addAtoms(topNext.serialize());
+        delNext.addAtoms(fromNext.serialize());
 
         fromNext.twistHash = fromNext.getHash();
-        safeAddAtoms(fromNext, delNext.serialize());
+        fromNext.addAtoms(delNext.serialize());
 
         return [fromNext, delNext, topNext]
     }
@@ -319,11 +312,11 @@ describe("Probe the edges of delegation", () => {
            [...Shield.rigForHoist(from.getHash(), fromNext.getHash(), NullHash).shapedVal,
             ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), NullHash).shapedVal]);
 
-        safeAddAtoms(delNext, topNext.serialize());
-        safeAddAtoms(delNext, fromNext.serialize());
+        delNext.addAtoms(topNext.serialize());
+        delNext.addAtoms(fromNext.serialize());
 
         fromNext.twistHash = fromNext.getHash();
-        safeAddAtoms(fromNext, delNext.serialize());
+        fromNext.addAtoms(delNext.serialize());
 
         return [fromNext, delNext, topNext]
     }
@@ -518,14 +511,14 @@ describe("Full special-cased tests", () => {
             ...Shield.rigForHoist(del2.getHash(), delNext2.getHash(), NullHash).shapedVal
            ]);
 
-        safeAddAtoms(delNext, topNext.serialize());
-        safeAddAtoms(delNext, fromNext.serialize());
-        safeAddAtoms(delNext2, topNext.serialize());
-        safeAddAtoms(delNext2, fromNext.serialize());
+        delNext.addAtoms(topNext.serialize());
+        delNext.addAtoms(fromNext.serialize());
+        delNext2.addAtoms(topNext.serialize());
+        delNext2.addAtoms(fromNext.serialize());
 
         fromNext.twistHash = fromNext.getHash();
-        safeAddAtoms(fromNext, delNext.serialize());
-        safeAddAtoms(fromNext, delNext2.serialize());
+        fromNext.addAtoms(delNext.serialize());
+        fromNext.addAtoms(delNext2.serialize());
 
         assert.equal(delNext.quantity, 0);
         assert.equal(delNext2.quantity, 0);
@@ -577,14 +570,14 @@ describe("Full special-cased tests", () => {
             ...Shield.rigForHoist(del2.getHash(), delNext2.getHash(), NullHash).shapedVal
            ]);
 
-        safeAddAtoms(delNext, topNext.serialize());
-        safeAddAtoms(delNext, fromNext.serialize());
-        safeAddAtoms(delNext2, topNext.serialize());
-        safeAddAtoms(delNext2, fromNext.serialize());
+        delNext.addAtoms(topNext.serialize());
+        delNext.addAtoms(fromNext.serialize());
+        delNext2.addAtoms(topNext.serialize());
+        delNext2.addAtoms(fromNext.serialize());
 
         fromNext.twistHash = fromNext.getHash();
-        safeAddAtoms(fromNext, delNext.serialize());
-        safeAddAtoms(fromNext, delNext2.serialize());
+        fromNext.addAtoms(delNext.serialize());
+        fromNext.addAtoms(delNext2.serialize());
 
         assert.equal(delNext.quantity, 0);
         assert.equal(delNext2.quantity, 0);

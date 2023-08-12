@@ -24,11 +24,13 @@ class Line {
     static fromAtoms(atoms, focus) {
         let x = new this();
 
-        for (let [h,p] of atoms) {
-            x.put(h,p);
+        // dx: TODO: optimize this, if these are really atoms they've already been imported
+        x.atoms.merge(atoms);
+        for (let [h,p] of atoms.toPairs()) {
+            x.processPacket(h, p);
         }
 
-        x.focus = focus || atoms.lastAtomHash();
+        x.focus = focus || atoms.focus;
         return x;
     }
 
@@ -240,8 +242,8 @@ class Line {
      * @param {Twist} twist
      */
     putTwist(twist) {
-        this.focus = twist.atoms.lastAtomHash();
-        return twist.atoms.forEach((packet, hash) => this.put(hash, packet));
+        this.focus = twist.atoms.focus
+        return twist.atoms.toPairs().forEach(([hash, packet]) => this.put(hash, packet));
     }
 
 
@@ -270,7 +272,11 @@ class Line {
 
     put(hash, packet) {
         this.atoms.set(hash, packet);
+        this.atoms.focus = hash; // dx: TODO: drop this when we lose focus
+        this.processPacket(hash, packet);
+    }
 
+    processPacket(hash, packet) {
         if (packet instanceof BasicTwistPacket) {
             packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
             let body = this.get(packet.getBodyHash());
@@ -315,7 +321,7 @@ class Line {
     }
 
     addAtoms(atoms) {
-        for (let [h,p] of atoms) {
+        for (let [h,p] of atoms.toPairs()) {
             this.put(h,p);
         }
 

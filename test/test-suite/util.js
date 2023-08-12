@@ -32,7 +32,7 @@ function loadTest(fileName)
 {
     let bytes = fs.readFileSync(new URL('./descriptions/' + fileName, import.meta.url))
     let atoms = Atoms.fromBytes(bytes);
-    let abj = Abject.parse(atoms, atoms.lastAtomHash());
+    let abj = Abject.parse(atoms, atoms.focus);
     let linkedFile = Abject.parse(atoms, abj.getFieldHash(linkedInputFile));
     return {"colour": parseColour(abj.getFieldHash(colour)),
             "moniker": Abject.parse(atoms, abj.getFieldHash(moniker)),

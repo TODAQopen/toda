@@ -221,6 +221,10 @@ class NullHash extends Hash {
     isNull() {
         return true;
     }
+
+    toString() {
+        return '00';
+    }
 }
 
 /**

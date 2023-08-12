@@ -47,7 +47,9 @@ function isolateTwist(twist) {
     expandHash(twist, twist.getBody().getShieldHash());
     expandHash(twist, twist.getBody().getCargoHash());
     expandHash(twist, twist.getPacket().getSatsHash());
-    isolated.forceSetLast(twist.getHash(), twist.getPacket());
+    // isolated.forceSetLast(twist.getHash(), twist.getPacket());
+    isolated.set(twist.getHash(), twist.getPacket())
+    isolated.focus = twist.getHash()
     return isolated;
 }
 
@@ -65,7 +67,9 @@ function isolateSegment(twist, earliestHash) {
         }
         prev = prev.prev();
     }
-    isolated.forceSetLast(twist.getHash(), twist.getPacket());
+    // isolated.forceSetLast(twist.getHash(), twist.getPacket());
+    isolated.set(twist.getHash(), twist.getPacket())
+    isolated.focus = twist.getHash()
     return isolated;
 }
 
@@ -178,7 +182,8 @@ class MockSimpleHistoricRelay {
             .post('/')
             .query({})
             .reply(200, async function (uri, requestBodyHex) {
-                let riggingPacket = Atoms.fromBytes(this.req.requestBodyBuffers[0]).lastPacket();
+                let atoms = Atoms.fromBytes(this.req.requestBodyBuffers[0]);
+                let riggingPacket = atoms.get(atoms.focus);
                 // TODO: this is a bit gross; theoretically it could be the latest but it doesn't really matter :shrug:
                 let tether = server.latest().getTetherHash();
                 let next = await server.append(tether, riggingPacket);

@@ -67,7 +67,7 @@ class Actionable extends Abject {
         let x = new this();
         x.atoms = atoms;
         x.data = new HashMap(atoms.get(cargoHash).getShapedValue()); // does htis work?
-        x.twistHash = focusHash || atoms.lastAtomHash();
+        x.twistHash = focusHash || atoms.focus;
         return x;
     }
 

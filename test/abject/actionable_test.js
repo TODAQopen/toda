@@ -5,6 +5,7 @@ import { Sha256 } from '../../src/core/hash.js';
 import { Shield } from '../../src/core/shield.js';
 import { ArbitraryPacket } from '../../src/core/packet.js';
 import { ByteArray } from '../../src/core/byte-array.js';
+import { Atoms } from '../../src/core/atoms.js';
 import assert from 'node:assert/strict';
 
 // Builds a root and a delegate that point up to a topline
@@ -36,7 +37,7 @@ async function buildMockDelegate() {
     await relay.append(null, Shield.rigForHoist(root0.getHash(), root1.getHash(), root0_shield));
 
     let final_tw = delegate1.buildTwist().twist();
-    final_tw.safeAddAtoms(relay.latest().getAtoms());
+    final_tw.addAtoms(relay.latest().getAtoms());
 
     return {topline: relay.twists(),
             delegate: Abject.fromTwist(final_tw),
@@ -51,20 +52,25 @@ describe("checkAllRigs", async () => {
 
     it("Valid delegate and topline, root's shield missing: ", async () => {
         let mock = await buildMockDelegate();
-        mock.delegate.getAtoms().delete(Sha256.fromPacket(mock.root0_shield));
+        let atoms = mock.delegate.getAtoms();
+        let hash = Sha256.fromPacket(mock.root0_shield);
+        mock.delegate.atoms = Atoms.fromPairs(atoms.toPairs().filter(([h,p]) => h+"" === hash+""));
         await assert.rejects(() => mock.delegate.checkAllRigs());
     });
 
     it("Valid root and topline, delegates's shield missing: ", async () => {
         let mock = await buildMockDelegate();
-        mock.delegate.getAtoms().delete(Sha256.fromPacket(mock.delegate0_shield));
+        let atoms = mock.delegate.getAtoms();
+        let hash = Sha256.fromPacket(mock.delegate0_shield);
+        mock.delegate.atoms = Atoms.fromPairs(atoms.toPairs().filter(([h,p]) => h+"" === hash+""));
         await assert.rejects(() => mock.delegate.checkAllRigs());
     });
 
     it("Valid root and delegate, topline sat missing: ", async () => {
         let mock = await buildMockDelegate();
         let satHash = mock.topline[1].packet.getSatsHash();
-        mock.delegate.getAtoms().delete(satHash);
+        let atoms = mock.delegate.getAtoms();
+        mock.delegate.atoms = Atoms.fromPairs(atoms.toPairs().filter(([h,p]) => h+"" === satHash + ""));
         await assert.rejects(() => mock.delegate.checkAllRigs());
     });
 });

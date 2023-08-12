@@ -26,7 +26,7 @@ void async function () {
         let inputs = getAcceptedInputs(args, acceptedFields);
         let bytes = await getFileOrInput(args["_"][0]);
         let atoms = Atoms.fromBytes(bytes);
-        let twistHash = inputs.twist.isNull() ? atoms.lastAtomHash() : inputs.twist;
+        let twistHash = inputs.twist.isNull() ? atoms.focus : inputs.twist;
 
         if (args["line"]) {
             twistHash = Line.fromBytes(bytes).last(twistHash);

@@ -14,7 +14,7 @@ async function checkInterpret(b)
         let atoms = Atoms.fromBytes(b);
         let line = Line.fromAtoms(atoms);
         let interpreter = new Interpreter(line, null);
-        let successorH = atoms.lastAtomHash();
+        let successorH = atoms.focus;
         let predecessorH = line.prev(successorH);
         let successor = new Twist(atoms, successorH);
         let predecessor = new Twist(atoms, predecessorH);
