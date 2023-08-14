@@ -227,7 +227,7 @@ class TodaClient {
      * @param req <RequirementSatisfier>
      * @param cargo <Atoms> //primary cargo is last atom
      */
-    async _append(prev, next, tether, req, cargo, preSignHook = () => {}, rigging, { noHoist } = {} ) {
+    async _append(prev, next, tether, req, cargo, preSignHook = () => {}, rigging, { noHoist, noRemote } = {} ) {
         if (req) {
             // TODO: _potentially_ re-introduce check to ensure we control this key?
             // At the moment assumes req is a RequirementSatisfier... a bit brittle.
@@ -272,7 +272,7 @@ class TodaClient {
                     throw new Error("Cannot find relay for " + lastFast.getHash().toString());
                 }
                 let nth = nextTwist.getHash();
-                await r.hoist(lastFast, nth);
+                await r.hoist(lastFast, nth, { noFast: noRemote });
 
                 ({relayTwist} = await this._waitForHoist(lastFast, r));
 
@@ -523,10 +523,7 @@ class TodaClient {
      * @param {Number} quantity
      * @returns {Promise<Array>} [delegatedTwist, remainingTwist]
      */
-    async delegateQuantity(dq, quantity) {
-
-        // XXX(acg): PERF - some of these can happen locally without hoisting
-        // all the way to poptop.
+    async delegateQuantity(dq, quantity, { lastFast } = {}) {
 
         // TODO(acg): There's a really weird amount of back-forth between Abj and
         // Twist we need to sort out.
@@ -540,18 +537,20 @@ class TodaClient {
 
         // create delegate
         let dqDel = dq.delegate(quantity);
-        let dqDelTwist = await this._append(null, dqDel.buildTwist(), dqTether);
-        // PERF(acg): does the above even need to be fast?
+        let dqDelTwist = await this._append(null, dqDel.buildTwist(), dqTether,
+                                            null, null, undefined, null, { noRemote: true});
 
         // Append to delegator for CONFIRM
         let dqNext = dq.createSuccessor();
         dqNext.confirmDelegate(Abject.fromTwist(dqDelTwist));
-        let dqNextTwist = await this._append(dqTwist, dqNext.buildTwist(), dqTether);
+        let dqNextTwist = await this._append(dqTwist, dqNext.buildTwist(), dqTether,
+                                             null, null, undefined, null, { noRemote: true});
 
         // Append to delegate for COMPLETE
         let dqDelNext = Abject.fromTwist(dqDelTwist).createSuccessor();
         dqDelNext.completeDelegate(Abject.fromTwist(dqNextTwist));
-        let dqDelNextTwist = await this._append(dqDelTwist, dqDelNext.buildTwist(), dqTether);
+        let dqDelNextTwist = await this._append(dqDelTwist, dqDelNext.buildTwist(), dqTether,
+                                                null, null, undefined, null, { noRemote: !lastFast });
 
         return [dqDelNextTwist, dqNextTwist];
     }
@@ -563,8 +562,10 @@ class TodaClient {
 
     async _transfer(typeHash, twists, destHash) {
         let newTwists = [];
-        for (let t of twists) {
-            newTwists.push(await this._append(t, Abject.fromTwist(t).createSuccessor().buildTwist(), destHash));
+        for (let [i,t] of twists.entries()) {
+            let noRemote = i < twists.length - 1; // XXX(acg): always fastens last twist for now
+            newTwists.push(await this._append(t, Abject.fromTwist(t).createSuccessor().buildTwist(), destHash,
+                                              null, null, undefined, null, { noRemote }));
         }
 
         //TODO(acg): potentially wait for the balance to actually be recalculated.
@@ -572,7 +573,7 @@ class TodaClient {
         return newTwists;
     }
 
-    async transfer({ amount, typeHash, destHash }) {
+    async transfer({ amount, typeHash, destHash }) { // XXX(acg): always fastens last twist for now
         let dqs = await this.getControlledByType(typeHash);
 
         const quantity = DQ.displayToQuantity(amount, dqs[0].displayPrecision);

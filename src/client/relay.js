@@ -9,12 +9,12 @@ import axios from 'axios';
 
 class RelayClient {
 
-    hoist(prevTwist, nextHash) {
-        return this.hoistPacket(prevTwist.hoistPacket(nextHash));
+    hoist(prevTwist, nextHash, opts) {
+        return this.hoistPacket(prevTwist.hoistPacket(nextHash), opts);
     }
 
-    hoistPacket(riggingPacket) {
-        return this._hoist(Atoms.fromPairs([[Sha256.fromPacket(riggingPacket), riggingPacket]]));
+    hoistPacket(riggingPacket, opts) {
+        return this._hoist(Atoms.fromPairs([[Sha256.fromPacket(riggingPacket), riggingPacket]]), opts);
     }
 
     _hoist(atoms) {
@@ -92,14 +92,15 @@ class LocalRelayClient extends RelayClient {
         this.client = todaClient;
     }
 
-    _hoist(atoms) {
+    _hoist(atoms, { noFast } = {}) {
         console.log("Hosting to local: ", this.hash.toString());
         let relay = this.get();
 
         // heuristic.  use current key if last update was keyed
         let req = relay.reqs() ? this.client.requirementSatisfiers[0] : null;
-        // heuristic. use last tether if last update was tethered
-        let tether = relay.isTethered() ? relay.getTetherHash() : null;
+
+        // semi-heuristic. use last tether if last update was tethered
+        let tether = noFast ? null : (relay.isTethered() ? relay.getTetherHash() : null);
 
         return this.client.append(relay, tether, req, undefined, undefined,
                                   atoms.get(atoms.focus));
@@ -218,14 +219,14 @@ class LocalNextRelayClient extends NextRelayClient {
         return isolated;
     }
 
-    async _hoist(prevTwist, nextHash) {
+    async _hoist(prevTwist, nextHash, { noFast } = {}) {
         console.log("Hosting to local: ", this.tetherHash.toString());
         let relay = await this.client.get(this.tetherHash);
 
         // heuristic.  use current key if last update was keyed
         let req = relay.reqs() ? this.client.requirementSatisfiers[0] : null;
-        // heuristic. use last tether if last update was tethered
-        let tether = relay.isTethered() ? relay.getTetherHash() : null;
+        // semi-heuristic. use last tether if last update was tethered
+        let tether = noFast ? null : (relay.isTethered() ? relay.getTetherHash() : null);
 
         const t = await this.client.append(relay, tether, req, undefined, undefined,
             prevTwist.hoistPacket(nextHash))
