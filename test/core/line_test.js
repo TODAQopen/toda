@@ -34,6 +34,10 @@ function tetherTwist(twist, tether) {
     return new Twist(tb.serialize());
 }
 
+function getPropsForTestComparison(hash) {
+    return {length: hash.length, offset: hash.offset, serializedValue: hash.serializedValue, stringValue: hash.stringValue};
+}
+
 describe("Line/twist", () => {
     it("Sould get twist by hash", () => {
         let tw = simpleTwist("one", "two", "three");
@@ -100,9 +104,9 @@ describe("Line/history", () => {
     line.putTwist(tw2);
     line.putTwist(tw3);
     it("Should return a list of all twist hashes before and including the input one", () => {
-        assert.deepEqual(line.history(tw3.getHash()), [tw1,tw2,tw3].map(t => t.getHash()));
-        assert.deepEqual(line.history(tw2.getHash()), [tw1,tw2].map(t => t.getHash()));
-        assert.deepEqual(line.history(tw1.getHash()), [tw1.getHash()]);
+        assert.deepEqual(line.history(tw3.getHash()).map(getPropsForTestComparison), [tw1,tw2,tw3].map(t => t.getHash()).map(getPropsForTestComparison));
+        assert.deepEqual(line.history(tw2.getHash()).map(getPropsForTestComparison), [tw1,tw2].map(t => t.getHash()).map(getPropsForTestComparison));
+        assert.deepEqual(line.history(tw1.getHash()).map(getPropsForTestComparison), [tw1.getHash()].map(getPropsForTestComparison));
     });
     it("Should return null if hash is not a twist in line", () => {
         assert.equal(line.history(sbh("askjankdcjnd")), null);

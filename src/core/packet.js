@@ -63,15 +63,19 @@ class Packet {
     static PACKET_LENGTH_LENGTH = 4;
     static PACKET_CONTENT_OFFSET = this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH;
 
-    static parse(bytes) {
-        let packetLength = ByteArray.from(bytes.subarray(this.PACKET_LENGTH_OFFSET,
-                                                         this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH)).toInt();
-        if (bytes.length - Packet.PACKET_CONTENT_OFFSET < packetLength) {
+    static parse(bytes, offset=0) {
+        let packetLength = ByteArray.toInt(bytes.subarray(offset + this.PACKET_LENGTH_OFFSET,
+                                                         offset + this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH));
+        if (bytes.length - Packet.PACKET_CONTENT_OFFSET - offset < packetLength) {
             throw new ShapeException("Packet length does not match specified length.");
         }
-        return Packet.createFromShapeCode(bytes[this.PACKET_SHAPE_OFFSET],
-            ByteArray.from(bytes.subarray(this.PACKET_CONTENT_OFFSET,
-                this.PACKET_CONTENT_OFFSET + packetLength)));
+
+        let shapeCode = bytes[offset + this.PACKET_SHAPE_OFFSET];
+        // dx: perf: can we avoid copying?
+        let content = ByteArray.from(bytes.subarray(offset + this.PACKET_CONTENT_OFFSET,
+                                                    offset + this.PACKET_CONTENT_OFFSET + packetLength));
+
+        return Packet.createFromShapeCode(shapeCode, content);
     }
 
     static createFromShapeCode(shapeCode, content) {
@@ -154,6 +158,10 @@ class Packet {
     getSize() {
         return this.content.length;
     }
+
+    getLength() {
+        return this.content.length + 5;
+    }
 }
 
 /**
@@ -201,6 +209,7 @@ class HashPacket extends Packet {
     getShapedValueFromContent() {
         let buf = this.content;
         let hashes = [];
+        // dx: perf: optimize this
         while (buf.length > 0) {
             let hash = Hash.parse(buf);
             hashes.push(hash);

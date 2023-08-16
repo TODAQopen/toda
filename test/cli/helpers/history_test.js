@@ -33,6 +33,6 @@ describe("getHistory", () => {
             cargo: new NullHash().toString()
         }];
 
-        assert.deepEqual(getHistory(twist), expected);
+        assert.equal(JSON.stringify(getHistory(twist)), JSON.stringify(expected));
     });
 });

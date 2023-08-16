@@ -66,6 +66,10 @@ let testNames = listTests().filter(testFilter);
 
 describe("test-suite/reqsat-test", () => {
     it("Make sure at least one test was loaded.", () => assert(testNames.length > 0));
+
+    // it("should wait forever for perf debugging", () => {
+    //     while(1) {}
+    // })
 });
 
 testNames.forEach(function (s) {

@@ -5,7 +5,7 @@
 * Apache License 2.0
 *************************************************************/
 
-import { NullHash, Sha256, Hash } from '../core/hash.js';
+import { NullHash, Sha256, Symbol } from '../core/hash.js';
 import { BasicTwistPacket, PairTriePacket, HashPacket } from '../core/packet.js';
 import { HashMap } from '../core/map.js';
 import { Atoms } from '../core/atoms.js';
@@ -317,7 +317,7 @@ class Abject {
         }
         sym += seed;
 
-        return Hash.symbolFromStr(sym);
+        return Symbol.fromStr(sym);
     }
 
     /**

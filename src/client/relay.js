@@ -37,7 +37,6 @@ class RelayClient {
         try {
             return {hoist: i.hitchHoist(lead.getHash()), relayTwist};
         } catch (e) {
-            //console.warn("Error getting hoist:", e);
             return {};
         }
     }
@@ -51,7 +50,6 @@ class RemoteRelayClient extends RelayClient {
     }
 
     _hoist(atoms) {
-        console.log("Hoisting to: ", this.url.toString());
         return axios({
             method: "POST",
             url: this.url.toString(),
@@ -93,7 +91,6 @@ class LocalRelayClient extends RelayClient {
     }
 
     _hoist(atoms, { noFast } = {}) {
-        console.log("Hosting to local: ", this.hash.toString());
         let relay = this.get();
 
         // heuristic.  use current key if last update was keyed
@@ -220,7 +217,6 @@ class LocalNextRelayClient extends NextRelayClient {
     }
 
     async _hoist(prevTwist, nextHash, { noFast } = {}) {
-        console.log("Hosting to local: ", this.tetherHash.toString());
         let relay = await this.client.get(this.tetherHash);
 
         // heuristic.  use current key if last update was keyed
@@ -279,7 +275,6 @@ class RemoteNextRelayClient extends NextRelayClient {
     }
 
     async _hoist(prevTwist, nextHash) {
-        console.log("Hoisting to: ", this.relayUrl.toString());
         const hoistPacket = prevTwist.hoistPacket(nextHash);
         const data = {'relay-twist': prevTwist.getTetherHash().toString(),
                       'hoist-request': {}};

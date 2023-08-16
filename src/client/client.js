@@ -54,7 +54,6 @@ class TodaClient {
             return new LocalRelayClient(this, this.defaultRelayHash);
         }*/
         if (this.defaultRelayUrl) {
-            console.log("returning default relay url:", this.defaultRelayUrl);
             return new RemoteRelayClient(this.defaultRelayUrl);
         }
         console.error("No default relay found.");
@@ -62,8 +61,6 @@ class TodaClient {
     }
 
     _getRelay(fastTwist, tetherUrl) {
-        console.log("getting relay for:", fastTwist.getHash().toString(), "tethered to:",
-                                          fastTwist.getTetherHash().toString());
         if (tetherUrl) {
             return new RemoteRelayClient(tetherUrl);
         }
@@ -157,7 +154,6 @@ class TodaClient {
             if (hoist) {
                 return {hoist, relayTwist};
             } else {
-                console.warn("Requerying for hoist...");
                 await new Promise(res => setTimeout(res, this.retryInterval));
             }
         }
@@ -331,7 +327,6 @@ class TodaClient {
         if (!lastFast) {
             return;
         }
-        console.log("Pulling hitch for", lastFast.getHash().toString());
         let relay = this.getRelay(lastFast);
 
         while (relay) {
@@ -651,7 +646,6 @@ class TodaClientV2 extends TodaClient {
 
     _defaultRelay(fastTwist) {
         if (this.defaultRelayUrl) {
-            console.log("returning default relay url:", this.defaultRelayUrl);
             return new RemoteNextRelayClient(this.defaultRelayUrl, this.fileServerUrl, fastTwist.getTetherHash(), this._backwardsStopPredicate(fastTwist));
         }
         console.error("No default relay found.");
@@ -659,8 +653,6 @@ class TodaClientV2 extends TodaClient {
     }
 
     _getRelay(fastTwist, tetherUrl) {
-        console.log("getting relay for:", fastTwist.getHash().toString(), "tethered to:",
-                                          fastTwist.getTetherHash().toString());
         if (tetherUrl) {
             return new RemoteNextRelayClient(tetherUrl, this.fileServerUrl, fastTwist.getTetherHash(), this._backwardsStopPredicate(fastTwist));
         }

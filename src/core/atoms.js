@@ -13,9 +13,7 @@ import { HashMap } from './map.js';
 
 /**
  * Adds helpful utilities when using HashMap as HashMap<Hash,Packet>
- *
  */
-// class Atoms extends HashMap {
 class Atoms {
 
     static packets = {};
@@ -44,13 +42,15 @@ class Atoms {
         let pairs = [];
         let fh = focus+"";
 
-        for(var h in this.hashes) {
-            if(h !== fh)
+        for (var h in this.hashes) {
+            if (h !== fh) {
                 pairs.push([this.hashes[h], Atoms.packets[h]]);
+            }
         }
 
-        if(this.hashes[fh])
+        if (this.hashes[fh]) {
             pairs.push([this.hashes[fh], Atoms.packets[fh]]);
+        }
 
         return pairs;
     }
@@ -70,25 +70,23 @@ class Atoms {
         return this.hashes[this._focus];
     }
 
-    static cache = {}
-
     /**
-   * @param {Hash} hash
-   * @param {Packet} packet
-   * @returns {void}
-   * @throws things
-   */
+     * @param {Hash} hash
+     * @param {Packet} packet
+     * @returns {void}
+     * @throws things
+     **/
     set(hash, packet) {
         if (!packet) {
             throw new Error("Cannot set null packet");
         }
 
         let h = hash.toString();
-        if(!h) {
+        if (!h) {
             throw new Error("Cannot set an undefined hash");
         }
 
-        if(!Atoms.packets.hasOwnProperty(h)) {
+        if (!Atoms.packets.hasOwnProperty(h)) {
             // dx: think: could throw if packet != p already... but then we'd have to do an expensive equality check every time
             hash.assertVerifiesPacket(packet); // throws
             Atoms.packets[h] = packet;
@@ -99,9 +97,13 @@ class Atoms {
     }
 
     get(hash) {
-        let h = hash+""; // optimization
-        if(this.hashes[h])
+        if (!hash) {
+            return undefined;
+        }
+        let h = hash.toString();
+        if (this.hashes[h]) {
             return Atoms.packets[h];
+        }
     }
 
     mergeNOFOCUS(atoms) {
@@ -119,12 +121,12 @@ class Atoms {
         focus = focus || this._focus; // dx: todo: remove the || once we lose focus
         let a = this.toPairs(focus);
 
-        let len = a.reduce((acc, [h,p]) => acc + h.serializedValue.byteLength + p.serializedValue.byteLength, 0)
+        let len = a.reduce((acc, [h,p]) => acc + h.length + p.serialize().byteLength, 0)
         let ret = new ByteArray(len);
         let off = 0;
         a.forEach(([h, p]) => {
-            ret.set(h.serializedValue, off);
-            off += h.serializedValue.byteLength;
+            ret.set(h.serialize(), off); // dx: perf: could make this faster by using the raw offset in h
+            off += h.serialize().byteLength;
             ret.set(p.serializedValue, off);
             off += p.serializedValue.byteLength;
         })
@@ -132,34 +134,34 @@ class Atoms {
     }
 
     /**
-   * @param {Buffer} bytes
-   */
-    static *entries(bytes) {
-        while (bytes.length > 0) {
-            let hash = Hash.parse(bytes);
-            bytes = bytes.subarray(hash.serialize().length);
-            let packet = Packet.parse(bytes);
-            bytes = bytes.subarray(packet.serialize().length);
-            yield [hash, packet];
-            // dx: TODO: can we make this faster? where is it used?
-        }
-    }
-
-    /**
-   * @param {Buffer|ByteArray} bytes
-   * @returns {Atoms}
-   */
+     * @param {Buffer|ByteArray} bytes
+     * @returns {Atoms}
+     **/
     static fromBytes(bytes) {
         let atoms = new Atoms();
         let lasthash;
-        for (let [h, p] of Atoms.entries(bytes)) {
-            atoms.set(h, p);
-            lasthash = h;
+        let i = 0, bl = bytes.length;
+
+        while (i < bl) {
+            let hash = Hash.parse(bytes, i);
+            i += hash.numBytes();
+            let h = hash.toString();
+            let packet = Atoms.packets[h];
+            if (!packet) {
+                packet = Packet.parse(bytes, i);
+                hash.assertVerifiesPacket(packet); // throws
+                Atoms.packets[h] = packet;
+            }
+            // else { /* dx: todo: make sure the bytes match... how is this not tested? */ }
+
+            i += packet.getLength();
+            atoms.hashes[h] = hash;
+            lasthash = hash;
         }
+
         atoms.focus = lasthash;
         return atoms;
     }
-
 }
 
 export { Atoms };

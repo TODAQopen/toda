@@ -15,7 +15,7 @@ function relayServerV2(toda, config = {}) {
         ...config
     };
     const app = express();
-    
+
     app.use(express.json());
 
     // For debugging + tests
@@ -84,9 +84,9 @@ function relayServerV2(toda, config = {}) {
                 hashes.set(Hash.fromHex(k), Hash.fromHex(v));
 
             const updatedTwist = app.toda.get(hash);
-            const pairtrie = PairTriePacket.createFromUnsorted(hashes); 
+            const pairtrie = PairTriePacket.createFromUnsorted(hashes);
             // DON'T WAIT!
-            app.toda.append(updatedTwist, 
+            app.toda.append(updatedTwist,
                             updatedTwist.lastFast()?.getTetherHash(),
                             null,
                             null,
@@ -112,7 +112,6 @@ async function start(server, { port }) {
     return new Promise((res, rej) => {
         runningServer = server.listen(port, (err) => {
             if (err) rej(err);
-            console.log(`Relay listening on port ${port}`);
             res();
         });
     }).then(() => runningServer);

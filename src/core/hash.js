@@ -19,17 +19,15 @@ class Hash {
      * @param hashValue <ByteArray> representing the result of applying the hashing algorithm specified by algoCode.  Length depends on selected algorithm.
      *
      */
-    constructor(hashValue) {
-        // just guard against bad coding
-        if (hashValue.length != this.constructor.getHashValueLength()){
-            throw new Error("cannot set hash value of wrong length: ", hashValue);
-        }
-        this.hashValue = hashValue;
+    constructor(bytes, offset) {
+        this.bytes = bytes;
+        this.offset = offset || 0;
+        this.length = Hash.ALGO_CODE_LENGTH + this.constructor.getHashValueLength();
 
-        this.serializedValue = new ByteArray(hashValue.length + 1);
-        this.serializedValue[0] = this.constructor.algoCode;
-        this.serializedValue.set(this.hashValue, 1);
-        this.stringValue = this.serializedValue.toString();
+        // just guard against bad coding
+        if (bytes.length < this.offset + this.length) {
+            throw new Error("cannot set hash value of wrong length: ", bytes);
+        }
     }
 
     static hash() {
@@ -48,19 +46,39 @@ class Hash {
      * @returns <ByteArray> The serialized value of the Hash
      */
     serialize() {
-        return this.serializedValue;
-    }
+        if (this.serializedValue) {
+            return this.serializedValue;
+        }
 
-    getHashValue() {
-        return this.hashValue;
+        // dx: perf: where is this used? can we make it faster?
+        this.serializedValue = new ByteArray(this.bytes.subarray(this.offset, this.offset+this.length));
+        return this.serializedValue;
     }
 
     /**
      * @returns <String> the hex representation of this object
      */
     toString() {
+        if (this.stringValue) {
+            return this.stringValue;
+        }
+
+        // dx: perf: make this faster
+        this.stringValue = this.serialize().toString();
+        // this.stringValue = this.bytes.toString(this.offset, this.length);
+
+        // let b = this.bytes.slice()
+        // let foo = this.serialize().toString();
+        // if(foo !== this.stringValue) {
+        //     console.error(foo)
+        //     console.error(this.stringValue)
+        //     console.log(this.offset, this.length)
+        //     console.log(this.bytes.subarray(this.offset, this.offset+this.length))
+        //     console.log(this.serializedValue)
+        //     throw new Error("whoa there!");
+        // }
+
         return this.stringValue;
-        // return this.serialize().toString();
     }
 
     toJSON() {
@@ -72,14 +90,20 @@ class Hash {
      *  of this Hash
      */
     numBytes() {
-        return this.serialize().length;
+        return this.length;
     }
 
     /**
      * @param <ByteArray> raw bytes which hopefully start with an algoCode
+     * @param <int> (optional) offset in the bytearray
      */
-    static parse(raw) {
-        return this.createFromAlgoCode(raw[0], raw.subarray(1));
+    static parse(bytes, offset=0) {
+        let imp = this.implementationForAlgoCode(bytes[offset]);
+        if (!imp) {
+            throw new Error("Unknown algorithm code: ");
+        }
+
+        return new imp(bytes, offset);
     }
 
     /**
@@ -87,27 +111,6 @@ class Hash {
      */
     static fromHex(str) {
         return Hash.parse(ByteArray.fromHex(str));
-    }
-
-    /**
-     * @param <string> a utf8 string
-     */
-    static symbolFromStr(str) {
-        return new Symbol(Sha256.hash(ByteArray.fromUtf8(str)));
-    }
-
-    /**
-     * @param algoCode <int> a value representing which hashing algorithm was used
-     * @param hashValue <ByteArray> bytes representing the result of the hash function (OR MORE)
-     * @returns <Hash> an instance of a subclass of Hash with the appropriate algo
-     * warning: will truncate supplied hashValue if it's too long
-     */
-    static createFromAlgoCode(algoCode, hashValue) {
-        let imp = this.implementationForAlgoCode(algoCode);
-        if (!imp) {
-            throw new Error("Unknown algorithm code: ", algoCode);
-        }
-        return new imp(ByteArray.from(hashValue.subarray(0, imp.getHashValueLength())));
     }
 
     static registeredAlgoByCode = {};
@@ -133,7 +136,14 @@ class Hash {
      * @returns <Hash> a newly created instance of a subclass of Hash
      */
     static fromBytes(data) {
-        return new this(this.hash(data));
+        let hashBytes = this.hash(data);
+
+        // dx: todo: add a helper function for this and Symbol.fromStr
+        let bytes = new ByteArray(Sha256.getHashValueLength() + 1);
+        bytes[0] = this.algoCode;
+        bytes.set(hashBytes, 1);
+
+        return new this(bytes);
     }
 
     /**
@@ -149,9 +159,7 @@ class Hash {
      * this Hash's algo is used.
      */
     verifiesPacket(packet) {
-        return ByteArray.isEqual(this.constructor.fromPacket(packet).hashValue,
-            this.hashValue);
-
+        return this.toString() === this.constructor.fromPacket(packet).toString() // hashValue was the whole bytearray...
     }
 
     assertVerifiesPacket(packet) {
@@ -177,8 +185,7 @@ class Hash {
      * @returns <Boolean>
      */
     equals(hash) {
-        return this.stringValue == hash.toString();
-        // return this.toString() == hash.toString();
+        return this.toString() === hash.toString();
     }
 
     // dx: TODO: could be done with a constructor check instead?
@@ -197,13 +204,91 @@ class Hash {
     }
 }
 
+
+/**
+ * Classic standard sha256 hash implementation.
+ */
+class Sha256 extends Hash {
+    static algoCode = 0x41;
+    static MONIKER = "SHA256";
+    static DESCRIPTION = "SHA256";
+
+    /**
+     * @param <ByteArray> data The data to be hashed
+     * @returns <ByteArray> the raw hash value according to this algorithm
+     */
+    static hash(data) {
+        var sha = new sjcl.hash.sha256();
+        sha.update(sjcl.codec.bytes.toBits(data));
+        return new ByteArray(sjcl.codec.arrayBuffer.fromBits(sha.finalize()));
+    }
+
+    /**
+     * @param <ByteArray> raw bytes hopefully starting with this algoCode
+     * @param <int> (optional) offset in the bytearray
+     * @returns <Sha256> parsed implementation of this class
+     */
+    static parse(bytes, offset=0) {
+        // dx: perf: this makes a copy of the bytearray
+        let h = new Hash(bytes.subarray(offset,
+                                      offset + Hash.ALGO_CODE_LENGTH + this.constructor.getHashValueLength()));
+
+        // xxx(acg) slightly shady - maybe move to base class
+        h.__proto__ = this.prototype;
+        return h;
+    }
+
+    static getHashValueLength() {
+        return 32; // This implementation always yields hashValues that are precisely 32 bytes
+    }
+}
+
+class Symbol extends Hash {
+    static algoCode = 0x22;
+    static MONIKER = "Symbol";
+    static DESCRIPTION = "A hash that doesn't point at a packet";
+
+    static hash() {
+        throw new Error("this implementation should not be used to hash data");
+    }
+
+    static getHashValueLength() {
+        return 32;
+    }
+
+    isSymbol() {
+        return true;
+    }
+
+    /**
+     * @param <string> a utf8 string
+     */
+    static fromStr(str) {
+        let hashBytes = Sha256.hash(ByteArray.fromUtf8(str));
+
+        // dx: perf: would be nice to do this more efficiently... could cache symbols by string and reuse them.
+        let bytes = new ByteArray(Sha256.getHashValueLength() + 1);
+        bytes[0] = Symbol.algoCode;
+        bytes.set(hashBytes, 1);
+
+        return new Symbol(bytes);
+    }
+}
+
 class NullHash extends Hash {
     static algoCode = 0x00;
     static MONIKER = "Null Hash";
     static DESCRIPTION = "Represents an empty hash";
+    static bytes = new ByteArray([0]);
+    static singleton;
 
     constructor() {
-        super(new ByteArray());
+        if (NullHash.singleton) {
+            return NullHash.singleton;
+        }
+
+        NullHash.singleton = super(NullHash.bytes);
+        return NullHash.singleton;
     }
 
     static hash() {
@@ -225,82 +310,9 @@ class NullHash extends Hash {
     toString() {
         return '00';
     }
-}
 
-/**
- * Classic standard sha256 hash implementation.
- */
-class Sha256 extends Hash {
-    static algoCode = 0x41;
-    static MONIKER = "SHA256";
-    static DESCRIPTION = "SHA256";
-
-    /**
-     * @param <ByteArray> data The data to be hashed
-     * @returns <ByteArray> the raw hash value according to this algorithm
-     */
-    static hash(data) {
-        var sha = new sjcl.hash.sha256();
-        sha.update(sjcl.codec.bytes.toBits(data));
-        return new ByteArray(sjcl.codec.arrayBuffer.fromBits(sha.finalize()));
-    }
-
-    // This implementation always yields hashValues that are precisely 32 bytes
-    static FIXED_HASH_VALUE_LENGTH = 32;
-
-    /**
-     * @param <ByteArray> raw bytes hopefully starting with this algoCode
-     * @returns <Sha256> parsed implementation of this class
-     */
-    static parse(raw) {
-        let h = new Hash(raw.slice(this.ALGO_CODE_LENGTH,
-            this.ALGO_CODE_LENGTH +
-                                   this.FIXED_HASH_VALUE_LENGTH));
-
-        // xxx(acg) slightly shady - maybe move to base class
-        h.__proto__ = this.prototype;
-        return h;
-    }
-
-    static getHashValueLength() {
-        return this.FIXED_HASH_VALUE_LENGTH;
-    }
-}
-
-class Symbol extends Hash {
-
-    static algoCode = 0x22;
-    static MONIKER = "Symbol";
-    static DESCRIPTION = "A hash that doesn't point at a packet";
-
-    static FIXED_HASH_VALUE_LENGTH = 32;
-
-    static hash() {
-        throw new Error("this implementation should not be used to hash data");
-    }
-
-
-    // TODO(acg): What is this used for; seems similar to base class?
-    /**
-   * @param raw <ByteArray> raw bytes hopefully starting with this algoCode
-   * @returns <Sha256> parsed implementation of this class
-   */
-    static parse(raw) {
-        let h = new Hash(raw.slice(this.ALGO_CODE_LENGTH,
-            this.ALGO_CODE_LENGTH +
-                                 this.FIXED_HASH_VALUE_LENGTH));
-
-        // xxx(acg) slightly shady - maybe move to base class
-        h.__proto__ = this.prototype;
-        return h;
-    }
-
-    static getHashValueLength() {
-        return this.FIXED_HASH_VALUE_LENGTH;
-    }
-
-    isSymbol() {
-        return true;
+    serialize() {
+        return NullHash.bytes;
     }
 }
 
@@ -308,9 +320,16 @@ class UnitHash extends Hash {
     static algoCode = 0xff;
     static MONIKER = "Unit Hash";
     static DESCRIPTION = "Represents an special hash";
+    static bytes = new ByteArray([255]);
+    static singleton;
 
     constructor() {
-        super(new ByteArray());
+        if (UnitHash.singleton) {
+            return UnitHash.singleton;
+        }
+
+        UnitHash.singleton = super(UnitHash.bytes);
+        return UnitHash.singleton;
     }
 
     static hash() {
@@ -327,6 +346,14 @@ class UnitHash extends Hash {
 
     isNull() {
         return false;
+    }
+
+    toString() {
+        return 'ff';
+    }
+
+    serialize() {
+        return UnitHash.bytes;
     }
 }
 

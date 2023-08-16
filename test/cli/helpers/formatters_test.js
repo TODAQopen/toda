@@ -154,7 +154,8 @@ describe("formatBodyPacket", () => {
             cargo: new NullHash().toString()
         };
 
-        assert.deepEqual(formatBodyPacket(twist.getBody(), twist), expected);
+        // assert.deepEqual(formatBodyPacket(twist.getBody(), twist), expected);
+        assert.equal(JSON.stringify(formatBodyPacket(twist.getBody(), twist)), JSON.stringify(expected));
     });
 });
 

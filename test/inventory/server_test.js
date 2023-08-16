@@ -73,16 +73,16 @@ describe("POST /files", async () => {
             });
 
             assert(response.status, 201, "Must return code 201");
-            assert.deepEqual(response.data, validTodaFile.hash.serializedValue, "Must return hash of new file");
+            assert.deepEqual((new ByteArray(response.data)).toString(), validTodaFile.hash.toString(), "Must return hash of new file");
             // get file by hash
             let response1 = await axios({
                 method: "GET",
-                url: `http://localhost:3001/files/${validTodaFile.hash.serializedValue}`,
+                url: `http://localhost:3001/files/${validTodaFile.hash.serialize()}`,
                 headers: { "Content-Type": "application/octet-stream" },
                 responseType: "arraybuffer"
             });
 
-            assert.deepEqual(Atoms.fromBytes(ByteArray.from(response1.data)), validTodaFile.atoms );
+            assert.deepEqual(Atoms.fromBytes(ByteArray.from(response1.data)).serializedValue, validTodaFile.atoms.serializedValue );
         } finally {
             server.close();
             await fs.rm(`${__dirname}/localhost/${validTodaFile.getHash()}.toda`);

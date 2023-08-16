@@ -20,6 +20,21 @@ class ByteArray extends Uint8Array {
         return ByteArray.from(result);
     }
 
+    /**
+   * Returns true if byte-arrays are equal and false otherwise
+   * @param {ByteArray} lhs
+   * @param {ByteArray} rhs
+   */
+    static isEqual(lhs, rhs) {
+        return lhs.toString() == rhs.toString();
+    }
+
+    static toInt(bytes) {
+        return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0, false)
+    }
+
+    static hexes_helper = Array.from(Array(256)).map((n,i)=>i.toString(16).padStart(2, '0'));
+
 
     concat(x) {
         let res = new ByteArray(this.length + x.length);
@@ -28,17 +43,20 @@ class ByteArray extends Uint8Array {
         return res;
     }
 
-
-    static hexes_helper = Array.from(Array(256)).map((n,i)=>i.toString(16).padStart(2, '0'));
-
-    toString() {
-        if(this.str)
+    toString(offset=0, length=0) {
+        if (!offset && this.str) {
             return this.str;
+        }
         let hex = '';
-        let l = this.byteLength;
-        for (let i = 0; i < l; i++)
-            hex += ByteArray.hexes_helper[this[i]];
-        Object.defineProperty(this, 'str', { value: hex } ); // dx: this is slower than setting the string directly, but without it some deep equal tests fail... :/
+        const hh = ByteArray.hexes_helper;
+        const l = length || this.byteLength;
+        const o = offset || 0;
+        for (let i = o; i < l; i++) {
+            hex += hh[this[i]];
+        }
+        if (!offset) {
+            this.str = hex;
+        }
         return hex;
     }
 
@@ -46,21 +64,9 @@ class ByteArray extends Uint8Array {
         return this.reduce((acc, n) => acc + String.fromCharCode(n), '')
     }
 
-    toInt() {
-        return new DataView(this.buffer, 0, 4).getUint32(0, false)
-    }
 
     equals(x) {
         return ByteArray.isEqual(this, x);
-    }
-
-    /**
-   * Returns true if byte-arrays are equal and false otherwise
-   * @param {ByteArray} lhs
-   * @param {ByteArray} rhs
-   */
-    static isEqual(lhs, rhs) {
-        return lhs.toString() == rhs.toString();
     }
 }
 

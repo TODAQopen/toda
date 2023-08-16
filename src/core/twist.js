@@ -293,10 +293,14 @@ class Twist {
     constructor(atoms, hash) {
         this.atoms = atoms;
         this.hash = hash || atoms.focus;
-
         this.packet = atoms.get(this.hash);
+
         if (!this.packet) {
             throw new MissingHashPacketError(this.hash);
+        }
+
+        if (!this.packet.getBodyHash) {
+            return null; // dx: maybe should throw here? this returns an improper twist...
         }
 
         this.body = atoms.get(this.packet.getBodyHash());

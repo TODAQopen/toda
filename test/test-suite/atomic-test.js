@@ -39,8 +39,7 @@ function testFilter(testName) {
         return false;
     }
     // FIXME! These currently DO NOT WORK
-    if (testName != "atomic_atom_test_hash_mismatch_description.toda" &&
-        testName != "atomic_hash_list_test_empty_list_description.toda" &&
+    if (testName != "atomic_hash_list_test_empty_list_description.toda" &&
         testName != "atomic_packet_test_packet_content_must_contain_at_least_one_byte_description.toda" &&
         testName != "atomic_pairtrie_test_empty_pairtrie_description.toda") {
         return true;

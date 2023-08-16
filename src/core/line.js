@@ -22,16 +22,19 @@ class Line {
     }
 
     static fromAtoms(atoms, focus) {
-        let x = new this();
+        let line = new this();
 
         // dx: TODO: optimize this, if these are really atoms they've already been imported
-        x.atoms.merge(atoms);
+        line.atoms.merge(atoms);
+        // line.atoms.hashes = {...atoms.hashes}
+        // line.atoms._focus = atoms._focus;
+
         for (let [h,p] of atoms.toPairs()) {
-            x.processPacket(h, p);
+            line.processPacket(h, p);
         }
 
-        x.focus = focus || atoms.focus;
-        return x;
+        line.focus = focus || atoms.focus;
+        return line;
     }
 
     static fromTwist(twist) {
@@ -94,11 +97,11 @@ class Line {
         let prev = this.prev(hash);
 
         while (prev) {
-            history.unshift(prev);
+            history.push(prev);
             prev = this.prev(prev);
         }
 
-        return history;
+        return history.reverse();
     }
 
     /**
@@ -211,12 +214,9 @@ class Line {
    * @returns {Twist} Twist corresponding to the given hash
    */
     twist(hash) {
-        if (!this.atoms.get(hash) || !this.atoms.get(hash).getBodyHash) {
-            return null;
-        }
-
         try {
-            return new Twist(this.atoms, hash);
+            let twist = new Twist(this.atoms, hash);
+            return twist.body ? twist : null;
         } catch (err) {
             if (err instanceof MissingHashPacketError) {
                 return null;

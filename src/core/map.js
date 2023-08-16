@@ -34,28 +34,33 @@ class HashMap extends Map {
         return res;
     }
 
-    get(key) {
-        return super.get(this.hashes[key]);
+    get(key) { // dx: perf: this is expensive! how can we make it faster?
+        if(!key) return undefined;
+        let h = key.toString();
+        let k = this.hashes[h];
+        return super.get(k);
     }
 
     has(key) {
-        return !!this.hashes[key];
+        if(!key) return false;
+        return !!this.hashes[key.toString()];
     }
 
     set(key, value) {
-        //console.log("this:", this, this.hashes);
-
         // XXX(acg): hack - if args are passed to super(), 'set' will otherwise fail
-        if(this.hashes === undefined) {
+        if (this.hashes === undefined) {
             this.hashes = {};
         }
 
         let keystring = key.toString();
-        if (!this.hashes[keystring]) {
+        let currentKey = this.hashes[keystring];
+
+        if (!currentKey) {
             this.hashes[keystring] = key;
+            currentKey = key;
         }
 
-        return super.set(this.hashes[keystring], value);
+        return super.set(currentKey, value);
     }
 
     clone() {

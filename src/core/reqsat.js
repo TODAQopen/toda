@@ -7,7 +7,7 @@
 
 import { ByteArray } from './byte-array.js';
 
-import { Sha256, Hash } from './hash.js';
+import { Sha256, Symbol } from './hash.js';
 import { MemorySyncPacketStore } from './store.js';
 import { PairTriePacket, ArbitraryPacket, HashPacket } from './packet.js';
 
@@ -30,7 +30,7 @@ class Requirement extends MemorySyncPacketStore {
 }
 
 class RequirementList extends Requirement {
-    static REQ_LIST = Hash.symbolFromStr("reqsatlist");
+    static REQ_LIST = Symbol.fromStr("reqsatlist");
     static REQ_LIST_MONIKER = "requirements";
 
     constructor(hashImp) {
@@ -82,9 +82,9 @@ class RequirementList extends Requirement {
 }
 
 class SignatureRequirement extends Requirement {
-    static REQ_SECP256r1 = Hash.symbolFromStr("secp256r1");
+    static REQ_SECP256r1 = Symbol.fromStr("secp256r1");
     static REQ_SECP256r1_MONIKER = "SECP256r1";
-    static REQ_ED25519 = Hash.symbolFromStr("ed25519");
+    static REQ_ED25519 = Symbol.fromStr("ed25519");
     static REQ_ED25519_MONIKER = "ED25519";
 
     /**

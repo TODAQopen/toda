@@ -224,15 +224,20 @@ class SerialStore extends InMemoryPacketStore {
      * @returns [<Hash>, <Integer>] where int is number of bytes read.
      */
     readHash(bytes) {
-        let algoCode = this.readBytes(bytes, Hash.ALGO_CODE_LENGTH)[0];
-        let imp = Hash.implementationForAlgoCode(algoCode);
-        bytes = bytes.slice(Hash.ALGO_CODE_LENGTH);
+        let hash = Hash.parse(bytes, 0);
+
+        return [hash, hash.numBytes()];
 
 
-        if (!imp) throw new Error("unknown algo code: " + algoCode);
+        // let algoCode = this.readBytes(bytes, Hash.ALGO_CODE_LENGTH)[0];
+        // let imp = Hash.implementationForAlgoCode(algoCode);
+        // bytes = bytes.slice(Hash.ALGO_CODE_LENGTH);
 
-        let hashBytes = this.readBytes(bytes, imp.getHashValueLength());
-        return [Hash.createFromAlgoCode(algoCode, hashBytes), Hash.ALGO_CODE_LENGTH + hashBytes.length];
+
+        // if (!imp) throw new Error("unknown algo code: " + algoCode);
+
+        // let hashBytes = this.readBytes(bytes, imp.getHashValueLength());
+        // return [Hash.createFromAlgoCode(algoCode, hashBytes), Hash.ALGO_CODE_LENGTH + hashBytes.length];
 
     }
 
@@ -242,7 +247,7 @@ class SerialStore extends InMemoryPacketStore {
     readPacket(bytes) {
         let shapeCode = this.readBytes(bytes, Packet.PACKET_LENGTH_OFFSET)[0];
         bytes = bytes.slice(Packet.PACKET_LENGTH_OFFSET);
-        let packetLength = this.readBytes(bytes, Packet.PACKET_LENGTH_LENGTH).toInt();
+        let packetLength = ByteArray.toInt(this.readBytes(bytes, Packet.PACKET_LENGTH_LENGTH));
         bytes = bytes.slice(Packet.PACKET_LENGTH_LENGTH);
         return [Packet.createFromShapeCode(shapeCode, this.readBytes(bytes, packetLength)),
             Packet.PACKET_LENGTH_OFFSET +

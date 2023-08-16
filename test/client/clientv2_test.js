@@ -88,6 +88,7 @@ describe("append", async () => {
             mid.defaultTopLineHash = t0.getHash();
             const m0 = await mid.create(t0.getHash(), null, uuidCargo());
 
+
             const foot = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()),
                                         "http://localhost:8091/files");
             foot._getSalt = () => ByteArray.fromUtf8("some salty");
@@ -369,7 +370,6 @@ describe("Stopping conditions", async () => {
 
             // Make doubly sure the new data made it into f1 for the sake of this test
             f1.addAtoms(mid5.getAtoms());
-
 
             // Clear the logs
             midRelay.app.requestLogs = [];
