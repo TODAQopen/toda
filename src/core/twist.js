@@ -545,16 +545,6 @@ class Twist {
         this.atoms.mergeNOFOCUS(atoms);
         // dx: todo: make this just merge, and lift focus into twist
     }
-
-    /**
-     * Determine whether or not the shield of `twistHash` is safe
-     *  to publicize
-     * @param {Hash} otherTwistHash
-     * @returns {Boolean}
-     */
-    shieldIsPublic(otherTwistHash) {
-        return !this.lastFast(true)?.getHash().equals(otherTwistHash);
-    }
 }
 
 export { Twist };
