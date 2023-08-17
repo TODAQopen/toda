@@ -178,6 +178,7 @@ class NextRelayClient extends RelayClient {
 }
 
 class LocalNextRelayClient extends NextRelayClient {
+
     constructor(todaClient, hash) {
         super(hash);
 
@@ -268,6 +269,10 @@ class LocalNextRelayClient extends NextRelayClient {
  *          walking backwards when it sees a twist that matches the predicate
  */
 class RemoteNextRelayClient extends NextRelayClient {
+
+    static globalNextCache = {};
+    static globalShieldCache = {};
+
     constructor(relayUrl, fileServerUrl, tetherHash, backwardsStopPredicate) {
         super(tetherHash, backwardsStopPredicate);
         this.fileServerUrl = fileServerUrl;
@@ -292,6 +297,10 @@ class RemoteNextRelayClient extends NextRelayClient {
     }
 
     async _getNext(twistHash) {
+        if (RemoteNextRelayClient.globalNextCache[twistHash]) {
+            return RemoteNextRelayClient.globalNextCache[twistHash];
+        }
+
         const resp = await axios({
             method: "GET",
             url: "/" + twistHash + ".next.toda",
@@ -299,11 +308,17 @@ class RemoteNextRelayClient extends NextRelayClient {
             responseType: "arraybuffer"
         }).catch(_ => null);
         if (resp) {
-            return Twist.fromBytes(new ByteArray(resp.data));
+            const x = Twist.fromBytes(new ByteArray(resp.data));
+            RemoteNextRelayClient.globalNextCache[twistHash] = x;
+            return x;
         }
     }
 
     async _getShield(twistHash) {
+        if (RemoteNextRelayClient.globalShieldCache[twistHash]) {
+            return RemoteNextRelayClient.globalShieldCache[twistHash];
+        }
+
         const resp = await axios({
             method: "GET",
             url: "/" + twistHash + ".shield",
@@ -311,7 +326,9 @@ class RemoteNextRelayClient extends NextRelayClient {
             responseType: "arraybuffer"
         }).catch(_ => null);
         if (resp) {
-            return Packet.parse(new ByteArray(resp.data));
+            const x = Packet.parse(new ByteArray(resp.data));
+            RemoteNextRelayClient.globalShieldCache[twistHash] = x;
+            return x;
         }
     }
 }

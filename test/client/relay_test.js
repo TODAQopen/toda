@@ -224,6 +224,9 @@ describe("RemoteNextRelayClient", async () => {
     });
 
     it("get() no backwards when twist is already fast", async () => {
+        RemoteNextRelayClient.globalNextCache = {};
+        RemoteNextRelayClient.globalShieldCache = {};
+
         nock.cleanAll();
         nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", twistHashes[5]);

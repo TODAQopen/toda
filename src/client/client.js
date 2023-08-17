@@ -357,14 +357,7 @@ class TodaClient {
                 twist.addAtoms(prevFastTwist.getAtoms())
             }
 
-            let upstream;
-            if (startHash && previousGetResult && previousGetResult.findPrevious(startHash)){
-                upstream = previousGetResult;
-                previousGetResult = undefined; // performance hack to stop calling findPrevious
-            } else {
-                upstream = await relay.get(startHash);
-            }
-
+            let upstream = await relay.get(startHash);
             twist.addAtoms(upstream.getAtoms());
             let relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
 
@@ -672,7 +665,7 @@ class TodaClientV2 extends TodaClient {
         if (lead) {
             // temporary hackitty hack
             // does this twist already contain the hoisting info?
-            let local = new LocalNextRelayClient(this, lead.getTetherHash());
+            let local = new LocalNextRelayClient(this, lead.getHash());
             ({hoist, relayTwist} = await local.getHoist(lead));
             if (hoist) {
                 tb.addRigging(lead.getHash(), hoist.getHash());
