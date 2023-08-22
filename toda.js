@@ -24,5 +24,6 @@ export { SECP256r1 } from  "./src/client/secp256r1.js";
 export { TodaClient, TodaClientV2 } from  "./src/client/client.js";
 export { ByteArray } from  "./src/core/byte-array.js";
 export { Shield } from  "./src/core/shield.js";
+export { TestRelayServer } from "./test/client/relay_server.js";
 export const store = { MemorySyncPacketStore, SerialStore };
 export const version = packageJSON.version;

@@ -6,11 +6,11 @@ import { Interpreter } from "../../src/core/interpret.js";
 import { Line } from "../../src/core/line.js";
 import assert from "assert";
 import { Hash } from "../../src/core/hash.js";
-import { TwistBuilder, Twist } from "../../src/core/twist.js";
+import { TwistBuilder } from "../../src/core/twist.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { SimpleHistoric } from "../../src/abject/simple-historic.js";
 import { RemoteNextRelayClient, LocalNextRelayClient } from "../../src/client/relay.js";
-import { startRelay, stopRelay } from "./relay_server.js";
+import { TestRelayServer } from "./relay_server.js";
 
 describe("append", async () => {
     it("append local test", async () => {
@@ -27,6 +27,7 @@ describe("append", async () => {
 
         const i = new Interpreter(Line.fromTwist(f4), t0.getHash());
         await i.verifyHitchLine(f4.getHash());
+        
     });
 
     it("append stacked local test", async () => {
@@ -50,7 +51,7 @@ describe("append", async () => {
         const inv = new LocalInventoryClient("./files/" + uuid())
         const top = new TodaClientV2(inv, "http://localhost:1234");
         top._getSalt = () => ByteArray.fromUtf8("some salty");
-        const topRelay = await startRelay(top, { port: 8090 });
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
         try {
             const t0 = await top.create(null, null, uuidCargo());
             const foot = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()),
@@ -69,17 +70,17 @@ describe("append", async () => {
             const i = new Interpreter(Line.fromTwist(f4), t0.getHash());
             await i.verifyHitchLine(f4.getHash());
         } finally {
-            await stopRelay(topRelay);
+            topRelay.stop();
         }
     });
 
     it("append stacked remote test", async () => {
         const top = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()), "http://localhost:1234");
         top._getSalt = () => ByteArray.fromUtf8("some salty");
-        const topRelay = await startRelay(top, { port: 8090 });
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
         const mid = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()), "http://localhost:8090/files");
         mid._getSalt = () => ByteArray.fromUtf8("some salty2");
-        const midRelay = await startRelay(mid, { port: 8091, fileServerRedirects: ["http://localhost:8090/files"] });
+        const midRelay = await new TestRelayServer(mid, { port: 8091, fileServerRedirects: ["http://localhost:8090/files"] }).start();
         try {
             const t0 = await top.create(null, null, uuidCargo());
             await top.append(t0);
@@ -106,8 +107,8 @@ describe("append", async () => {
 
             await i.verifyHitchLine(f4.getHash());
         } finally {
-            await stopRelay(topRelay);
-            await stopRelay(midRelay);
+            await topRelay.stop();
+            await midRelay.stop()
         }
     });
 
@@ -115,7 +116,7 @@ describe("append", async () => {
         const inv = new LocalInventoryClient("./files/" + uuid())
         const top = new TodaClientV2(inv, "http://localhost:1234");
         top._getSalt = () => ByteArray.fromUtf8("some salty");
-        const topRelay = await startRelay(top, { port: 8090 });
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
         try {
             const t0 = await top.create(null, null, uuidCargo());
 
@@ -142,7 +143,7 @@ describe("append", async () => {
             assert.ok(f3.getTetherHash().equals(t.prev().getPrevHash()));
             assert.ok(f4.getTetherHash().equals(t.getPrevHash()));
         } finally {
-            await stopRelay(topRelay);
+            await topRelay.stop();
         }
     });
 });
@@ -202,7 +203,7 @@ describe("Stopping conditions", async () => {
         const invTop = new LocalInventoryClient("./files/" + uuid())
         const top = new TodaClientV2(invTop, "http://localhost:1234");
         top._getSalt = () => ByteArray.fromUtf8("some salty");
-        const topRelay = await startRelay(top, {port: 8090});
+        const topRelay = await new TestRelayServer(top, {port: 8090}).start();
         try {
             const top0 = await top.create(null, null, uuidCargo());
             const top1 = await top.append(top0);
@@ -221,12 +222,12 @@ describe("Stopping conditions", async () => {
             const f1 = await foot.append(f0, top4.getHash());
 
             // Does not grab top0: it has already gone back to the poptop
-            assert.ok(!topRelay.app.requestLogs.includes(`GET /files/${top0.getHash()}.next.toda`));
+            assert.ok(!topRelay.requestLogs.includes(`GET /files/${top0.getHash()}.next.toda`));
             // Does grab top1: the poptop
-            assert.ok(topRelay.app.requestLogs.includes(`GET /files/${top1.getHash()}.next.toda`));
+            assert.ok(topRelay.requestLogs.includes(`GET /files/${top1.getHash()}.next.toda`));
         }
         finally {
-            await stopRelay(topRelay);
+            await topRelay.stop();
         }
     });
 
@@ -234,11 +235,11 @@ describe("Stopping conditions", async () => {
         const invTop = new LocalInventoryClient("./files/" + uuid())
         const top = new TodaClientV2(invTop, "http://localhost:1234");
         top._getSalt = () => ByteArray.fromUtf8("some salty");
-        const topRelay = await startRelay(top, {port: 8090});
+        const topRelay = await new TestRelayServer(top, {port: 8090}).start();
         const invMid = new LocalInventoryClient("./files/" + uuid())
         const mid = new TodaClientV2(invMid, "http://localhost:8090/files");
         mid._getSalt = () => ByteArray.fromUtf8("mose malty");
-        const midRelay = await startRelay(mid, {port: 8091, fileServerRedirects: ["http://localhost:8090/files"]});
+        const midRelay = await new TestRelayServer(mid, {port: 8091, fileServerRedirects: ["http://localhost:8090/files"]}).start();
         try {
             const top0 = await top.create(null, null, uuidCargo());
             const top1 = await top.append(top0);
@@ -267,13 +268,13 @@ describe("Stopping conditions", async () => {
             const f1 = await foot.append(f0, mid4.getHash());
 
             // Does not grab mid1: it has already reached a fast twist (mid2)
-            assert.ok(!midRelay.app.requestLogs.includes(`GET /files/${mid1.getHash()}.next.toda`));
+            assert.ok(!midRelay.requestLogs.includes(`GET /files/${mid1.getHash()}.next.toda`));
             // Does grab mid2: the fast twist
-            assert.ok(midRelay.app.requestLogs.includes(`GET /files/${mid2.getHash()}.next.toda`));
+            assert.ok(midRelay.requestLogs.includes(`GET /files/${mid2.getHash()}.next.toda`));
         }
         finally {
-            await stopRelay(midRelay);
-            await stopRelay(topRelay);
+            await midRelay.stop();
+            await topRelay.stop();
         }
     });
 
@@ -281,7 +282,7 @@ describe("Stopping conditions", async () => {
         const invTop = new LocalInventoryClient("./files/" + uuid())
         const top = new TodaClientV2(invTop, "http://localhost:1234");
         top._getSalt = () => ByteArray.fromUtf8("some salty");
-        const topRelay = await startRelay(top, {port: 8090});
+        const topRelay = await new TestRelayServer(top, {port: 8090}).start();
         try {
             const top0 = await top.create(null, null, uuidCargo());
             const top1 = await top.append(top0);
@@ -306,7 +307,7 @@ describe("Stopping conditions", async () => {
             const top5 = top.get(top1.getHash());
 
             // Clear the logs
-            topRelay.app.requestLogs = [];
+            topRelay.requestLogs.length = 0;
 
             const f5 = await foot.append(f4, top1.getHash());
             const top6 = top.get(top1.getHash());
@@ -320,17 +321,17 @@ describe("Stopping conditions", async () => {
             assert.ok(f5.get(top6.getHash()));
 
             // Does not grab top1; really old twist that is already stored
-            assert.ok(!topRelay.app.requestLogs.includes(`GET /files/${top1.getHash()}.next.toda`));
+            assert.ok(!topRelay.requestLogs.includes(`GET /files/${top1.getHash()}.next.toda`));
             // Does not grab top2; still too old
-            assert.ok(!topRelay.app.requestLogs.includes(`GET /files/${top2.getHash()}.next.toda`));
+            assert.ok(!topRelay.requestLogs.includes(`GET /files/${top2.getHash()}.next.toda`));
             // Needs to grab top3: it's the tether of f3 (ie, of the lead), and onwards
             // cached.
-            //assert.ok(topRelay.app.requestLogs.includes(`GET /files/${top3.getHash()}.next.toda`));
-            //assert.ok(topRelay.app.requestLogs.includes(`GET /files/${top4.getHash()}.next.toda`));
-            //assert.ok(topRelay.app.requestLogs.includes(`GET /files/${top5.getHash()}.next.toda`));
-            //assert.ok(topRelay.app.requestLogs.includes(`GET /files/${top6.getHash()}.next.toda`));
+            //assert.ok(topRelay.requestLogs.includes(`GET /files/${top3.getHash()}.next.toda`));
+            //assert.ok(topRelay.requestLogs.includes(`GET /files/${top4.getHash()}.next.toda`));
+            //assert.ok(topRelay.requestLogs.includes(`GET /files/${top5.getHash()}.next.toda`));
+            //assert.ok(topRelay.requestLogs.includes(`GET /files/${top6.getHash()}.next.toda`));
         } finally {
-            await stopRelay(topRelay);
+            await topRelay.stop();
         }
     });
 
@@ -338,11 +339,11 @@ describe("Stopping conditions", async () => {
         const invTop = new LocalInventoryClient("./files/" + uuid())
         const top = new TodaClientV2(invTop, "http://localhost:1234");
         top._getSalt = () => ByteArray.fromUtf8("some salty");
-        const topRelay = await startRelay(top, {port: 8090});
+        const topRelay = await new TestRelayServer(top, {port: 8090}).start();
         const invMid = new LocalInventoryClient("./files/" + uuid())
         const mid = new TodaClientV2(invMid, "http://localhost:8090/files");
         mid._getSalt = () => ByteArray.fromUtf8("mose malty");
-        const midRelay = await startRelay(mid, {port: 8091, fileServerRedirects: ["http://localhost:8090/files"]});
+        const midRelay = await new TestRelayServer(mid, {port: 8091, fileServerRedirects: ["http://localhost:8090/files"]}).start();
         try {
             const top0 = await top.create(null, null, uuidCargo());
             const top1 = await top.append(top0);
@@ -374,20 +375,20 @@ describe("Stopping conditions", async () => {
             f1.addAtoms(mid5.getAtoms());
 
             // Clear the logs
-            midRelay.app.requestLogs = [];
+            midRelay.requestLogs.length = 0;
 
             const f2 = await foot.append(f1, mid4.getHash());
 
             // Even though we already have info for mid4, since the midline has tethers we know about,
             //  we keep going until we see a fast twist (ie, mid2)
             //cached.
-            //assert.ok(midRelay.app.requestLogs.includes(`GET /files/${mid2.getHash()}.next.toda`));
+            //assert.ok(midRelay.requestLogs.includes(`GET /files/${mid2.getHash()}.next.toda`));
             // Doesn't go beyond that
-            assert.ok(!midRelay.app.requestLogs.includes(`GET /files/${mid1.getHash()}.next.toda`));
+            assert.ok(!midRelay.requestLogs.includes(`GET /files/${mid1.getHash()}.next.toda`));
         }
         finally {
-            await stopRelay(midRelay);
-            await stopRelay(topRelay);
+            await midRelay.stop();
+            await topRelay.stop();
         }
     });
 });
