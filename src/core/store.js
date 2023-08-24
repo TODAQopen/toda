@@ -162,7 +162,7 @@ class SerialStore extends InMemoryPacketStore {
     put(hash, packet) {
         let existingPacket = this.pairs.get(hash) || this.masterMap[hash];
         if (!existingPacket) {
-            this.byteBuffer = this.byteBuffer.concat(hash.serialize().concat(packet.serialize()));
+            this.byteBuffer = this.byteBuffer.concat(hash.toBytes().concat(packet.toBytes()));
             super.put(hash, packet);
         }
     }
@@ -178,7 +178,7 @@ class SerialStore extends InMemoryPacketStore {
     }
 
     forcePut(hash, packet) {
-        this.byteBuffer = this.byteBuffer.concat(hash.serialize().concat(packet.serialize()));
+        this.byteBuffer = this.byteBuffer.concat(hash.toBytes().concat(packet.toBytes()));
         super.put(hash, packet);
         this.setPrimaryHash(hash);
     }
@@ -193,68 +193,20 @@ class SerialStore extends InMemoryPacketStore {
         await ss.forcePut(file.getHash(), await file.getTwistPacket());
         return ss;
     }
+
     /**
      * Reads and parses a serialized packet store and returns the "primary hash".
      * @param {ByteArray} bytes
      * @returns {Hash}
      */
     parseAndAddBytes(bytes) {
-        while (bytes.length > 0) {
-            let [hash, numBytes] = this.readHash(bytes);
-            bytes = bytes.slice(numBytes);
-            let [packet, packetNumBytes] = this.readPacket(bytes);
-            bytes = bytes.slice(packetNumBytes);
-            // we call 'put' on the superclass so we don't write it to the bytestream again
+        let atoms = Atoms.fromBytes(bytes);
+        let pairs = atoms.toPairs();
+        pairs.forEach(([hash, packet]) => {
             super.put(hash, packet);
             this.setPrimaryHash(hash);
-        }
+        })
     }
-
-    /**
-     * @returns <ByteArray> the bytes
-     */
-    readBytes(bytes, num) {
-        if (bytes.length < num) {
-            throw new Error("could not parse file; reading off end");
-        }
-        return bytes.slice(0, num);
-    }
-
-    /**
-     * @returns [<Hash>, <Integer>] where int is number of bytes read.
-     */
-    readHash(bytes) {
-        let hash = Hash.parse(bytes, 0);
-
-        return [hash, hash.numBytes()];
-
-
-        // let algoCode = this.readBytes(bytes, Hash.ALGO_CODE_LENGTH)[0];
-        // let imp = Hash.implementationForAlgoCode(algoCode);
-        // bytes = bytes.slice(Hash.ALGO_CODE_LENGTH);
-
-
-        // if (!imp) throw new Error("unknown algo code: " + algoCode);
-
-        // let hashBytes = this.readBytes(bytes, imp.getHashValueLength());
-        // return [Hash.createFromAlgoCode(algoCode, hashBytes), Hash.ALGO_CODE_LENGTH + hashBytes.length];
-
-    }
-
-    /**
-     * @returns [<Packet>, <Integer>] where int is number of bytes read.
-     */
-    readPacket(bytes) {
-        let shapeCode = this.readBytes(bytes, Packet.PACKET_LENGTH_OFFSET)[0];
-        bytes = bytes.slice(Packet.PACKET_LENGTH_OFFSET);
-        let packetLength = ByteArray.toInt(this.readBytes(bytes, Packet.PACKET_LENGTH_LENGTH));
-        bytes = bytes.slice(Packet.PACKET_LENGTH_LENGTH);
-        return [Packet.createFromShapeCode(shapeCode, this.readBytes(bytes, packetLength)),
-            Packet.PACKET_LENGTH_OFFSET +
-		Packet.PACKET_LENGTH_LENGTH +
-		packetLength];
-    }
-
 }
 
 

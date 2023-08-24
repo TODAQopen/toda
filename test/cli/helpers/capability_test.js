@@ -36,7 +36,7 @@ xdescribe("append capability", () => {
         assert.deepEqual(new Date(cap.expiry()), expiry);
         assert(cap.popTop().equals(tb.serialize().focus));
         assert(capTwist.tether().getHash().equals(tb.serialize().focus));
-        assert(ByteArray.isEqual(capTwist.shield().getShapedValue(), shield));
+        assert.equal(shield.toString(), capTwist.shield().getShapedValue().toString());
     });
 
     it("should authorize a Capability correctly", async () => {
@@ -139,7 +139,7 @@ xdescribe("delegate capability", () => {
 
         let lineTwist = await getAtomsFromPath(linePath).then(atoms => new Twist(atoms));
         assert(delTwist.tether().getHash().equals(lineTwist.prev().getHash()));
-        assert(ByteArray.isEqual(delTwist.shield().getShapedValue(), shield));
+        assert.equal(shield.toString(), delTwist.shield().getShapedValue().toString());
 
         // Verify delegationChain
         assert(del.delegateComplete().first().getHash().equals(cap.getHash()));

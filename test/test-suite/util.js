@@ -1,6 +1,7 @@
 import { Atoms } from "../../src/core/atoms.js";
 import { Abject } from "../../src/abject/abject.js";
 import { Hash } from "../../src/core/hash.js";
+import { ByteArray } from "../../src/core/byte-array.js";
 import fs from 'fs';
 
 const descriptionDirectory = new URL('./descriptions', import.meta.url)
@@ -30,7 +31,7 @@ function loadInput(fileName)
 
 function loadTest(fileName)
 {
-    let bytes = fs.readFileSync(new URL('./descriptions/' + fileName, import.meta.url))
+    let bytes = new ByteArray(fs.readFileSync(new URL('./descriptions/' + fileName, import.meta.url)));
     let atoms = Atoms.fromBytes(bytes);
     let abj = Abject.parse(atoms, atoms.focus);
     let linkedFile = Abject.parse(atoms, abj.getFieldHash(linkedInputFile));

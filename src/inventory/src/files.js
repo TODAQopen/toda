@@ -22,7 +22,7 @@ async function putFile(invPath, bytes) {
         let hash = atoms.focus;
         await fs.mkdir(path.join(invPath), {recursive: true});
         await fs.writeFile(path.join(invPath, `${hash}.toda`), bytes);
-        return hash.serialize();
+        return hash.toBytes();
     } catch (err) {
         return Promise.reject(err);
     }

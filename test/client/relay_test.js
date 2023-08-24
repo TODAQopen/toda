@@ -181,7 +181,7 @@ describe("RemoteNextRelayClient", async () => {
         let twist2 = Twist.fromBytes(new ByteArray(fs.readFileSync(p)));
         let loadedContent = shield.getShapedValueFromContent();
         let expectedContent = twist2.shield().getShapedValueFromContent();
-        assert.ok(loadedContent.equals(expectedContent));
+        assert.equal(loadedContent.toString(), expectedContent.toString());
         nock.cleanAll();
     });
 
@@ -321,7 +321,7 @@ describe("LocalNextRelayClient", async () => {
         const relay = new LocalNextRelayClient(toda, t3.getHash());
         assert.ok(!relay._getShield(t0.getHash())); // dne: loose
         assert.ok(relay._getShield(t1.getHash())); // Public!
-        assert.ok((relay._getShield(t1.getHash())).content.equals(t1.shield().content));
+        assert.equal((relay._getShield(t1.getHash())).toString(), t1.shield().toString());
         assert.ok(!relay._getShield(t2.getHash())); // dne: loose
         assert.ok(!relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
     });
@@ -339,7 +339,7 @@ describe("LocalNextRelayClient", async () => {
         const relay = new LocalNextRelayClient(toda, t3.getHash());
         assert.ok(!relay._getShield(t0.getHash())); // dne: loose
         assert.ok(relay._getShield(t1.getHash())); // Public!
-        assert.ok((relay._getShield(t1.getHash())).content.equals(t1.shield().content));
+        assert.equal((relay._getShield(t1.getHash())).toString(), t1.shield().toString());
         assert.ok(!relay._getShield(t2.getHash())); // dne: loose
         assert.ok(!relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
         assert.ok(!relay._getShield(t4.getHash())); // dne: loose

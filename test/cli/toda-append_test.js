@@ -20,7 +20,7 @@ describe("toda-append", async () => {
             let r = execSync(`${getTodaPath()}/toda create --empty --config ${getConfigPath()}`);
             let rawTwist = Twist.fromBytes(r);
 
-            r = execSync(`${getTodaPath()}/toda append ${rawTwist.getHash().toString('hex')} --empty --tether ${h.serialize()} --config ${getConfigPath()}`);
+            r = execSync(`${getTodaPath()}/toda append ${rawTwist.getHash().toString('hex')} --empty --tether ${h.toBytes()} --config ${getConfigPath()}`);
 
             let twist = Twist.fromBytes(r); //hack
             assert(twist.prev().getHash().equals(rawTwist.getHash()));

@@ -15,58 +15,57 @@ class ByteArray extends Uint8Array {
     // Reads hex string data into a Uint8Array
     static fromHex(str) {
         let result = [];
-        for(let i = 0; i < str.length; i += 2)
+        for(let i = 0; i < str.length; i += 2) {
             result.push(parseInt(str.substring(i, i + 2), 16));
+        }
         return ByteArray.from(result);
     }
 
-    /**
-   * Returns true if byte-arrays are equal and false otherwise
-   * @param {ByteArray} lhs
-   * @param {ByteArray} rhs
-   */
-    static isEqual(lhs, rhs) {
-        return lhs.toString() == rhs.toString();
+    static toInt(bytes, offset=0, length=0) {
+        return new DataView(bytes.buffer, offset || bytes.byteOffset, length || bytes.byteLength).getUint32(0, false);
     }
 
-    static toInt(bytes) {
-        return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0, false)
+    static fourByteInt(n) {
+        let bytes = new Uint8Array(4);
+        for (let i = 3; i >= 0; i--) {
+            bytes[i] = n & (255);
+            n = n >> 8;
+        }
+        return bytes;
     }
 
     static hexes_helper = Array.from(Array(256)).map((n,i)=>i.toString(16).padStart(2, '0'));
 
 
-    concat(x) {
-        let res = new ByteArray(this.length + x.length);
+    concat(bytes) { // dx: exterminate
+        let res = new ByteArray(this.length + bytes.length);
         res.set(this);
-        res.set(x, this.length);
+        res.set(bytes, this.length);
         return res;
     }
 
-    toString(offset=0, length=0) {
-        if (!offset && this.str) {
-            return this.str;
-        }
+    /**
+     * @param {int} offset starting byte
+     * @param {int} length total length of bytes
+     * @returns {string}
+     **/
+    toHex(offset=0, length=0) {
         let hex = '';
         const hh = ByteArray.hexes_helper;
-        const l = length || this.byteLength;
         const o = offset || 0;
+        const l = o + (length || this.byteLength);
         for (let i = o; i < l; i++) {
             hex += hh[this[i]];
-        }
-        if (!offset) {
-            this.str = hex;
         }
         return hex;
     }
 
-    toUTF8String() {
+    toUTF8String() { // dx: perf: make this fast; accept offset and length
         return this.reduce((acc, n) => acc + String.fromCharCode(n), '')
     }
 
-
-    equals(x) {
-        return ByteArray.isEqual(this, x);
+    toString() { // dx: don't call this deliberately, it's only here for console output and a few low-level tests
+        return this.toHex();
     }
 }
 

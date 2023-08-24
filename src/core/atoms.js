@@ -9,7 +9,6 @@ import { ByteArray } from './byte-array.js';
 
 import { Hash } from './hash.js';
 import { Packet } from './packet.js';
-import { HashMap } from './map.js';
 
 /**
  * Adds helpful utilities when using HashMap as HashMap<Hash,Packet>
@@ -39,6 +38,7 @@ class Atoms {
     }
 
     toPairs(focus) {
+        // dx: perf: keep pairs as a cached structure internally once focus is removed
         let pairs = [];
         let fh = focus+"";
 
@@ -121,16 +121,16 @@ class Atoms {
         focus = focus || this._focus; // dx: todo: remove the || once we lose focus
         let a = this.toPairs(focus);
 
-        let len = a.reduce((acc, [h,p]) => acc + h.length + p.serialize().byteLength, 0)
+        let len = a.reduce((acc, [h,p]) => acc + h.numBytes() + p.getLength(), 0)
         let ret = new ByteArray(len);
         let off = 0;
         a.forEach(([h, p]) => {
-            ret.set(h.serialize(), off); // dx: perf: could make this faster by using the raw offset in h
-            off += h.serialize().byteLength;
-            ret.set(p.serializedValue, off);
-            off += p.serializedValue.byteLength;
+            ret.set(h.toBytes(), off);
+            off += h.toBytes().byteLength;
+            ret.set(p.toBytes(), off);
+            off += p.getLength();
         })
-        return ret
+        return ret;
     }
 
     /**
@@ -138,6 +138,7 @@ class Atoms {
      * @returns {Atoms}
      **/
     static fromBytes(bytes) {
+        bytes = new ByteArray(bytes); // dx: todo: skip if already ByteArray? or make this cheap in that case?
         let atoms = new Atoms();
         let lasthash;
         let i = 0, bl = bytes.length;
@@ -147,6 +148,7 @@ class Atoms {
             i += hash.numBytes();
             let h = hash.toString();
             let packet = Atoms.packets[h];
+
             if (!packet) {
                 packet = Packet.parse(bytes, i);
                 hash.assertVerifiesPacket(packet); // throws

@@ -2,7 +2,7 @@ import { Atoms } from "../../src/core/atoms.js";
 import { Sha256 } from "../../src/core/hash.js";
 import { ArbitraryPacket } from "../../src/core/packet.js";
 import { TwistBuilder, Twist } from "../../src/core/twist.js";
-import { bafs, sbh } from "../util.js";
+import { sbh } from "../util.js";
 import { app } from "../../src/inventory/src/server.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import fs from "fs/promises";
@@ -50,7 +50,7 @@ describe("POST /files", async () => {
     it("Should return code 201 and hash of the newly stored file", async () => {
     // make a valid toda file
         function hpp(str) { // hash-packet-pair
-            let p = new ArbitraryPacket(bafs(str));
+            let p = new ArbitraryPacket(ByteArray.fromUtf8(str));
             return [Sha256.fromPacket(p), p];
         }
 
@@ -77,12 +77,12 @@ describe("POST /files", async () => {
             // get file by hash
             let response1 = await axios({
                 method: "GET",
-                url: `http://localhost:3001/files/${validTodaFile.hash.serialize()}`,
+                url: `http://localhost:3001/files/${validTodaFile.hash.toBytes()}`,
                 headers: { "Content-Type": "application/octet-stream" },
                 responseType: "arraybuffer"
             });
 
-            assert.deepEqual(Atoms.fromBytes(ByteArray.from(response1.data)).serializedValue, validTodaFile.atoms.serializedValue );
+            assert.deepEqual(Atoms.fromBytes(ByteArray.from(response1.data)).toBytes(), validTodaFile.atoms.toBytes() );
         } finally {
             server.close();
             await fs.rm(`${__dirname}/localhost/${validTodaFile.getHash()}.toda`);

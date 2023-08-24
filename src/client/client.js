@@ -133,7 +133,7 @@ class TodaClient {
 
     _generateShield(hash) {
         hash = hash || new NullHash();
-        return Sha256.hash(this._getSalt().concat(hash.serialize()));
+        return Sha256.hash(this._getSalt().concat(hash.toBytes()));
     }
 
     // TODO: support explicit shields later.  only salted ones for now.

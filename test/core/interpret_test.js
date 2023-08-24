@@ -35,18 +35,22 @@ describe("Runs pickled rig tests (v1)", () => {
     };
 
     let runPassTest = async (todaFile) => {
-        const data = fs.readFileSync(todaFile);
-        let s = new SerialStore(new ByteArray(data));
+        try {
+            const data = fs.readFileSync(todaFile);
+            let s = new SerialStore(new ByteArray(data));
 
-        let line = new Line();
-        await s.copyInto(line);
+            let line = new Line();
+            await s.copyInto(line);
 
-        let i = new Interpreter(line, getTopline(line, s.getPrimaryHash()));
-        await i.verifyTopline();
-        await i.verifyHitchLine(s.getPrimaryHash());
+            let i = new Interpreter(line, getTopline(line, s.getPrimaryHash()));
+            await i.verifyTopline();
+            await i.verifyHitchLine(s.getPrimaryHash());
+        } catch (err) {
+            assert.ifError(err);
+        }
     };
 
-    let runThrowsTest = async (todaFile, f) => {
+    let runThrowsTest = async (todaFile, expectedErrorType) => {
         const data = fs.readFileSync(todaFile);
         let s = new SerialStore(new ByteArray(data));
 
@@ -55,19 +59,15 @@ describe("Runs pickled rig tests (v1)", () => {
 
         let i = new Interpreter(line, getTopline(line, s.getPrimaryHash()));
 
-        let err;
+        let e;
         try {
             await i.verifyTopline();
             await i.verifyHitchLine(s.getPrimaryHash());
-            console.log("uh oh");
-        } catch (e) {
-            err = e;
+            e = 'Did not throw an error';
+        } catch (err) {
+            e = err instanceof expectedErrorType ? null : err;
         }
-        if (err) {
-            assert(f(err));
-        } else {
-            assert(false, "expected error.");
-        }
+        assert.ifError(e);
     };
 
     it("green: unit_rig", async() => {
@@ -105,59 +105,35 @@ describe("Runs pickled rig tests (v1)", () => {
     });
 
     it("yellow: cork missing rigging", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/cork_missing_rigging.toda`,(e) => {
-            return (e instanceof MissingHashPacketError);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/cork_missing_rigging.toda`, MissingHashPacketError);
     });
 
     it("yellow: lash_succession_missing_prev", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/lash_succession_missing_prev.toda`,(e) => {
-            return (e instanceof MissingPrevious);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/lash_succession_missing_prev.toda`, MissingPrevious);
     });
 
     it("yellow: missing shield", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/missing_shield.toda`,(e) => {
-            return (e instanceof MissingHoistError);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/missing_shield.toda`, MissingHoistError);
     });
 
     it("yellow: missing rigging", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/missing_rigging.toda`,(e) => {
-            return (e instanceof MissingHashPacketError);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/missing_rigging.toda`, MissingHashPacketError);
     });
 
     it("red: corkline_incomplete_early", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/corkline_incomplete_early.toda`,(e) => {
-            return (e instanceof MissingHoistError);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/corkline_incomplete_early.toda`, MissingHoistError);
     });
 
     it("red: corkline_incomplete_late", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/corkline_incomplete_late.toda`,(e) => {
-            return (e instanceof MissingHoistError);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/corkline_incomplete_late.toda`, MissingHoistError);
     });
 
     it("red: cork_reqsat_fail", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/cork_reqsat_fail.toda`,(e) => {
-            return (e instanceof ReqSatError);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/cork_reqsat_fail.toda`, ReqSatError);
     });
 
     it("red: meets_do_not_match", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/meets_do_not_match.toda`,(e) => {
-            return (e instanceof MissingSuccessor);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/meets_do_not_match.toda`, MissingSuccessor);
     });
 
     /* conflicting successor
@@ -169,17 +145,13 @@ describe("Runs pickled rig tests (v1)", () => {
     });*/
 
     it("red: lash_succession_no_fast_twist", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/lash_succession_no_fast_twist.toda`,(e) => {
-            return (e instanceof LooseTwistError);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/lash_succession_no_fast_twist.toda`, LooseTwistError);
     });
+
     it("red: lash_succession_reqsat_fail", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/lash_succession_reqsat_fail.toda`,() => {
-            return true; // At the moment throws spectacular ASN1 format issue.
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/lash_succession_reqsat_fail.toda`, Error);
     });
+
     /* Conflicting successor
     it('red: lashed_non_colinear', async() => {
 	return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/lashed_non_colinear.toda`,(e) => {
@@ -189,10 +161,7 @@ describe("Runs pickled rig tests (v1)", () => {
     });    */
 
     it("red: missing post key", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/post_rigging_missing_post_key.toda`,(e) => {
-            return (e instanceof MissingPostEntry);
-            // todo: more specifics
-        });
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/red/post_rigging_missing_post_key.toda`, MissingPostEntry);
     });
 
 
@@ -288,43 +257,43 @@ describe("`verifyHitchLine` can handle partial proofs when provided `startHash`"
     let interpreter = new Interpreter(line, topHash);
 
     it("Running a partial proof without `startHash` fails", async () => {
-        let x;
+        let e;
         try {
             await interpreter.verifyHitchLine(newestHash);
-            x = false;
+            e = true;
         } catch (err) {
-            x = err instanceof MissingHashPacketError;
+            e = err instanceof MissingHashPacketError ? null : err;
         }
-        assert(x, "Running interpreter should fail with error MissingPrevious.");
+        assert.ifError(e);
     });
 
     it("Running a partial proof with valid `startHash` succeeds", async () => {
-        let x;
         try {
             await interpreter.verifyHitchLine(newestHash, newestHash);
-            x = true;
         } catch (err) {
-            x = false;
+            assert.ifError(err);
         }
-        assert(x, "Running interpreter should succeed.");
     });
 });
 
 describe("Runs pickled reqsattrie tests (v1)", () => {
     let runPassTest = async (todaFile) => {
-        const data = new ByteArray(fs.readFileSync(todaFile));
-        let s = new SerialStore(data);
-        let line = new Line();
-        await s.copyInto(line);
-        let i = new Interpreter(line, undefined);
+        try {
+            const data = new ByteArray(fs.readFileSync(todaFile));
+            let s = new SerialStore(data);
+            let line = new Line();
+            await s.copyInto(line);
+            let i = new Interpreter(line, undefined);
 
-        let twist1 = Twist.fromBytes(data);
-        let twist0 = twist1.prev();
-
-        return i.verifyLegit(twist0, twist1);
+            let twist1 = Twist.fromBytes(data);
+            let twist0 = twist1.prev();
+            return i.verifyLegit(twist0, twist1);
+        } catch (err) {
+            assert.ifError(err);
+        }
     };
 
-    let runThrowTest = async (todaFile, expectedErrorType) => {
+    let runThrowsTest = async (todaFile, expectedErrorType) => {
         const data = new ByteArray(fs.readFileSync(todaFile));
         let s = new SerialStore(data);
         let line = new Line();
@@ -334,17 +303,14 @@ describe("Runs pickled reqsattrie tests (v1)", () => {
         let twist1 = Twist.fromBytes(data);
         let twist0 = twist1.prev();
 
-        let err;
+        let e;
         try {
             await i.verifyLegit(twist0, twist1);
-        } catch (e) {
-            err = e;
+            e = 'Did not throw an error';
+        } catch (err) {
+            e = err instanceof expectedErrorType ? null : err;
         }
-        if (err) {
-            assert(err instanceof expectedErrorType);
-        } else {
-            assert(false, "expected error.");
-        }
+        assert.ifError(e);
     };
 
     it("green: satisfied sig", async() => {
@@ -352,42 +318,42 @@ describe("Runs pickled reqsattrie tests (v1)", () => {
     });
 
     it("yellow: unknown interpreter type", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/unknown_interpreter.toda`, ReqSatError);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/unknown_interpreter.toda`, ReqSatError);
     });
 
     it("yellow: reqtrie missing", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/reqtrie_missing.toda`, MissingHashPacketError);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/reqtrie_missing.toda`, MissingHashPacketError);
     });
 
     it("yellow: sattrie missing", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/sattrie_missing.toda`, MissingHashPacketError);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/sattrie_missing.toda`, MissingHashPacketError);
     });
 
     it("red: req is null but the sat is not", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/req_null_sat_not.toda`, Error);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/req_null_sat_not.toda`, Error);
     });
 
     it("red: sat is null but the req is not", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sat_null_req_not.toda`, Error);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sat_null_req_not.toda`, Error);
     });
 
     it("red: req is not a trie", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/reqtrie_invalid.toda`, TypeError);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/reqtrie_invalid.toda`, TypeError);
     });
 
     it("red: sat is not a trie", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sattrie_invalid.toda`, TypeError);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sattrie_invalid.toda`, TypeError);
     });
 
     it("red: req / sat keys mismatch", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/reqtrie_sattrie_different_keys.toda`, Error);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/reqtrie_sattrie_different_keys.toda`, Error);
     });
 
     it("red: sattrie has an extra key", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sattrie_key_extra.toda`, Error);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sattrie_key_extra.toda`, Error);
     });
 
     it("red: sattrie has one less key", async() => {
-        return runThrowTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sattrie_key_not_included.toda`, Error);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/red/sattrie_key_not_included.toda`, Error);
     });
 });

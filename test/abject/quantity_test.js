@@ -119,8 +119,8 @@ describe("Delegation works correctly", () => {
         let topNext = top.createSuccessor();
         // could... be.. nicer..
         topNext.rigging = new Map(
-           [...Shield.rigForHoist(from.getHash(), fromNext.getHash(), NullHash).shapedVal,
-            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), NullHash).shapedVal]);
+           [...Shield.rigForHoist(from.getHash(), fromNext.getHash(), new NullHash()).shapedVal,
+            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), new NullHash()).shapedVal]);
 
         delNext.addAtoms(topNext.serialize());
         delNext.addAtoms(fromNext.serialize());
@@ -239,8 +239,8 @@ describe("Adversarial DQs can't break their invariants", () => {
         let topNext = top.createSuccessor();
         // could... be.. nicer..
         topNext.rigging = new Map(
-           [...Shield.rigForHoist(from.getHash(), fromNext.getHash(), NullHash).shapedVal,
-            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), NullHash).shapedVal]);
+           [...Shield.rigForHoist(from.getHash(), fromNext.getHash(), new NullHash()).shapedVal,
+            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), new NullHash()).shapedVal]);
 
         delNext.addAtoms(topNext.serialize());
         delNext.addAtoms(fromNext.serialize());
@@ -309,8 +309,8 @@ describe("Probe the edges of delegation", () => {
 
         let topNext = top.createSuccessor();
         topNext.rigging = new Map(
-           [...Shield.rigForHoist(from.getHash(), fromNext.getHash(), NullHash).shapedVal,
-            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), NullHash).shapedVal]);
+           [...Shield.rigForHoist(from.getHash(), fromNext.getHash(), new NullHash()).shapedVal,
+            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), new NullHash()).shapedVal]);
 
         delNext.addAtoms(topNext.serialize());
         delNext.addAtoms(fromNext.serialize());
@@ -505,10 +505,10 @@ describe("Full special-cased tests", () => {
         // could... be.. nicer..
         topNext.rigging = new Map(
            [
-            ...Shield.rigForHoist(root.getHash(), fromNext.getHash(), NullHash).shapedVal,
-            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), NullHash).shapedVal,
-            ...Shield.rigForHoist(root.getHash(), fromNext.getHash(), NullHash).shapedVal,
-            ...Shield.rigForHoist(del2.getHash(), delNext2.getHash(), NullHash).shapedVal
+            ...Shield.rigForHoist(root.getHash(), fromNext.getHash(), new NullHash()).shapedVal,
+            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), new NullHash()).shapedVal,
+            ...Shield.rigForHoist(root.getHash(), fromNext.getHash(), new NullHash()).shapedVal,
+            ...Shield.rigForHoist(del2.getHash(), delNext2.getHash(), new NullHash()).shapedVal
            ]);
 
         delNext.addAtoms(topNext.serialize());
@@ -564,10 +564,10 @@ describe("Full special-cased tests", () => {
         let topNext = top.createSuccessor();
         topNext.rigging = new Map(
            [
-            ...Shield.rigForHoist(root.getHash(), fromNext.getHash(), NullHash).shapedVal,
-            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), NullHash).shapedVal,
-            ...Shield.rigForHoist(root.getHash(), fromNext.getHash(), NullHash).shapedVal,
-            ...Shield.rigForHoist(del2.getHash(), delNext2.getHash(), NullHash).shapedVal
+            ...Shield.rigForHoist(root.getHash(), fromNext.getHash(), new NullHash()).shapedVal,
+            ...Shield.rigForHoist( del.getHash(),  delNext.getHash(), new NullHash()).shapedVal,
+            ...Shield.rigForHoist(root.getHash(), fromNext.getHash(), new NullHash()).shapedVal,
+            ...Shield.rigForHoist(del2.getHash(), delNext2.getHash(), new NullHash()).shapedVal
            ]);
 
         delNext.addAtoms(topNext.serialize());

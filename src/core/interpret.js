@@ -215,6 +215,7 @@ class Interpreter {
     }
 
     isHoist(lead, twist) {
+        // dx: perf: hey, cache these values! this happens a lot and hashing is slow!
         let s = Shield.shield(lead.hash, lead.hash, lead.shield());
         let ss = Shield.doubleShield(lead.hash, lead.hash, lead.shield());
         let v = twist.rig(s);
@@ -224,10 +225,12 @@ class Interpreter {
     }
 
     hoistForwardSearch(lead, twist) {
-        if (!twist)
+        if (!twist) {
             return null;
-        if (this.isHoist(lead, twist))
+        }
+        if (this.isHoist(lead, twist)) {
             return twist;
+        }
         return this.hoistForwardSearch(lead, this.next(twist.hash));
     }
 
@@ -247,13 +250,15 @@ class Interpreter {
     hitchMeet(hash) {
         let leadTwist = this.twist(hash);
         let hoist = this.hitchHoist(hash);
+
         if (!hoist) {
-            throw new MissingHoistError(hash);
+            throw new MissingHoistError(hash, undefined, {atoms: this.line.atoms.hashes});
         }
 
         let meet = this.twist(hoist.rig(Shield.shield(hash, hash, leadTwist.shield())));
-        if(meet.isTethered())
+        if (meet.isTethered()) {
             return meet;
+        }
         throw new Error("Meet is not fast.");
     }
 

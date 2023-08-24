@@ -19,6 +19,6 @@ describe("TwistBuilder/getBodyPacket", () => {
         let rigging = riggingPacket.getShapedValue();
         assert.equal(rigging.size, 3);
         assert(riggingPacket.get(Sha256.fromBytes(ByteArray.fromUtf8("sauce")))
-               .equals(Sha256.fromBytes(ByteArray.fromUtf8("sauce")).serialize()));
+               .equals(Sha256.fromBytes(ByteArray.fromUtf8("sauce")).toBytes()));
     });
 });

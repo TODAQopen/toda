@@ -23,10 +23,10 @@ class Shield {
     static shield(twistHash, hashToShield, shieldPacket) {
         if (shieldPacket) {
             return this._shield(twistHash,
-                hashToShield.serialize(),
-                shieldPacket.content);
+                hashToShield.toBytes(),
+                shieldPacket.toBytes().subarray(5)); // dx: perf
         }
-        return this._shield(twistHash, hashToShield.serialize());
+        return this._shield(twistHash, hashToShield.toBytes());
     }
 
     /**

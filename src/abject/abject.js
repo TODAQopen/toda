@@ -181,9 +181,9 @@ class Abject {
     //     //todo(acg): initialize with the actual num of bytes we'll need
     //     let byteBuffer = new ByteArray();
     //     for (const [hash,packet] in this.atoms) {
-    //         byteBuffer = byteBuffer.concat(hash.serialize().concat(packet.serialize()));
+    //         byteBuffer = byteBuffer.concat(hash.toBytes().concat(packet.serialize()));
     //     }
-    //     return byteBuffer.concat(dataHash.serialize().concat(dataPacket.serialize()));
+    //     return byteBuffer.concat(dataHash.toBytes().concat(dataPacket.serialize()));
     // }
 
     /**

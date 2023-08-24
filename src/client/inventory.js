@@ -74,6 +74,8 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     _addAtoms(atoms) {
+        // dx: perf: this is very slow, and we don't actually store the line.
+        //           we're only using it to populate this.files and this.twistIdx
         let line = Line.fromAtoms(atoms);
         let firstHash = line.first(line.focus);
         let existing = this.files.get(firstHash);
@@ -131,7 +133,6 @@ class LocalInventoryClient extends InventoryClient {
         if (atoms) {
             this._addAtoms(atoms);
         }
-        return atoms;
     }
 
     put(atoms, explicitPath) {

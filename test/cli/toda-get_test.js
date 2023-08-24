@@ -2,7 +2,7 @@ import { app as invServer } from "../../src/inventory/src/server.js";
 import { Atoms } from "../../src/core/atoms.js";
 import { Twist, TwistBuilder } from "../../src/core/twist.js";
 import { ArbitraryPacket } from "../../src/core/packet.js";
-import { bafs, sbh } from "../util.js";
+import { sbh } from "../util.js";
 import { Sha256 } from "../../src/core/hash.js";
 import { getTodaPath, getConfigPath, cleanupTestEnv } from "./test-utils.js";
 
@@ -18,7 +18,7 @@ xdescribe('toda-get', async() => {
 
   it('Should get a file from the configured inventory', async() => {
     function hpp(str) { // hash-packet-pair
-      let p = new ArbitraryPacket(bafs(str));
+      let p = new ArbitraryPacket(ByteArray.fromUtf8(str));
       return [Sha256.fromPacket(p), p];
     }
 

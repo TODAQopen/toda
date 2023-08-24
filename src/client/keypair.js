@@ -24,20 +24,21 @@ class KeyPair extends RequirementSatisfier {
         let bodyHash = twist.packet.getBodyHash();
         return this.verifySig(reqPacket.getShapedValue(),
                               satPacket.getShapedValue(),
-                              bodyHash.serialize());
+                              bodyHash.toBytes());
     }
 
     async isSatisfiable(requirementTypeHash, requirementPacket) {
         if (!requirementTypeHash.equals(this.constructor.requirementTypeHash)) {
             return false;
         }
-        return requirementPacket.getShapedValue().equals(await this.exportPublicKey());
+        let pubkey = await this.exportPublicKey();
+        return requirementPacket.getShapedValue().toString() === pubkey.toString();
     }
 
     async satisfy(prevTwist, newBodyHash) {
         return new SignatureSatisfaction(prevTwist.getHashImp(),
                                          this.constructor.requirementTypeHash,
-                                         await this.signBytes(newBodyHash.serialize()));
+                                         await this.signBytes(newBodyHash.toBytes()));
     }
 }
 

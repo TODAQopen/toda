@@ -23,11 +23,8 @@ class Line {
 
     static fromAtoms(atoms, focus) {
         let line = new this();
-
-        // dx: TODO: optimize this, if these are really atoms they've already been imported
+        // line.atoms = atoms; // dx: todo: figure out why this doesn't work
         line.atoms.merge(atoms);
-        // line.atoms.hashes = {...atoms.hashes}
-        // line.atoms._focus = atoms._focus;
 
         for (let [h,p] of atoms.toPairs()) {
             line.processPacket(h, p);
@@ -254,8 +251,10 @@ class Line {
     }
 
     _addChildHash(parentHash, childHash) {
-        if (this.parents.get(childHash)) {
-            this.parents.get(childHash).push(parentHash);
+        // dx: perf: speed it up or call it less
+        let kid = this.parents.get(childHash);
+        if (kid) {
+            kid.push(parentHash);
         } else {
             this.parents.set(childHash, [parentHash]);
         }

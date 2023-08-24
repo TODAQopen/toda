@@ -148,7 +148,7 @@ class MockSimpleHistoricRelay {
             .persist()
             .get('/latest')
             .reply(200, async (uri, requestBody) => {
-                let response = Buffer.from(this.latest().getHash().serialize());
+                let response = Buffer.from(this.latest().getHash().toBytes());
                 this.logs.push({ method: "get", uri, requestBody, response });
                 return response;
             });

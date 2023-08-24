@@ -6,8 +6,6 @@
 *************************************************************/
 
 import { ByteArray } from './byte-array.js';
-
-import { fourByteInt } from './util.js';
 import { Hash } from './hash.js';
 import { HashMap } from './map.js';
 
@@ -19,25 +17,39 @@ class Packet {
 
     // 4GB (1024^3 * 4 bytes) limit
     static MAX_CONTENT_SIZE = 1024 * 1024 * 1024 * 4;
+    static PACKET_SHAPE_OFFSET = 0;
+    static PACKET_LENGTH_OFFSET = 1;
+    static PACKET_LENGTH_LENGTH = 4;
+    static PACKET_CONTENT_OFFSET = this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH;
+    static registeredShapeByCode = {};
 
     /**
      * Raw constructor of packets. Users are recommended to use the
      * shape-specific constructors in subclasses.
      *
-     * @param content <ByteArray> the bytes to be used as content
+     * @param bytes <ByteArray> the bytes to be used as content
+     * @param offset <int> beginning of the content in bytes (not the whole packet)
+     * @param length <int> length of the content
      */
-    constructor(content) {
-        if (content.length > Packet.MAX_CONTENT_SIZE) {
-            throw new ShapeException("SIZE_EXCEEDED", "Maximum content size exceeded.");
+    constructor(bytes, offset, length) {
+        if (offset === undefined) {
+            offset = 0;
+        }
+        if (length === undefined) {
+            length = bytes.length - offset;
         }
 
-        this.len = fourByteInt(content.length);
-        this.content = content;
+        if (length > Packet.MAX_CONTENT_SIZE) {
+            throw new ShapeException("SIZE_EXCEEDED", "Maximum content size exceeded.");
+        }
+        if (offset + length > bytes.length) {
+            throw new Error("Byte are too short", bytes);
+        }
 
-        this.serializedValue = new ByteArray(content.length + 5);
-        this.serializedValue[0] = this.constructor.shapeCode;
-        this.serializedValue.set(this.len, 1);
-        this.serializedValue.set(this.content, 5);
+        // these are all wrt the packet content, not including its five byte header
+        this.content = bytes;
+        this.offset = offset;
+        this.length = length;
     }
 
     // lazy packet expansion
@@ -54,43 +66,20 @@ class Packet {
      *
      * @returns <ByteArray> The serialized value of the packet
      */
-    serialize() {
-        return this.serializedValue;
-    }
-
-    static PACKET_SHAPE_OFFSET = 0;
-    static PACKET_LENGTH_OFFSET = 1;
-    static PACKET_LENGTH_LENGTH = 4;
-    static PACKET_CONTENT_OFFSET = this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH;
-
-    static parse(bytes, offset=0) {
-        let packetLength = ByteArray.toInt(bytes.subarray(offset + this.PACKET_LENGTH_OFFSET,
-                                                         offset + this.PACKET_LENGTH_OFFSET + this.PACKET_LENGTH_LENGTH));
-        if (bytes.length - Packet.PACKET_CONTENT_OFFSET - offset < packetLength) {
-            throw new ShapeException("Packet length does not match specified length.");
+    toBytes() {
+        if (!this.bytesValue) {
+            if (this.offset > 5) {
+                this.bytesValue = this.content.subarray(this.offset - 5, this.offset + this.length);
+            } else {
+                this.len = ByteArray.fourByteInt(this.length);
+                this.bytesValue = new ByteArray(this.getLength());
+                this.bytesValue[0] = this.constructor.shapeCode;
+                this.bytesValue.set(this.len, 1);
+                this.bytesValue.set(this.content.subarray(this.offset, this.offset + this.length), Packet.PACKET_CONTENT_OFFSET);
+            }
         }
 
-        let shapeCode = bytes[offset + this.PACKET_SHAPE_OFFSET];
-        // dx: perf: can we avoid copying?
-        let content = ByteArray.from(bytes.subarray(offset + this.PACKET_CONTENT_OFFSET,
-                                                    offset + this.PACKET_CONTENT_OFFSET + packetLength));
-
-        return Packet.createFromShapeCode(shapeCode, content);
-    }
-
-    static createFromShapeCode(shapeCode, content) {
-        let imp = this.implementationForShapeCode(shapeCode);
-        if (!imp) {
-            throw new ShapeException("SHAPE_UNKNOWN", "Unknown shape: " + shapeCode);
-        }
-
-        let o = new Packet(content);
-
-        // xxx(acg): tell me you don't love js
-        o.__proto__ = imp.prototype;
-        o.serializedValue[0] = shapeCode; // haaaack
-
-        return o;
+        return this.bytesValue;
     }
 
     /**
@@ -102,20 +91,14 @@ class Packet {
     }
 
     /**
-     * @returns <String> the hex representation of this object
+     * @returns <String> the hex representation of this packet
      */
     toString() {
-        return this.serialize().toString();
-    }
+        if (!this.strValue) {
+            this.strValue = this.content.toHex(this.offset, this.length);
+        }
 
-    static registeredShapeByCode = {};
-
-    static registerShape(subclass) {
-        this.registeredShapeByCode[subclass.shapeCode] = subclass;
-    }
-
-    static implementationForShapeCode(shapeCode) {
-        return this.registeredShapeByCode[shapeCode] || null;
+        return this.strValue;
     }
 
     /**
@@ -125,21 +108,60 @@ class Packet {
         throw new Error("abstract method not implemented in class Packet");
     }
 
-    // /**
-    //  * Returns a map of Hashes and Packets which represent a given object.
-    //  * Assumes the top-level is a trie.
-    //  * @returns <Map.<Hash:Packet>>
-    //  */
-    // fromObject(obj) {
-    //     // TODO(acg)
-    // }
-
     isTwist(){
         return this instanceof BasicTwistPacket;
     }
 
     getShapedValue() {
         return this.shapedVal;
+    }
+
+    getContent() {
+        return this.content; // dx: might need serialized version? this is only used in the CLI...
+    }
+
+    /**
+     * @returns <int> Total packet size in bytes (not just content)
+     */
+    getLength() {
+        return this.length + Packet.PACKET_CONTENT_OFFSET;
+    }
+
+
+    /**
+     * @param bytes  <ByteArray> bytes for the whole packet (not just content)
+     * @param packetStart <int> offset of the whole packet (not just content)
+     * @returns <Packet>
+     */
+    static parse(bytes, packetStart=0) {
+        let packetLength = ByteArray.toInt(bytes, packetStart + Packet.PACKET_LENGTH_OFFSET, Packet.PACKET_LENGTH_LENGTH);
+
+        if (bytes.length - Packet.PACKET_CONTENT_OFFSET - packetStart < packetLength) {
+            throw new ShapeException("Packet length does not match specified length.");
+        }
+
+        let shapeCode = bytes[packetStart + this.PACKET_SHAPE_OFFSET];
+        return Packet.createFromShapeCode(shapeCode, bytes, packetStart, packetLength);
+    }
+
+    /**
+     * @param shapeCode <int> a shape code as a decimal value (a JS number)
+     * @param bytes <ByteArray> bytes for the whole packet (not just content)
+     * @param packetStart <int> beginning of the whole packet (not just content)
+     * @param length <int> length of the content, not the whole packet
+     * @returns <Boolean>
+     */
+    static createFromShapeCode(shapeCode, bytes, packetStart=0, length=0) {
+        let imp = this.implementationForShapeCode(shapeCode);
+        if (!imp) {
+            throw new ShapeException("SHAPE_UNKNOWN", "Unknown shape: " + shapeCode);
+        }
+
+        let o = new Packet(bytes, packetStart + Packet.PACKET_CONTENT_OFFSET, length);
+
+        // xxx(acg): tell me you don't love js
+        o.__proto__ = imp.prototype;
+        return o;
     }
 
     static getShapeCode() {
@@ -150,17 +172,12 @@ class Packet {
         return this.moniker;
     }
 
-    getContent() {
-        return this.content;
+    static registerShape(subclass) {
+        this.registeredShapeByCode[subclass.shapeCode] = subclass;
     }
 
-    // Get the content size in bytes
-    getSize() {
-        return this.content.length;
-    }
-
-    getLength() {
-        return this.content.length + 5;
+    static implementationForShapeCode(shapeCode) {
+        return this.registeredShapeByCode[shapeCode] || null;
     }
 }
 
@@ -172,7 +189,7 @@ class ArbitraryPacket extends Packet {
     static moniker = "Arbitrary Packet";
 
     getShapedValueFromContent() {
-        return this.content;
+        return this.content.subarray(this.offset, this.offset + this.length);
     }
 
     /**
@@ -201,19 +218,22 @@ class HashPacket extends Packet {
      * @param hashes <Array.<Hash>> the list of hashes to create a packet from.
      */
     constructor(hashes) {
-        super(hashes.map((hash) => hash.serialize())
+        // dx: perf: if we're reading from disk then this ByteArray already exists...
+        super(hashes.map((hash) => hash.toBytes())
             .reduce((buffer, bytes) => buffer.concat(bytes),
                 new ByteArray()));
     }
 
     getShapedValueFromContent() {
-        let buf = this.content;
+        let bytes = this.content;
+        let i = this.offset;
+        let bl = this.offset + this.length;
         let hashes = [];
-        // dx: perf: optimize this
-        while (buf.length > 0) {
-            let hash = Hash.parse(buf);
+
+        while (i < bl) {
+            let hash = Hash.parse(bytes, i);
+            i += hash.numBytes();
             hashes.push(hash);
-            buf = buf.subarray(hash.numBytes());
         }
         return hashes;
     }
@@ -241,7 +261,6 @@ class HashPairPacket extends HashPacket {
     constructor(pairs) {
         super(pairs.flat());
     }
-
 
     getShapedValueFromContent() {
         let hs = super.getShapedValueFromContent();
@@ -313,7 +332,6 @@ class PairTriePacket extends HashPairPacket {
       */
     static isSorted(hashMap) {
         // sorting is lexicographic by hex value
-
         let keys = [...hashMap.keys()];
         let sortedKeys = [...keys].sort();
         for (let i=0;i<keys.length;i++) {
@@ -335,6 +353,8 @@ class PairTriePacket extends HashPairPacket {
             }
             trie.set(k,v);
         }
+
+        // dx: perf: sorting is expensive, could inline this into the above for-loop
         if (!PairTriePacket.isSorted(trie)) {
             throw new ShapeException("SHAPE_ORDER", "Map not sorted");
         }
@@ -379,6 +399,7 @@ class PairTriePacket extends HashPairPacket {
                 break;
             }
         }
+        // dx: perf: some room for improvement...
         return PairTriePacket.createFromUnsorted(shapedValue.set(keyHash, valHash));
     }
 
@@ -443,6 +464,7 @@ class BasicTwistPacket extends HashPacket {
         }
         return shapedValue;
     }
+
     // helpful shortcuts
     getBodyHash() {
         return this.getShapedValue()[0];

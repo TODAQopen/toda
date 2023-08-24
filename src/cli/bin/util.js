@@ -383,7 +383,7 @@ function getDistinct(arr) {
 }
 
 function getPacketSize(packet, friendly) {
-    return friendly ? formatBytes(packet.getSize()) : packet.getSize();
+    return friendly ? formatBytes(packet.getLength()) : packet.getLength();
 }
 
 /** Attempts to parse the atoms as an abject. If that fails, returns a Twist containing those atoms instead.

@@ -42,7 +42,7 @@ xdescribe("toda", async() => {
             assert(fs.existsSync(getConfig().privateKey));
             assert(fs.existsSync(getConfig().line));
 
-            assert(line.getBody().getTetherHash().toString() === cfg.poptop);
+            assert.equal(line.getBody().getTetherHash().toString(), cfg.poptop);
         } catch (err) {
             assert.fail(err);
         }

@@ -3,11 +3,12 @@ import { Atoms } from "../../src/core/atoms.js";
 import { Twist, TwistBuilder } from "../../src/core/twist.js";
 import { Line } from "../../src/core/line.js";
 import { ArbitraryPacket } from "../../src/core/packet.js";
-import { sbh, bafs } from "../util.js";
+import { sbh } from "../util.js";
+import { ByteArray } from "../../src/core/byte-array.js";
 import assert from "assert";
 
 function hpp(str) { // hash-packet-pair
-    let p = new ArbitraryPacket(bafs(str));
+    let p = new ArbitraryPacket(ByteArray.fromUtf8(str));
     return [Sha256.fromPacket(p), p];
 }
 
@@ -35,7 +36,8 @@ function tetherTwist(twist, tether) {
 }
 
 function getPropsForTestComparison(hash) {
-    return {length: hash.length, offset: hash.offset, serializedValue: hash.serializedValue, stringValue: hash.stringValue};
+    // dx: in general we shouldn't touch properties directly, use methods instead
+    return {offset: hash.offset, length: hash.numBytes(), stringValue: hash.toString()};
 }
 
 describe("Line/twist", () => {

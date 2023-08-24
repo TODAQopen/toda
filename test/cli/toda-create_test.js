@@ -34,7 +34,7 @@ describe("toda-create", async() => {
 
         try {
             let h = Sha256.fromBytes(ByteArray.fromUtf8("foo"));
-            let r = execSync(`${getTodaPath()}/toda create --empty --tether ${h.serialize()} --config ${getConfigPath()}`);
+            let r = execSync(`${getTodaPath()}/toda create --empty --tether ${h.toBytes()} --config ${getConfigPath()}`);
             let rawTwist = Twist.fromBytes(r);
             out = path.resolve(getConfig().store, `${rawTwist.getHash()}.toda`);
 
