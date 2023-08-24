@@ -5,7 +5,7 @@ import axios from "axios";
 import { LocalNextRelayClient } from "../../src/client/relay.js";
 import { Hash } from "../../src/core/hash.js";
 
-class TestRelayServer 
+class TestRelayServer
 {
     constructor(toda, config = {})
     {
@@ -79,7 +79,7 @@ class TestRelayServer
             if (ext == ".shield") {
                 const shield = relay._getShield(hash);
                 if (!shield) return;
-                return Buffer.from(shield.serialize());
+                return Buffer.from(shield.toBytes());
             }
             if (ext == ".next.toda") {
                 const twist = relay._getNext(hash);
@@ -108,7 +108,7 @@ class TestRelayServer
                 for (const [k, v] of Object.entries(quad)) {
                     hashes.set(Hash.fromHex(k), Hash.fromHex(v));
                 }
-    
+
                 const updatedTwist = toda.get(hash);
                 const pairtrie = PairTriePacket.createFromUnsorted(hashes);
                 // DON'T WAIT!
@@ -128,7 +128,7 @@ class TestRelayServer
             console.error(err)
             return res.status(500);
         });
-        
+
         this.app = app;
     }
 }
