@@ -121,11 +121,11 @@ class TestRelayServer
                 const pairtrie = PairTriePacket.createFromUnsorted(hashes);
                 // DON'T WAIT!
                 toda.append(updatedTwist,
-                                updatedTwist.lastFast()?.getTetherHash(),
-                                null,
-                                null,
-                                () => {},
-                                pairtrie);
+                            updatedTwist.lastFast()?.getTetherHash(),
+                            null,
+                            null,
+                            () => {},
+                            pairtrie);
                 return res.status(204).send();
             } catch (err) {
                 next(err);

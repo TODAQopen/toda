@@ -1,28 +1,17 @@
 import assert from "assert";
 import { Abject } from "../../src/abject/abject.js";
-import { DQ } from "../../src/abject/quantity.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { Hash } from "../../src/core/hash.js";
-import { SECP256r1 } from "../../src/client/secp256r1.js";
-import { TodaClient } from "../../src/client/client.js";
+import { TodaClient, TodaClientV2 } from "../../src/client/client.js";
 import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { v4 as uuid } from "uuid";
-import { P1String } from "../../src/abject/primitive.js";
-
-async function mint(client, qty, precision, tether)
-{
-    let req = await SECP256r1.generate();
-    let mintingInfo = new P1String(JSON.stringify({uuid: uuid()}));
-    let abj = DQ.mint(qty, precision, mintingInfo);
-    client.addSatisfier(req);
-    return await client.finalizeTwist(abj.buildTwist(), tether, req);
-}
+import { createLine, initRelay, mint } from "./util.js";
 
 describe("getQuantity", async () => {
     it("getQuantity for DQ", async () =>
     {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
@@ -38,7 +27,7 @@ describe("getQuantity", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
-        let twist = await mint(toda, 43, 1, );
+        let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
 
         let [delegate, delegator] = await toda.delegateValue(dq, 3.4);
@@ -54,7 +43,7 @@ describe("getBalance", async () => {
     it("Unknown type hash", async () =>
     {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         let result = await toda.getBalance(Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5"));
         assert.deepEqual({balance: 0,
                           quantity: 0,
@@ -67,7 +56,7 @@ describe("getBalance", async () => {
     it("Simple", async () =>
     {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
@@ -87,7 +76,7 @@ describe("getBalance", async () => {
     it("Uncontrolled", async () =>
     {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
@@ -111,7 +100,7 @@ describe("getBalance", async () => {
 describe("delegateValue", async () => {
     it("Simple", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
@@ -125,7 +114,7 @@ describe("delegateValue", async () => {
 
     it("Nested", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
@@ -141,20 +130,20 @@ describe("delegateValue", async () => {
 
     it("Client cannot satisfy DQ", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
 
         // New client does not have satisfier
-        toda = new TodaClient(inv, "http://localhost:8000");
+        toda = new TodaClientV2(inv, "http://localhost:8000");
         await assert.rejects(toda.delegateValue(dq, 2.2));
     });
 
 
     it("Not enough qty", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
@@ -163,7 +152,7 @@ describe("delegateValue", async () => {
 
     it("NaN", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
@@ -172,7 +161,7 @@ describe("delegateValue", async () => {
 
     it("Delegate value updates its tether", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
 
         let relayTwist0 = await toda.create();
@@ -189,10 +178,10 @@ describe("delegateValue", async () => {
     });
 });
 
-describe("transfer", async () => {
+describe("Transfer tests; simple", async () => {
     it("Exact", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
@@ -209,7 +198,7 @@ describe("transfer", async () => {
 
     it("Excess", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
@@ -226,7 +215,7 @@ describe("transfer", async () => {
 
     it("Multiple exact change", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 45, 1);
@@ -244,7 +233,7 @@ describe("transfer", async () => {
 
     it("Multiple change", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let twist = await mint(toda, 43, 1);
@@ -257,5 +246,413 @@ describe("transfer", async () => {
         assert.equal((await toda.getBalance(twist.getHash())).balance, 1.2);
         assert.equal(newTwists.map(t => Abject.fromTwist(t).quantity).reduce((x, y) => x + y, 0),
                      31);
+    });
+});
+
+describe("Transfer tests; comprehensive", async function() {
+    beforeEach(async function() {
+        const { toda, server, twists, req } = await initRelay(8090, null, null, 5);
+        this.relayReq = req;
+        this.relayClient = toda;
+        this.relayServer = server;
+        this.initRelayTwists = twists;
+    });
+
+    afterEach(async function() {
+        await this.relayServer.stop();
+    })
+
+    it("Alice => Bob, same poptop", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash)).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 9.2);
+    });
+
+    it("Alice => Bob => Charlie, same poptop", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.initRelayTwists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash)).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+
+    it("Alice => Bob => Alice, same poptop", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash)).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: aliceHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            alice.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+    });
+
+    it("Alice => Bob => Alice, Alice earlier poptop", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[0].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash)).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: aliceHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            alice.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+    });
+
+    it("Alice => Bob => Alice, Bob earlier poptop", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[0].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash)).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: aliceHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            alice.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+    });
+
+    it("Alice => Bob => Charlie, Bob earlier poptop, Charlie even earlier", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[4].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.initRelayTwists[0].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash)).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+
+    //INFO: Honestly expected this to fail
+    it("Alice => Bob => Alice, DQ has earlier poptop than Bob", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[0].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash)).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: aliceHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            alice.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+    });
+
+    // FIXME: Fails as expected
+    xit("Alice => Bob => Alice, DQ has earlier poptop than either", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash, this.initRelayTwists[0].getHash())).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: aliceHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            alice.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+    });
+
+    // FIXME: Fails as expected
+    xit("Alice => Bob => Charlie, DQ has earlier poptop than all of them", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.initRelayTwists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash, this.initRelayTwists[0].getHash())).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+
+    //FIXME: Fails as expected
+    xit("Alice => Bob => Charlie, DQ has later poptop than all of them", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.initRelayTwists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.initRelayTwists[2].getHash());
+
+        const recentTop = this.relayClient.get(this.initRelayTwists[0].getHash());
+        const newTop = await this.relayClient.append(recentTop, null, this.relayReq);
+
+        const dq = (await mint(alice, 143, 1, aliceHash, newTop.getHash())).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+});
+
+describe("Transfer tests; comprehensive", async function() {
+    beforeEach(async function() {
+        const upper = await initRelay(8091, null, null, 5);
+        const lower = await initRelay(8090, "http://localhost:8091", upper.twists[0].getHash(), 5);
+        this.lowerRelay = lower;
+        this.upperRelay = upper;
+    });
+
+    afterEach(async function() {
+        await this.lowerRelay.server.stop();
+        await this.upperRelay.server.stop();
+    })
+
+    it("Alice => Bob => Charlie, same poptop, multi layered poptop", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                                  this.upperRelay.twists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                              this.upperRelay.twists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                                      this.upperRelay.twists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash)).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+
+    it("Alice => Bob => Charlie, same poptop, multi layered poptop", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                                  this.upperRelay.twists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                              this.upperRelay.twists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                                      this.upperRelay.twists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash)).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+
+    it("Alice => Bob => Charlie, multi layered poptop, DQ has a lower poptop than addresses", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                                  this.upperRelay.twists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.lowerRelay.twists[2].getHash(),
+                                                              this.upperRelay.twists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.lowerRelay.twists[2].getHash(),
+                                                                      this.upperRelay.twists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash, this.lowerRelay.twists[2].getHash())).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+
+    // FIXME: Woo this one is fun, sort of expected this to fail
+    xit("Alice => Bob => Charlie, multi layered poptop, DQ has a higher poptop than addresses", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.lowerRelay.twists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.lowerRelay.twists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.lowerRelay.twists[2].getHash());
+        const dq = (await mint(alice, 143, 1, aliceHash, this.upperRelay.twists[2].getHash())).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+
+    //INFO: Honestly expected this to fail
+    it("Alice => Bob => Charlie, DQ has earlier poptop, multi layered poptop", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                                  this.upperRelay.twists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                              this.upperRelay.twists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                                      this.upperRelay.twists[2].getHash());
+
+        const dq = (await mint(alice, 143, 1, aliceHash, this.upperRelay.twists[0].getHash())).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+
+    //FIXME: Fails as expected
+    xit("Alice => Bob => Charlie, DQ has newer poptop, multi layered poptop", async function() {
+        const { toda: alice, hash: aliceHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                                  this.upperRelay.twists[2].getHash());
+        const { toda: bob, hash: bobHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                              this.upperRelay.twists[2].getHash());
+        const { toda: charlie, hash: charlieHash } = await createLine(this.lowerRelay.twists[2].getHash(), 
+                                                                      this.upperRelay.twists[2].getHash());
+
+        const recentTop = this.upperRelay.toda.get(this.upperRelay.twists[0].getHash());
+        const newTop = await this.upperRelay.toda.append(recentTop, null, this.upperRelay.req);
+        const dq = (await mint(alice, 143, 1, aliceHash, newTop.getHash())).getHash();
+
+        let transferedTwists = await alice.transfer({amount: 9.2, destHash: bobHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2, destHash: charlieHash, typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            charlie.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+        assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
     });
 });
