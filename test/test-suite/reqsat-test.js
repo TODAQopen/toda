@@ -20,9 +20,7 @@ async function checkInterpret(b)
         let predecessor = new Twist(atoms, predecessorH);
         await interpreter.verifyLegit(predecessor, successor);
         return true;
-    }
-    catch(err)
-    {
+    } catch (err) {
         return false;
     }
 }
@@ -30,21 +28,19 @@ async function checkInterpret(b)
 function runTest(test)
 // Returns string if error
 {
-    describe("test-suite/reqsat-test " + test["moniker"], async() => {
-        it("Test input properly loaded", async() =>
-            {
-                assert(test["input"] instanceof Buffer);
+    describe("test-suite/reqsat-test " + test["moniker"], async () => {
+        it("Test input properly loaded", async () => {
+            assert(test["input"] instanceof Buffer);
+        });
+        if (test["colour"] === "green") {
+            it("Reqsat should succeed", async () => {
+                assert(await checkInterpret(test["input"]));
             });
-        if(test["colour"] === "green")
-            it ("Reqsat should succeed", async() =>
-                {
-                    assert(await checkInterpret(test["input"]));
-                });
-        else
-            it ("Reqsat should fail", async() =>
-                {
-                    assert(!(await checkInterpret(test["input"])));
-                });
+        } else {
+            it("Reqsat should fail", async () => {
+                assert(!(await checkInterpret(test["input"])));
+            });
+        }
     });
 }
 
@@ -53,8 +49,7 @@ function testFilter(testName) {
         return false;
     }
     // FIXME! These currently DO NOT WORK
-    if (!testName.match("reqsatlist") &&
-        !testName.match("reqtrie")) {
+    if (!testName.match("reqsatlist") && !testName.match("reqtrie")) {
         return true;
     }
     console.warn("Skipping over test " + testName + "!");

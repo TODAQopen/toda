@@ -201,11 +201,14 @@ class LocalNextRelayClient extends NextRelayClient {
         isolated.set(twist.getBodyHash(), twist.getBody());
         // We don't want to expand the rigging: only want the pairtrie itself
         const rigging = twist.get(twist.getBody().getRiggingHash());
-        if (rigging)
+        if (rigging) {
             isolated.set(twist.getBody().getRiggingHash(), rigging);
+        }
         function expandHash(twist, hash) {
             let packet = twist.get(hash);
-            if (!packet) return;
+            if (!packet) {
+                return;
+            }
             isolated.set(hash, packet);
             packet.getContainedHashes?.().forEach(h => expandHash(twist, h));
         }
@@ -234,7 +237,9 @@ class LocalNextRelayClient extends NextRelayClient {
         const twist = this.client.get(this.tetherHash);
         const next = twist?.findLast(t => t.getPrevHash().equals(twistHash));
         const prev = next?.prev();
-        if (!prev) return null;
+        if (!prev) {
+            return null;
+        }
         const isolated = new Twist(this._isolateTwist(next), next.getHash());
         isolated.addAtoms(this._isolateTwist(prev));
         return isolated;
@@ -259,8 +264,9 @@ class LocalNextRelayClient extends NextRelayClient {
 
     _getShield(twistHash) {
         const twist = this.client.get(this.tetherHash);
-        if (twist && LocalNextRelayClient.shieldIsPublic(twist, twistHash))
+        if (twist && LocalNextRelayClient.shieldIsPublic(twist, twistHash)) {
             return twist.findPrevious(twistHash)?.shield();
+        }
     }
 }
 

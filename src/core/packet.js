@@ -108,7 +108,7 @@ class Packet {
         throw new Error("abstract method not implemented in class Packet");
     }
 
-    isTwist(){
+    isTwist() {
         return this instanceof BasicTwistPacket;
     }
 
@@ -270,7 +270,9 @@ class HashPairPacket extends HashPacket {
 
         return hs.reduce((pairs, hash, index) => {
             // xxx(acg): seriously js has no built-in array chunkifier?
-            if (index % 2 == 0) pairs.push([]);
+            if (index % 2 == 0) {
+                pairs.push([]);
+            }
             pairs[pairs.length - 1].push(hash);
             return pairs;
         }, []);
@@ -459,7 +461,7 @@ class BasicTwistPacket extends HashPacket {
 
     getShapedValueFromContent() {
         let shapedValue = super.getShapedValueFromContent();
-        if(shapedValue.length != 2) {
+        if (shapedValue.length != 2) {
             throw new ShapeException("Basic twist contains " + shapedValue.length + " hashes, not 2.");
         }
         return shapedValue;
@@ -504,7 +506,7 @@ class BasicBodyPacket extends HashPacket {
 
     getShapedValueFromContent() {
         let shapedValue = super.getShapedValueFromContent();
-        if(shapedValue.length != 6) {
+        if (shapedValue.length != 6) {
             throw new ShapeException("Basic body contains " + shapedValue.length + " hashes, not 6.");
         }
         return shapedValue;
@@ -552,7 +554,7 @@ Packet.registerShape(BasicTwistPacket);
 Packet.registerShape(BasicBodyPacket);
 
 class ShapeException extends Error {
-    constructor(message, code){
+    constructor(message, code) {
         super(message);
         this.code = code;
     }

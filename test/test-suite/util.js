@@ -18,9 +18,15 @@ function listTests()
 
 function parseColour(sym)
 {
-    if(sym.equals(green)) return "green";
-    if(sym.equals(yellow)) return "yellow";
-    if(sym.equals(red)) return "red";
+    if (sym.equals(green)) {
+        return "green";
+    }
+    if (sym.equals(yellow)) {
+        return "yellow";
+    }
+    if (sym.equals(red)) {
+        return "red";
+    }
     throw Error("Unknown colour? " + sym);
 }
 

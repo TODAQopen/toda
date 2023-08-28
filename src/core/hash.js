@@ -5,10 +5,6 @@
 * Apache License 2.0
 *************************************************************/
 
-// import sjcl from './sjcl.js';
-// var SHA256 = require('./index');
-
-
 import { ByteArray } from './byte-array.js';
 
 class Hash {
@@ -54,7 +50,7 @@ class Hash {
      */
     toString() {
         if (!this.stringValue) {
-            if(!this.bytes.toHex) {
+            if (!this.bytes.toHex) {
                 this.bytes = new ByteArray(this.bytes);
             }
             this.stringValue = this.bytes.toHex(this.offset, this.length);

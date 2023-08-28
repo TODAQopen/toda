@@ -56,8 +56,9 @@ class Interpreter {
      */
     next(hash) {
         let next = this.line.successor(hash);
-        if (!next)
+        if (!next) {
             return null;
+        }
         return this.twist(next);
     }
 
@@ -65,8 +66,9 @@ class Interpreter {
      * @return <Twist>
      */
     prev(hash) {
-        if (hash?.isNull?.())
+        if (hash?.isNull?.()) {
             return null;
+        }
         try {
             return this.twist(hash).prev();
         } catch (e) {
@@ -79,12 +81,9 @@ class Interpreter {
             return true;
         }
         let prev;
-        try
-        {
+        try {
             prev = this.prev(hash);
-        }
-        catch (err)
-        {
+        } catch (err) {
             return false;
         }
         if (prev) {
@@ -169,8 +168,9 @@ class Interpreter {
     async verifyLegitSeg(start, stop) {
         // console.log("Checking legit seg:", start.toString(), stop.toString());
         let next = await this.legitNext(start);
-        if (next.hash.equals(stop))
+        if (next.hash.equals(stop)) {
             return;
+        }
         return this.verifyLegitSeg(next.hash, stop);
     }
 
@@ -205,9 +205,9 @@ class Interpreter {
      */
     prevTetheredTwist(hash) {
         let prev = this.prev(hash);
-        if (!prev)
+        if (!prev) {
             return null;
-
+        }
         if (prev.isTethered()) {
             return prev;
         }

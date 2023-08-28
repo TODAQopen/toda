@@ -35,14 +35,18 @@ class HashMap extends Map {
     }
 
     get(key) { // dx: perf: this is expensive! how can we make it faster?
-        if(!key) return undefined;
+        if (!key) {
+            return undefined;
+        }
         let h = key.toString();
         let k = this.hashes[h];
         return super.get(k);
     }
 
     has(key) {
-        if(!key) return false;
+        if (!key) {
+            return false;
+        }
         return !!this.hashes[key.toString()];
     }
 

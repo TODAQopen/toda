@@ -244,7 +244,9 @@ class TodaClient {
 
             // XXX(acg): This will fail if we cannot retrieve the hoist.
             ({hoist, relayTwist} = await this._setPost(next));
-            if (relayTwist) next.addAtoms(relayTwist.getAtoms());
+            if (relayTwist) {
+                next.addAtoms(relayTwist.getAtoms());
+            }
         }
 
         if (rigging) {
@@ -276,7 +278,7 @@ class TodaClient {
                     await this.pull(nextTwist, r.hash || this.defaultTopLineHash, relayTwist);
                 }
 
-            } catch(e) {
+            } catch (e) {
                 console.error("Hoist error:", e);
                 throw(e);
             }
@@ -335,8 +337,9 @@ class TodaClient {
                 startTwist = twist.findLastStoredTether();
                 startHash = startTwist?.getHash()
             } catch (err) {
-                if (!err instanceof MissingPrevError)
+                if (!err instanceof MissingPrevError) {
                     throw err;
+                }
             }
 
             if (startTwist?.isTethered()) {
@@ -362,11 +365,13 @@ class TodaClient {
             let relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
 
             try {
-                if (relayTwist.findPrevious(poptopHash))
+                if (relayTwist.findPrevious(poptopHash)) {
                     break;
+                }
             } catch (err) {
-                if (!err instanceof MissingPrevError)
+                if (!err instanceof MissingPrevError) {
                     throw err;
+                }
             }
             let line = Line.fromAtoms(twist.getAtoms(), relayTwist.getHash());
 
@@ -579,20 +584,24 @@ class TodaClient {
         let selected = [];
         let cv = 0;
         for (let dq of dqs) { // select bills until we collect just what we need or a bit more
-            if (cv >= quantity) break;
+            if (cv >= quantity) {
+                break;
+            }
             selected.push(dq);
             cv = this.getCombinedQuantity(selected);
         }
+
         if (cv > quantity) { // if more than what we need, frac the last one
             // XXX(acg): we could be smarter about which to frac
             let lastBill = selected.pop();
             let [_, delegator] = await this.delegateQuantity(lastBill, cv - quantity);
             selected.push(delegator);
         }
-        if (cv >= quantity)
-        {
+
+        if (cv >= quantity) {
             return this._transfer(typeHash, selected, destHash);
         }
+
         throw new Error("Insufficient funds");
     }
 }
@@ -626,8 +635,9 @@ class TodaClientV2 extends TodaClient {
             // MissingPrevError is acceptable: we don't expect a relay line
             //  to contain all twists. If it reaches a missing twist, we can
             //  safely treat the line as 'loose'
-            if (!err instanceof MissingPrevError)
+            if (!err instanceof MissingPrevError) {
                 throw err;
+            }
         }
         return (backwardsTwist) => {
             const isFast = backwardsTwist.isTethered();

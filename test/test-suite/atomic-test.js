@@ -17,20 +17,18 @@ function runTest(test)
 // Returns string if error
 {
     describe("test-suite/atomic-test " + test["moniker"], async() => {
-        it("Test input properly loaded", async() =>
-            {
-                assert(test["input"] instanceof Buffer);
+        it("Test input properly loaded", async() => {
+            assert(test["input"] instanceof Buffer);
+        });
+        if (test["colour"] === "green") {
+            it ("Parsing LAT should succeed", async() => {
+                runParse(test["input"]);
             });
-        if(test["colour"] === "green")
-            it ("Parsing LAT should succeed", async() =>
-                {
-                    runParse(test["input"]);
-                });
-        else
-            it ("Parsing LAT should fail", async() =>
-                {
-                    assert.throws(() => runParse(test["input"]));
-                });
+        } else {
+            it("Parsing LAT should fail", async () => {
+                assert.throws(() => runParse(test["input"]));
+            });
+        }
     });
 }
 

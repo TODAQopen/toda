@@ -32,14 +32,18 @@ function todaize(byteArray,
     x.setAssetClass(Todaized);
     x.setField(Todaized.fieldSyms.fFileContent, packet);
     x.setFieldAbject(Todaized.fieldSyms.fFileSize, new P1Float(byteArray.length));
-    if (opts.fileName)
+    if (opts.fileName) {
         x.setFieldAbject(Todaized.fieldSyms.fFileName, new P1String(opts.fileName));
-    if (opts.timeCreated)
+    }
+    if (opts.timeCreated) {
         x.setFieldAbject(Todaized.fieldSyms.fFileCreated, new P1String(opts.timeCreated));
-    if (opts.timeModified)
+    }
+    if (opts.timeModified) {
         x.setFieldAbject(Todaized.fieldSyms.fFileModified, new P1String(opts.timeModified));
-    if (opts.description)
+    }
+    if (opts.description) {
         x.setFieldAbject(Todaized.fieldSyms.fFileDescr, new P1String(opts.description));
+    }
     let sr = new SimpleRigged();
     sr.setContext(x);
     sr.setPopTop(popTopHash);

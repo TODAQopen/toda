@@ -126,8 +126,8 @@ class DQ extends DelegableActionable {
 
         // - initiate? we have zero value
         let initiation = this.getFieldAbject(DelegableActionable.fieldSyms.delegateInitiate);
-        if(initiation) {
-            if(this.prev()) {
+        if (initiation) {
+            if (this.prev()) {
                 return this.cachedQuantity = this.prev().quantity; // initiation after the first twist does nothing
             }
             return this.cachedQuantity = 0;
@@ -135,14 +135,14 @@ class DQ extends DelegableActionable {
 
         // - complete a delegation? return our claim, or delegator.prev().quantity, whichever is smaller
         let completion = this.getField(DelegableActionable.fieldSyms.delegateComplete);
-        if(completion) {
-            if(!this.prev() || this.prev()?.prev()) {
+        if (completion) {
+            if (!this.prev() || this.prev()?.prev()) {
                 return this.cachedQuantity = this.prev().quantity; // completion outside the second twist does nothing
             }
             let delegator = this.delegateOf();
             let total = DQ.safeQuantity(delegator?.prev()?.quantity); // delegator might not exist
             let claim = safeClaimedQuantity(this.prev()); // NOTE: enforces prev as initiate, consider adding flex
-            if(delegator?.confirmedDelegates()?.length > 1) {
+            if (delegator?.confirmedDelegates()?.length > 1) {
                 total = 0; // can't confirm more than one delegate at a time
             }
             return this.cachedQuantity = Math.min(total, claim);
@@ -150,10 +150,10 @@ class DQ extends DelegableActionable {
 
         // - confirm a single delegate? return prev.quantity minus safe claimed delegate amount
         let confirmation = this.getField(DelegableActionable.fieldSyms.delegateConfirm);
-        if(confirmation) {
+        if (confirmation) {
             let dq = 0; // delegate quantity
             let hashes = confirmation.shapedVal;
-            if(hashes.length === 1) {
+            if (hashes.length === 1) {
                 let delegate = this.getAbject(hashes[0]); // the initiate
                 dq = safeClaimedQuantity(delegate);
             }
@@ -163,7 +163,7 @@ class DQ extends DelegableActionable {
 
         // - initial root twist? return our safe claimed quantity
         let isRoot = this === this.first() // && !initiation; // Note: already cleared initiation
-        if(isRoot) {
+        if (isRoot) {
             let quantity = safeClaimedQuantity(this);
             return this.cachedQuantity = quantity;
         }

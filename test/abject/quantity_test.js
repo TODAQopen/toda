@@ -108,7 +108,7 @@ describe("Delegation works correctly", () => {
         let fromNext = from.createSuccessor();
         fromNext.twistBuilder.tetherHash = top.getHash();
         fromNext.confirmDelegate(del);
-        if(from.prev()) {
+        if (from.prev()) {
             fromNext.twistBuilder.rigging = new Map([[from.prev().getHash(), top.getHash()]]);
         }
 
@@ -156,7 +156,7 @@ describe("Delegation works correctly", () => {
         root.twistBuilder.tetherHash = top.getHash();
 
         let rootNext = root, delNext, topNext = top;
-        for(let i = 0; i < 10; i++) {
+        for (let i = 0; i < 10; i++) {
           ;[rootNext, delNext, topNext] = delegator(rootNext, 1, topNext);
         }
 
@@ -174,10 +174,11 @@ describe("Delegation works correctly", () => {
         root.twistBuilder.tetherHash = top.getHash();
 
         let rootNext, del, delNext = root, topNext = top;
-        for(let i = 0; i < 10; i++) {
+        for (let i = 0; i < 10; i++) {
           ;[del, delNext, topNext] = delegator(delNext, 1, topNext);
-          if(!rootNext)
+          if (!rootNext) {
             rootNext = del;
+          }
         }
 
         // putFile('tttt', delNext.serialize().toBytes()) // for debugging
@@ -228,7 +229,7 @@ describe("Adversarial DQs can't break their invariants", () => {
         let fromNext = from.createSuccessor();
         fromNext.twistBuilder.tetherHash = top.getHash();
         fromNext.confirmDelegate(del);
-        if(from.prev()) {
+        if (from.prev()) {
             fromNext.twistBuilder.rigging = new Map([[from.prev().getHash(), top.getHash()]]);
         }
 
@@ -297,15 +298,18 @@ describe("Probe the edges of delegation", () => {
     function completor(from, del, top, options={}) {
         let fromNext = from.createSuccessor();
         fromNext.twistBuilder.tetherHash = top.getHash();
-        if(!options.noConfirm)
+        if (!options.noConfirm) {
             fromNext.confirmDelegate(del);
-        if(from.prev())
+        }
+        if (from.prev()) {
             fromNext.twistBuilder.rigging = new Map([[from.prev().getHash(), top.getHash()]]);
+        }
 
         let delNext = del.createSuccessor();
         delNext.twistBuilder.tetherHash = top.getHash();
-        if(!options.noComplete)
+        if (!options.noComplete) {
             delNext.completeDelegate(fromNext);
+        }
 
         let topNext = top.createSuccessor();
         topNext.rigging = new Map(

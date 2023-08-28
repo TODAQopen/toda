@@ -15,7 +15,7 @@ class ByteArray extends Uint8Array {
     // Reads hex string data into a Uint8Array
     static fromHex(str) {
         let result = [];
-        for(let i = 0; i < str.length; i += 2) {
+        for (let i = 0; i < str.length; i += 2) {
             result.push(parseInt(str.substring(i, i + 2), 16));
         }
         return ByteArray.from(result);

@@ -114,8 +114,9 @@ class LocalKeyPair extends KeyPair {
     }
 
     static base64ToUtf8(str) {
-        if(atob instanceof Function)
+        if (atob instanceof Function) {
             return atob(str)
+        }
         return Buffer.from(keyString, "base64").toString()
     }
 
@@ -196,11 +197,13 @@ class LocalKeyPair extends KeyPair {
             length--;
         }
 
-        for (var i = 0; i < 32-length; i++)
+        for (var i = 0; i < 32-length; i++) {
             view[i] = 0;
+        }
 
-        for (i = 0; i < length; i++)
+        for (i = 0; i < length; i++) {
             view[32 - length + i] = sig[offset + i];
+        }
 
         offset += length;
 
@@ -214,11 +217,13 @@ class LocalKeyPair extends KeyPair {
             length--;
         }
 
-        for (var i = 32; i < 32-length; i++)
+        for (var i = 32; i < 32-length; i++) {
             view[i] = 0;
+        }
 
-        for (i = 0; i < length; i++)
+        for (i = 0; i < length; i++) {
             view[64 - length + i] = sig[offset + i];
+        }
 
         return bytes;
     }

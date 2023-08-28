@@ -28,7 +28,9 @@ class TestRelayServer
         let runningServer;
         return new Promise((res, rej) => {
             runningServer = app.listen(port, (err) => {
-                if (err) rej(err);
+                if (err) {
+                    rej(err);
+                }
                 res();
             });
         }).then(() => runningServer);
@@ -78,12 +80,16 @@ class TestRelayServer
             const relay = new LocalNextRelayClient(toda, hash);
             if (ext == ".shield") {
                 const shield = relay._getShield(hash);
-                if (!shield) return;
+                if (!shield) {
+                    return;
+                }
                 return Buffer.from(shield.toBytes());
             }
             if (ext == ".next.toda") {
                 const twist = relay._getNext(hash);
-                if (!twist) return;
+                if (!twist) {
+                    return;
+                }
                 return Buffer.from(twist.getAtoms().toBytes());
             }
         }
@@ -92,7 +98,9 @@ class TestRelayServer
             try {
                 const file = req.params.file
                 const b = findLocal(file) ?? await redirect(file);
-                if (b) return res.status(200).send(b);
+                if (b) {
+                    return res.status(200).send(b);
+                }
                 return res.status(404).send();
             } catch (err) {
                 next(err);
