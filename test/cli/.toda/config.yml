@@ -1,8 +1,0 @@
-store: ./test/cli/.toda/store
-publicKey: ./test/cli/.toda/secure/id_secp256r1.pub
-privateKey: ./test/cli/.toda/secure/id_secp256r1
-salt: ./test/cli/.toda/secure/salt
-line: ./test/cli/.toda/store/line.toda
-inventoryServer: https://inventory.todaq.net
-maxHeaderSize: 1048576
-invPort: 3001
