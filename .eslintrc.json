@@ -10,27 +10,42 @@
     "overrides": [
     ],
     "parserOptions": {
-        "ecmaVersion": "latest"
+        "ecmaVersion": "latest",
+        "sourceType": "module"
     },
     "ignorePatterns": [
         "**/sjcl.js"
     ],
     "rules": {
-        "indent": [
-            "error",
-            4
-        ],
-        "linebreak-style": [
-            "error",
-            "unix"
-        ],
-        "quotes": [
-            "error",
-            "double"
-        ],
         "semi": [
             "error",
             "always"
+        ],
+        "consistent-return": [
+            "error"
+        ],
+        "brace-style": [
+            "error",
+            "1tbs",
+            { "allowSingleLine": true }
+        ],
+        "no-unused-vars": [
+            "warn"
+        ],
+        "block-spacing": [
+            "error",
+            "always"
+        ],
+        "no-useless-escape": [
+            "warn"
+        ],
+        "eol-last": [
+            "error",
+            "never"
+        ],
+        "max-len": [
+            "warn",
+            { "code": 80 }
         ]
     }
 }

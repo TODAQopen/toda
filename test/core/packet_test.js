@@ -1,6 +1,7 @@
 import { ByteArray } from "../../src/core/byte-array.js";
 import { Sha256 } from "../../src/core/hash.js";
-import { Packet, ArbitraryPacket, HashPacket, PairTriePacket } from "../../src/core/packet.js";
+import { Packet, ArbitraryPacket, HashPacket, PairTriePacket } 
+    from "../../src/core/packet.js";
 import assert from "assert";
 
 describe("ArbitraryPacket", () => {

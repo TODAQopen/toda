@@ -5,8 +5,6 @@
 * Apache License 2.0
 *************************************************************/
 
-import { ByteArray } from '../core/byte-array.js';
-
 import { Hash } from '../core/hash.js';
 import { Packet, PairTriePacket } from '../core/packet.js';
 import { HashMap } from '../core/map.js';
@@ -85,12 +83,14 @@ class DI extends Abject {
             cls = DIAssetClassClass;
         }
         let x = new cls();
-        x.data = new HashMap(atoms.get(focusHash).getShapedValue()); // does htis work?
+         // does htis work?
+        x.data = new HashMap(atoms.get(focusHash).getShapedValue());
         x.atoms = atoms;
         return x;
     }
 
-    // FIXME(acg): SECURITY SECURITY these field definitions must all be the same
+    // FIXME(acg): SECURITY SECURITY these field 
+    //  definitions must all be the same
     /**
      * @param dis Array.<DI>
      * @returns <DI>
@@ -105,7 +105,8 @@ class DI extends Abject {
         for (let di of dis.slice(1)) {
             let ac = di.getAssetClass();
             if (!ac.getHash().equals(ach)) {
-                throw new Error("cannot consolidate across different asset classes");
+                throw new Error("cannot consolidate across " + 
+                    "different asset classes");
             }
             for (let field of ac.getFieldHashes()) {
                 let fieldDefinition = ac.getFieldDefinition(field);
@@ -115,7 +116,8 @@ class DI extends Abject {
                     if (consol.data.get(field)) {
                         consol.setFieldMagic( //hack
                             field,
-                            fieldDefinition.consolidate(consol.getFieldAbject(field), val));
+                            fieldDefinition.
+                                consolidate(consol.getFieldAbject(field), val));
                     }
                 }
             }
@@ -185,7 +187,8 @@ class AssetClassField {
     consolidate(fOrig, fNext) {
 
         // honestly could just do these as subclasses
-        if (this.consolidation && this.consolidation.equals(DI.consolidations.remove)) {
+        if (this.consolidation && 
+            this.consolidation.equals(DI.consolidations.remove)) {
             if (!this.list) {
                 throw new AbjectError(); // explode.
             }
@@ -208,10 +211,12 @@ class AssetClassField {
                 return fOrig;
             }
         }
-        if (this.consolidation && this.consolidation.equals(DI.consolidations.firstWriteWins)) {
+        if (this.consolidation && 
+            this.consolidation.equals(DI.consolidations.firstWriteWins)) {
             return fOrig || fNext;
         }
-        if (this.consolidation && this.consolidation.equals(DI.consolidations.lastWriteWins)) {
+        if (this.consolidation && 
+            this.consolidation.equals(DI.consolidations.lastWriteWins)) {
             return fNext || fOrig;
         }
 
@@ -304,7 +309,8 @@ class DIAssetClassClass extends DI {
     }
 
     getFieldDefinition(fieldHash) {
-        return AssetClassField.parse(this.atoms, this.getField(DI.fieldSyms.ACfields).get(fieldHash));
+        return AssetClassField.parse(this.atoms, 
+            this.getField(DI.fieldSyms.ACfields).get(fieldHash));
     }
 
     addACField(fieldSym, fieldSpec) {
@@ -329,10 +335,6 @@ class AbjectIllegalTwistError extends AbjectError {
         this.interpreter = interpreter;
     }
 }
-
-
-let EmptyAssetClass = new DIAssetClassClass();
-//let DIAssetClass = new DIAssetClassClass();
 
 Abject.registerInterpreter(DI);
 

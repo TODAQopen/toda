@@ -14,35 +14,42 @@ import { ArbitraryPacket } from '../core/packet.js';
 /**
  * Creates a todaized file
  *
- * @param byteArray <ByteArray> representing the data that will be included in the payload
+ * @param byteArray <ByteArray> representing the data 
+ *  that will be included in the payload
  * @param popTopHash <Hash> the pop top that this abject will be tethered to
  * @param opts <Map> Containing the following params:
  * @param fileName <string> a string representing the name of the file
  * @param description <string> a string describing the file
- * @param timeCreated <string> a string (in ISO 8601 format) representing the time this file was created
- * @param timeModified <string> a string (in ISO 8601 format) representing the time this file was last modified
+ * @param timeCreated <string> a string (in ISO 8601 format) 
+ *  representing the time this file was created
+ * @param timeModified <string> a string (in ISO 8601 format) 
+ *  representing the time this file was last modified
  * @returns <SimpleRigged> the todaized SimpleRigged abject
  */
 function todaize(byteArray,
                  popTopHash,
-                 opts = {})
-{
+                 opts = {}) {
     let packet = new ArbitraryPacket(byteArray);
     let x = new DI();
     x.setAssetClass(Todaized);
     x.setField(Todaized.fieldSyms.fFileContent, packet);
-    x.setFieldAbject(Todaized.fieldSyms.fFileSize, new P1Float(byteArray.length));
+    x.setFieldAbject(Todaized.fieldSyms.fFileSize, 
+        new P1Float(byteArray.length));
     if (opts.fileName) {
-        x.setFieldAbject(Todaized.fieldSyms.fFileName, new P1String(opts.fileName));
+        x.setFieldAbject(Todaized.fieldSyms.fFileName, 
+            new P1String(opts.fileName));
     }
     if (opts.timeCreated) {
-        x.setFieldAbject(Todaized.fieldSyms.fFileCreated, new P1String(opts.timeCreated));
+        x.setFieldAbject(Todaized.fieldSyms.fFileCreated, 
+            new P1String(opts.timeCreated));
     }
     if (opts.timeModified) {
-        x.setFieldAbject(Todaized.fieldSyms.fFileModified, new P1String(opts.timeModified));
+        x.setFieldAbject(Todaized.fieldSyms.fFileModified, 
+            new P1String(opts.timeModified));
     }
     if (opts.description) {
-        x.setFieldAbject(Todaized.fieldSyms.fFileDescr, new P1String(opts.description));
+        x.setFieldAbject(Todaized.fieldSyms.fFileDescr, 
+            new P1String(opts.description));
     }
     let sr = new SimpleRigged();
     sr.setContext(x);

@@ -1,5 +1,5 @@
 import { HashMap } from "../../src/core/map.js";
-import assert from "assert"
+import assert from "assert";
 
 describe("HashMap", () => {
     it("can be cloned", () => {

@@ -291,6 +291,7 @@ describe("Runs pickled reqsattrie tests (v1)", () => {
         } catch (err) {
             assert.ifError(err);
         }
+        return null;
     };
 
     let runThrowsTest = async (todaFile, expectedErrorType) => {

@@ -2,7 +2,6 @@
 import axios from 'axios';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import { Atoms } from '../core/atoms.js';
 import { ByteArray } from '../core/byte-array.js';
 import { HashMap } from '../core/map.js';
@@ -38,7 +37,8 @@ class RemoteInventoryClient extends InventoryClient {
             method: "POST",
             url: this.url.toString(),
             headers: { "Content-Type": "application/octet-stream" },
-            // TODO(sfertman): add capability header once inventory server supports it
+            // TODO(sfertman): add capability header 
+            //  once inventory server supports it
             responseType: "arraybuffer",
             data: bytes
         });
@@ -75,11 +75,12 @@ class LocalInventoryClient extends InventoryClient {
 
     _addAtoms(atoms) {
         // dx: perf: this is very slow, and we don't actually store the line.
-        //           we're only using it to populate this.files and this.twistIdx
+        //       we're only using it to populate this.files and this.twistIdx
         let line = Line.fromAtoms(atoms);
         let firstHash = line.first(line.focus);
         let existing = this.files.get(firstHash);
-        if (!line.history(line.focus) || (existing && existing.history(existing.focus).length >
+        if (!line.history(line.focus) || 
+            (existing && existing.history(existing.focus).length >
                                           line.history(line.focus).length)) {
             return;
         }
@@ -90,7 +91,8 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     _listPaths() {
-        return fs.readdirSync(this.invRoot).filter(fname => fname.endsWith(".toda"));
+        return fs.readdirSync(this.invRoot).
+            filter(fname => fname.endsWith(".toda"));
     }
 
     //XXX(acg): I don't like this and would prefer just to be able to use hash
@@ -157,7 +159,8 @@ class LocalInventoryClient extends InventoryClient {
 
     search(partialHash) {
         const allDir = fs.readdirSync(this.invRoot);
-        return allDir.filter(f => f.startsWith(partialHash)).map(this._filePathToHash);
+        return allDir.filter(f => f.startsWith(partialHash)).
+            map(this._filePathToHash);
     }
 }
 

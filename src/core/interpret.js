@@ -117,7 +117,8 @@ class Interpreter {
         // TODO: verify shape
         let sigPacketHash = twist.sats(reqHash);
         if (!sigPacketHash) {
-            throw new MissingEntryError(twist.hash, reqHash, "missing sig entry");
+            throw new MissingEntryError(twist.hash, reqHash, 
+                "missing sig entry");
         }
         // TODO: verify shape
         let sigPacket = twist.get(sigPacketHash);
@@ -125,8 +126,10 @@ class Interpreter {
             throw new MissingError(sigPacketHash, "missing sig packet...");
         }
 
-        if (!(await RequirementSatisfier.verifySatisfaction(reqHash, twist, keyPacket, sigPacket))) {
-            throw new ReqSatError(reqHash, twist.packet.getBodyHash(), keyPacket, sigPacket);
+        if (!(await RequirementSatisfier.verifySatisfaction(
+                reqHash, twist, keyPacket, sigPacket))) {
+            throw new ReqSatError(reqHash, twist.packet.getBodyHash(), 
+                keyPacket, sigPacket);
         }
     }
 
@@ -141,7 +144,7 @@ class Interpreter {
                 return this.verifyReqSat(reqHash, prevTw, twist);
             }));
         } else if (!(prevTw.reqs() || twist.sats())) {
-            return; //why does js not have xor...
+            return undefined; //why does js not have xor...
         } else {
             throw new Error("req/sat mismatch..."); //todo
         }
@@ -166,16 +169,14 @@ class Interpreter {
      * @throws everything
      */
     async verifyLegitSeg(start, stop) {
-        // console.log("Checking legit seg:", start.toString(), stop.toString());
         let next = await this.legitNext(start);
         if (next.hash.equals(stop)) {
-            return;
+            return undefined;
         }
         return this.verifyLegitSeg(next.hash, stop);
     }
 
     inSegment(start,stop,search) {
-        // console.log("In segment?",start.toString(),stop.toString(),search.toString());
         if (search.equals(stop)) {
             return true;
         }
@@ -215,13 +216,15 @@ class Interpreter {
     }
 
     isHoist(lead, twist) {
-        // dx: perf: hey, cache these values! this happens a lot and hashing is slow!
+        // dx: perf: hey, cache these values! 
+        // this happens a lot and hashing is slow!
         let s = Shield.shield(lead.hash, lead.hash, lead.shield());
         let ss = Shield.doubleShield(lead.hash, lead.hash, lead.shield());
         let v = twist.rig(s);
         let vv = twist.rig(ss);
 
-        return v && vv && !v.equals(s) && Shield.shield(lead.hash, v, lead.shield()).equals(vv);
+        return v && vv && !v.equals(s) && 
+               Shield.shield(lead.hash, v, lead.shield()).equals(vv);
     }
 
     hoistForwardSearch(lead, twist) {
@@ -252,10 +255,12 @@ class Interpreter {
         let hoist = this.hitchHoist(hash);
 
         if (!hoist) {
-            throw new MissingHoistError(hash, undefined, {atoms: this.line.atoms.hashes});
+            throw new MissingHoistError(hash, undefined, 
+                {atoms: this.line.atoms.hashes});
         }
 
-        let meet = this.twist(hoist.rig(Shield.shield(hash, hash, leadTwist.shield())));
+        let meet = this.twist(hoist.rig(
+            Shield.shield(hash, hash, leadTwist.shield())));
         if (meet.isTethered()) {
             return meet;
         }
@@ -299,7 +304,7 @@ class Interpreter {
         let hoist = this.hitchHoist(hash);
 
         if (this.isTopline(hoist.hash)) {
-            return; // bueno
+            return undefined; // bueno
         }
         let presumedLead = this.prevTetheredTwist(hoist.hash);
         if (!presumedLead) {
@@ -314,7 +319,6 @@ class Interpreter {
             // this might not actually be necessary
             await this.verifyLegitSeg(meet.hash, post.hash);
         }
-        // console.log("Verified hitch from " + hash.toString() + " to " + meet.hash.toString());
         return meet;
     }
 
@@ -330,10 +334,6 @@ class Interpreter {
      * provided.
      */
     async _verifyHitchLine(unverifiedFast, optLastSupported, optFirst) {
-
-        // console.log("verifying hitch line from " + (optLastSupported ? optLastSupported.toString() : "<start>") +
-        //       " to lead: " + unverifiedFast.toString());
-
         await this.verifyHitch(unverifiedFast);
 
         if (!optFirst && !this.isFullHitch(unverifiedFast)) {
@@ -342,14 +342,18 @@ class Interpreter {
         if (optLastSupported && this.inSegment(unverifiedFast,
             this.nextTetheredTwist(unverifiedFast).hash,
             optLastSupported)) {
-            return; // success - hitches have been verified back to desired point.
+            // success - hitches have been verified back to desired point.
+            return undefined; 
         }
         if (this.twist(unverifiedFast).prev()) {
-            return this._verifyHitchLine(this.prevTetheredTwist(unverifiedFast).hash, optLastSupported, false);
+            return this._verifyHitchLine(
+                this.prevTetheredTwist(unverifiedFast).hash, 
+                optLastSupported, false);
         }
         if (optLastSupported) {
             throw new Error("This should never happen: thing in this line isn't in this line.");
         }
+        return undefined;
         // otherwise bueno
     }
 
@@ -361,12 +365,11 @@ class Interpreter {
         let twist = this.twist(hash);
 
         if (!twist.isTethered()) {
-            console.log("WARN!! This line ends loosely.  Are we chill with that?!");
+            console.log("WARN!! This line ends loosely. Are we chill with that?!");
             twist = this.prevTetheredTwist(hash);
         }
-        // console.log("Top hash is:", this.topHash.toString());
-        // console.log("Last lead is: ", this.prevTetheredTwist(twist.hash).hash.toString());
-        return this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash, startHash, true);
+        return this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash, 
+                                     startHash, true);
     }
 
     // Retrieves the hitch linking this twist hash to the topline
@@ -383,6 +386,7 @@ class Interpreter {
                 }
             }
         }
+        return null;
     }
 }
 

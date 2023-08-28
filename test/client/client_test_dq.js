@@ -8,8 +8,7 @@ import { v4 as uuid } from "uuid";
 import { createLine, initRelay, mint } from "./util.js";
 
 describe("getQuantity", async () => {
-    it("getQuantity for DQ", async () =>
-    {
+    it("getQuantity for DQ", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
@@ -22,8 +21,7 @@ describe("getQuantity", async () => {
         assert.equal(43, toda.getQuantity(dq));
     });
 
-    it("getCombinedQuantities for DQs", async () =>
-    {
+    it("getCombinedQuantities for DQs", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
@@ -40,8 +38,7 @@ describe("getQuantity", async () => {
 });
 
 describe("getBalance", async () => {
-    it("Unknown type hash", async () =>
-    {
+    it("Unknown type hash", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClientV2(inv, "http://localhost:8000");
         let result = await toda.getBalance(Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5"));
@@ -53,8 +50,7 @@ describe("getBalance", async () => {
                           result);
     });
 
-    it("Simple", async () =>
-    {
+    it("Simple", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
@@ -73,8 +69,7 @@ describe("getBalance", async () => {
                           result);
     });
 
-    it("Uncontrolled", async () =>
-    {
+    it("Uncontrolled", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));

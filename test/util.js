@@ -10,13 +10,11 @@ function sbh (s) {
     return Sha256.fromBytes(ByteArray.fromUtf8(s));
 }
 
-function randH()
-{
+function randH() {
     return Sha256.fromBytes(ByteArray.fromUtf8(uuid()));
 }
 
-function uuidCargo()
-{
+function uuidCargo() {
     const hs = new HashMap();
     hs.set(randH(), randH());
     const packet = PairTriePacket.createFromUnsorted(hs);

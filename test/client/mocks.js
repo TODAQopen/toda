@@ -1,11 +1,11 @@
 import { Abject } from "../../src/abject/abject.js";
 import { ByteArray } from "../../src/core/byte-array.js";
-import { TodaClient, WaitForHitchError } from "../../src/client/client.js";
+import { TodaClient } from "../../src/client/client.js";
 import { SimpleHistoric } from "../../src/abject/simple-historic.js";
 import { SECP256r1 } from "../../src/client/secp256r1.js";
-import { LocalInventoryClient, VirtualInventoryClient } from "../../src/client/inventory.js";
+import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { Atoms } from "../../src/core/atoms.js";
-import { Hash, Sha256 } from "../../src/core/hash.js";
+import { Hash } from "../../src/core/hash.js";
 import { PairTriePacket } from "../../src/core/packet.js";
 import { URL } from 'url';
 import nock from "nock";
@@ -27,7 +27,8 @@ const __dirname = path.dirname(__filename);
 function isolateTwist(twist) {
     let isolated = new Atoms();
     isolated.set(twist.getBodyHash(), twist.getBody());
-    // We don't want to actually expand the rigging: only want the pairtrie itself
+    // We don't want to actually expand the rigging: 
+    //  only want the pairtrie itself
     let rigging = twist.get(twist.getBody().getRiggingHash());
     if (rigging) {
         isolated.set(twist.getBody().getRiggingHash(), rigging);
@@ -48,8 +49,8 @@ function isolateTwist(twist) {
     expandHash(twist, twist.getBody().getCargoHash());
     expandHash(twist, twist.getPacket().getSatsHash());
     // isolated.forceSetLast(twist.getHash(), twist.getPacket());
-    isolated.set(twist.getHash(), twist.getPacket())
-    isolated.focus = twist.getHash()
+    isolated.set(twist.getHash(), twist.getPacket());
+    isolated.focus = twist.getHash();
     return isolated;
 }
 
@@ -68,8 +69,8 @@ function isolateSegment(twist, earliestHash) {
         prev = prev.prev();
     }
     // isolated.forceSetLast(twist.getHash(), twist.getPacket());
-    isolated.set(twist.getHash(), twist.getPacket())
-    isolated.focus = twist.getHash()
+    isolated.set(twist.getHash(), twist.getPacket());
+    isolated.focus = twist.getHash();
     return isolated;
 }
 
@@ -109,7 +110,8 @@ class MockSimpleHistoricRelay {
                 .then(res => Hash.parse(res));
         }
 
-        let first = await this.client.finalizeTwist(firstAbj.buildTwist(), tether, this.kp);
+        let first = await this.client.finalizeTwist(
+            firstAbj.buildTwist(), tether, this.kp);
         this.index = [first];
     }
 

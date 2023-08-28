@@ -317,6 +317,3 @@ describe("Line/lastFastBeforeHash", () => {
         assert(line.lastFastBeforeHash(tw3.getHash()).equals(tw2.getHash()));
     });
 });
-
-
-

@@ -5,10 +5,8 @@ import axios from "axios";
 import { LocalNextRelayClient } from "../../src/client/relay.js";
 import { Hash } from "../../src/core/hash.js";
 
-class TestRelayServer
-{
-    constructor(toda, config = {})
-    {
+class TestRelayServer {
+    constructor(toda, config = {}) {
         const CONFIG_DEFAULTS = {
             maxFileSize: "100kb",
             fileServerRedirects: []
@@ -20,7 +18,7 @@ class TestRelayServer
 
         this.toda = toda;
         this.config = config;
-        this.requestLogs = []
+        this.requestLogs = [];
         this._configureApp(toda, config, this.requestLogs);
     }
 
@@ -36,19 +34,16 @@ class TestRelayServer
         }).then(() => runningServer);
     }
 
-    async start()
-    {
+    async start() {
         this.server = await this._start(this.app, this.config.port);
         return this;
     }
 
-    async stop()
-    {
+    async stop() {
         await this.server.close();
     }
 
-    _configureApp(toda, config, requestLogs)
-    {
+    _configureApp(toda, config, requestLogs) {
         const app = express();
         app.use(express.json());
 
@@ -71,6 +66,7 @@ class TestRelayServer
                     return req.data;
                 }
             }
+            return null;
         }
 
         function findLocal(file) {
@@ -81,29 +77,30 @@ class TestRelayServer
             if (ext == ".shield") {
                 const shield = relay._getShield(hash);
                 if (!shield) {
-                    return;
+                    return null;
                 }
                 return Buffer.from(shield.toBytes());
             }
             if (ext == ".next.toda") {
                 const twist = relay._getNext(hash);
                 if (!twist) {
-                    return;
+                    return null;
                 }
                 return Buffer.from(twist.getAtoms().toBytes());
             }
+            return null;
         }
 
         app.get("/files/:file", async function (req, res, next) {
             try {
-                const file = req.params.file
+                const file = req.params.file;
                 const b = findLocal(file) ?? await redirect(file);
                 if (b) {
                     return res.status(200).send(b);
                 }
                 return res.status(404).send();
             } catch (err) {
-                next(err);
+                return next(err);
             }
         });
 
@@ -128,12 +125,12 @@ class TestRelayServer
                             pairtrie);
                 return res.status(204).send();
             } catch (err) {
-                next(err);
+                return next(err);
             }
         });
 
         app.use((err, req, res, next) => {
-            console.error(err)
+            console.error(err);
             return res.status(500);
         });
 
@@ -141,4 +138,4 @@ class TestRelayServer
     }
 }
 
-export { TestRelayServer }
+export { TestRelayServer };

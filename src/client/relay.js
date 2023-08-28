@@ -14,7 +14,8 @@ class RelayClient {
     }
 
     hoistPacket(riggingPacket, opts) {
-        return this._hoist(Atoms.fromPairs([[Sha256.fromPacket(riggingPacket), riggingPacket]]), opts);
+        return this._hoist(Atoms.fromPairs(
+            [[Sha256.fromPacket(riggingPacket), riggingPacket]]), opts);
     }
 
     _hoist(atoms) {
@@ -28,12 +29,14 @@ class RelayClient {
 
     /** Retrieves the hoist hitch for the specified lead
      * @param lead <Twist> the lead whose hitch to verify
-     * @returns Promise<Twist|null> The hash of the hitch hoist if it exists, or null
+     * @returns Promise<Twist|null> The hash of the hitch 
+     *  hoist if it exists, or null
      */
     async getHoist(lead) {
         let relayTwist = await this.get();
-        if (!relayTwist) return {}
-        let i = new Interpreter(Line.fromTwist(relayTwist).addAtoms(lead.getAtoms())); //awkward
+        if (!relayTwist) return {};
+        let i = new Interpreter(
+            Line.fromTwist(relayTwist).addAtoms(lead.getAtoms())); //awkward
         try {
             return {hoist: i.hitchHoist(lead.getHash()), relayTwist};
         } catch (e) {
@@ -73,7 +76,8 @@ class RemoteRelayClient extends RelayClient {
     }
 
     get(startHash) {
-        return this._getBytes(startHash).then(bytes => new Twist(Atoms.fromBytes(bytes)));
+        return this._getBytes(startHash).then(bytes => 
+            new Twist(Atoms.fromBytes(bytes)));
     }
 }
 
@@ -97,7 +101,8 @@ class LocalRelayClient extends RelayClient {
         let req = relay.reqs() ? this.client.requirementSatisfiers[0] : null;
 
         // semi-heuristic. use last tether if last update was tethered
-        let tether = noFast ? null : (relay.isTethered() ? relay.getTetherHash() : null);
+        let tether = noFast ? null : (relay.isTethered() ? 
+            relay.getTetherHash() : null);
 
         return this.client.append(relay, tether, req, undefined, undefined,
                                   atoms.get(atoms.focus));
@@ -110,8 +115,9 @@ class LocalRelayClient extends RelayClient {
 }
 
 /**
- * @param backwardsStopPredicate <fn(twist) => bool>: if specified, get() will stop
- *          walking backwards when it sees a twist that matches the predicate
+ * @param backwardsStopPredicate <fn(twist) => bool>: 
+ *      if specified, get() will stop
+*       walking backwards when it sees a twist that matches the predicate
  */
 class NextRelayClient extends RelayClient {
     constructor(tetherHash, backwardsStopPredicate) {
@@ -127,13 +133,13 @@ class NextRelayClient extends RelayClient {
     async get() {
         const backwardsPromise = this._backwards(this.tetherHash);
         const forwardsPromise = this._forwards(this.tetherHash);
-        const twists = [...(await backwardsPromise), ...(await forwardsPromise)];
+        const twists = [...(await backwardsPromise), 
+                        ...(await forwardsPromise)];
         if (twists.length == 0) {
             return null;
         }
         const twist = twists[twists.length-1];
         // Significantly more performant than `forEach(twist.safeAdd...`
-        // const atoms = new Atoms(twists.flatMap(tw => [...tw.getAtoms().entries()]));
         const atoms = Atoms.fromAtoms(...twists.flatMap(t => t.atoms||[]));
         twist.addAtoms(atoms);
         return twist;
@@ -189,7 +195,8 @@ class LocalNextRelayClient extends NextRelayClient {
     }
 
     /**
-     * Given a twist, returns an atoms object containing a trimmed version of its graph, containing:
+     * Given a twist, returns an atoms object containing a 
+     *  trimmed version of its graph, containing:
      *  the twist packet, the body packet, the req packet (and all contents),
      *  the sat packet (and all contents), and the rigging packet.
      * Note that the cargo and the shield are omitted
@@ -215,8 +222,8 @@ class LocalNextRelayClient extends NextRelayClient {
         // Completely expand reqs + sats
         expandHash(twist, twist.getBody().getReqsHash());
         expandHash(twist, twist.getPacket().getSatsHash());
-        isolated.set(twist.getHash(), twist.getPacket())
-        isolated.focus = twist.getHash()
+        isolated.set(twist.getHash(), twist.getPacket());
+        isolated.focus = twist.getHash();
         return isolated;
     }
 
@@ -226,10 +233,12 @@ class LocalNextRelayClient extends NextRelayClient {
         // heuristic.  use current key if last update was keyed
         let req = relay.reqs() ? this.client.requirementSatisfiers[0] : null;
         // semi-heuristic. use last tether if last update was tethered
-        let tether = noFast ? null : (relay.isTethered() ? relay.getTetherHash() : null);
+        let tether = noFast ? null : (relay.isTethered() ? 
+            relay.getTetherHash() : null);
 
-        const t = await this.client.append(relay, tether, req, undefined, undefined,
-            prevTwist.hoistPacket(nextHash))
+        const t = await this.client.append(relay, tether, 
+                req, undefined, undefined,
+            prevTwist.hoistPacket(nextHash));
         return t;
     }
 
@@ -267,12 +276,14 @@ class LocalNextRelayClient extends NextRelayClient {
         if (twist && LocalNextRelayClient.shieldIsPublic(twist, twistHash)) {
             return twist.findPrevious(twistHash)?.shield();
         }
+        return null;
     }
 }
 
 /**
- * @param backwardsStopPredicate <fn(twist) => bool>: if specified, get() will stop
- *          walking backwards when it sees a twist that matches the predicate
+ * @param backwardsStopPredicate <fn(twist) => bool>: if specified, 
+ *   get() will stop walking backwards when it sees a twist that 
+ *   matches the predicate
  */
 class RemoteNextRelayClient extends NextRelayClient {
 
@@ -312,12 +323,13 @@ class RemoteNextRelayClient extends NextRelayClient {
             url: "/" + twistHash + ".next.toda",
             baseURL: this.fileServerUrl,
             responseType: "arraybuffer"
-        }).catch(_ => null);
+        }).catch(() => null);
         if (resp) {
             const x = Twist.fromBytes(new ByteArray(resp.data));
             RemoteNextRelayClient.globalNextCache[twistHash] = x;
             return x;
         }
+        return null;
     }
 
     async _getShield(twistHash) {
@@ -330,12 +342,13 @@ class RemoteNextRelayClient extends NextRelayClient {
             url: "/" + twistHash + ".shield",
             baseURL: this.fileServerUrl,
             responseType: "arraybuffer"
-        }).catch(_ => null);
+        }).catch(() => null);
         if (resp) {
             const x = Packet.parse(new ByteArray(resp.data));
             RemoteNextRelayClient.globalShieldCache[twistHash] = x;
             return x;
         }
+        return null;
     }
 }
 

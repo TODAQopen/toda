@@ -15,10 +15,12 @@ import { DI, DIAssetClassClass, AssetClassField } from './di.js';
 class DQ extends DelegableActionable {
     static interpreter = Hash.fromHex("220a6a20be9131b708b193e1373aa4df209719e1d3f451836fa62245e4aed234a7");
 
-    // dx: this throws because everything else throws, but maybe it shouldn't? it could easily be a one-liner.
+    // dx: this throws because everything else throws, but maybe 
+    //  it shouldn't? it could easily be a one-liner.
     static displayToQuantity(value, displayPrecision) {
         if (DQ.safeDisplayPrecision(displayPrecision) === false) {
-            throw new Error("displayPrecision must be an integer between 0 and 15, inclusive");
+            throw new Error("displayPrecision must be an integer " + 
+                "between 0 and 15, inclusive");
         }
 
         let quantity = value * 10**displayPrecision;
@@ -33,7 +35,8 @@ class DQ extends DelegableActionable {
 
     static quantityToDisplay(quantity, displayPrecision) {
         if (DQ.safeDisplayPrecision(displayPrecision) === false) {
-            throw new Error("displayPrecision must be an integer between 0 and 15, inclusive");
+            throw new Error("displayPrecision must be an integer " +
+                "between 0 and 15, inclusive");
         }
 
         if (DQ.safeQuantity(quantity) < 0) {
@@ -75,13 +78,15 @@ class DQ extends DelegableActionable {
             throw new Error("Quantity minted must be a positive integer");
         }
         if (DQ.safeDisplayPrecision(displayPrecision) === false) {
-            throw new Error("displayPrecision must be an integer between 0 and 15, inclusive");
+            throw new Error("displayPrecision must be an " + 
+                "integer between 0 and 15, inclusive");
         }
 
         let c = new DI();
         c.setAssetClass(DQ.context);
         c.setFieldAbject(DQ.context.fieldSyms.quantity, new P1Float(quantity));
-        c.setFieldAbject(DQ.context.fieldSyms.displayPrecision, new P1Float(displayPrecision ? displayPrecision : 0));
+        c.setFieldAbject(DQ.context.fieldSyms.displayPrecision, 
+            new P1Float(displayPrecision ? displayPrecision : 0));
         if (mintingInfo) {
             // todo: check type.
             c.setFieldAbject(DQ.context.fieldSyms.mintingInfo, mintingInfo);
@@ -92,15 +97,18 @@ class DQ extends DelegableActionable {
         return x;
     }
 
-    // Returns a new first twist of a DQ which _must_ be confirmed, then completed.
+    // Returns a new first twist of a DQ which 
+    //  _must_ be confirmed, then completed.
     delegate(quantity) {
         if (DQ.safeQuantity(quantity) <= 0) {
             throw new Error("Quantity delegated must be a positive integer");
         }
 
         if (quantity > this.quantity) {
-            // NOTE: on write we block this, but on read we allow this and make it equal to parent's quantity
-            throw new Error("The delegate's quantity must not be greater than the delegator's quantity");
+            // NOTE: on write we block this, but on read we allow 
+            //  this and make it equal to parent's quantity
+            throw new Error("The delegate's quantity must "
+                + "not be greater than the delegator's quantity");
         }
 
         let x = this.createDelegate();
@@ -112,11 +120,13 @@ class DQ extends DelegableActionable {
     }
 
     get quantity() {
-        // a DQ twist can do at most a single thing: just one of the three delegation actions, and in the singular.
-        // the initiate -> complete -> confirm order is important (it's from the spec)
+        // a DQ twist can do at most a single thing: just one of the three 
+        //  delegation actions, and in the singular. the initiate -> complete 
+        // -> confirm order is important (it's from the spec)
 
         function safeClaimedQuantity(dq) {
-            return DQ.safeQuantity(dq?.getContext()?.getFieldAbject(DQ.context.fieldSyms.quantity));
+            return DQ.safeQuantity(dq?.getContext()?.
+                getFieldAbject(DQ.context.fieldSyms.quantity));
         }
 
         // - cached quantity? return it.
@@ -125,31 +135,40 @@ class DQ extends DelegableActionable {
         }
 
         // - initiate? we have zero value
-        let initiation = this.getFieldAbject(DelegableActionable.fieldSyms.delegateInitiate);
+        let initiation = this.getFieldAbject(DelegableActionable.
+            fieldSyms.delegateInitiate);
         if (initiation) {
             if (this.prev()) {
-                return this.cachedQuantity = this.prev().quantity; // initiation after the first twist does nothing
+                // initiation after the first twist does nothing
+                return this.cachedQuantity = this.prev().quantity; 
             }
             return this.cachedQuantity = 0;
         }
 
-        // - complete a delegation? return our claim, or delegator.prev().quantity, whichever is smaller
-        let completion = this.getField(DelegableActionable.fieldSyms.delegateComplete);
+        // - complete a delegation? return our claim, 
+        // or delegator.prev().quantity, whichever is smaller
+        let completion = this.getField(
+            DelegableActionable.fieldSyms.delegateComplete);
         if (completion) {
             if (!this.prev() || this.prev()?.prev()) {
-                return this.cachedQuantity = this.prev().quantity; // completion outside the second twist does nothing
+                 // completion outside the second twist does nothing
+                return this.cachedQuantity = this.prev().quantity;
             }
             let delegator = this.delegateOf();
-            let total = DQ.safeQuantity(delegator?.prev()?.quantity); // delegator might not exist
-            let claim = safeClaimedQuantity(this.prev()); // NOTE: enforces prev as initiate, consider adding flex
+            // delegator might not exist
+            let total = DQ.safeQuantity(delegator?.prev()?.quantity); 
+            // NOTE: enforces prev as initiate, consider adding flex
+            let claim = safeClaimedQuantity(this.prev());
             if (delegator?.confirmedDelegates()?.length > 1) {
                 total = 0; // can't confirm more than one delegate at a time
             }
             return this.cachedQuantity = Math.min(total, claim);
         }
 
-        // - confirm a single delegate? return prev.quantity minus safe claimed delegate amount
-        let confirmation = this.getField(DelegableActionable.fieldSyms.delegateConfirm);
+        // - confirm a single delegate? return prev.quantity 
+        //  minus safe claimed delegate amount
+        let confirmation = this.getField(
+            DelegableActionable.fieldSyms.delegateConfirm);
         if (confirmation) {
             let dq = 0; // delegate quantity
             let hashes = confirmation.shapedVal;
@@ -158,11 +177,12 @@ class DQ extends DelegableActionable {
                 dq = safeClaimedQuantity(delegate);
             }
             let pq = this.prev().quantity; // recursive prev quantity
-            return this.cachedQuantity = Math.max(pq - dq, 0); // don't get negative
+            // don't get negative
+            return this.cachedQuantity = Math.max(pq - dq, 0); 
         }
 
         // - initial root twist? return our safe claimed quantity
-        let isRoot = this === this.first() // && !initiation; // Note: already cleared initiation
+        let isRoot = this === this.first();
         if (isRoot) {
             let quantity = safeClaimedQuantity(this);
             return this.cachedQuantity = quantity;
@@ -175,7 +195,8 @@ class DQ extends DelegableActionable {
     get displayPrecision() {
         if (this.cachedDisplayPrecision === undefined) {
             let c = this.rootContext();
-            this.cachedDisplayPrecision = DQ.safeDisplayPrecision(c?.getFieldAbject(DQ.context.fieldSyms.displayPrecision)) || 0;
+            this.cachedDisplayPrecision = DQ.safeDisplayPrecision(
+                c?.getFieldAbject(DQ.context.fieldSyms.displayPrecision)) || 0;
         }
         return this.cachedDisplayPrecision;
     }
@@ -183,7 +204,8 @@ class DQ extends DelegableActionable {
     get mintingInfo() {
         if (this.cachedMintingInfo === undefined) {
             let c = this.rootContext();
-            this.cachedMintingInfo = !c ? null : c.getFieldAbject(DQ.context.fieldSyms.mintingInfo);
+            this.cachedMintingInfo = !c ? null : 
+                c.getFieldAbject(DQ.context.fieldSyms.mintingInfo);
         }
         return this.cachedMintingInfo;
     }

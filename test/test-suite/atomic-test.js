@@ -4,18 +4,15 @@ import { Atoms } from "../../src/core/atoms.js";
 import { listTests, loadTest } from './util.js';
 import assert from "assert";
 
-function runParse(b)
-{
+function runParse(b) {
     let lat = Atoms.fromBytes(b).toPairs().map(pair => pair[1]);
-    lat.forEach((p) =>
-        {
+    lat.forEach((p) => {
             p.getShapedValue();
         });
 }
 
-function runTest(test)
-// Returns string if error
-{
+function runTest(test) {
+    // Returns string if error
     describe("test-suite/atomic-test " + test["moniker"], async() => {
         it("Test input properly loaded", async() => {
             assert(test["input"] instanceof Buffer);

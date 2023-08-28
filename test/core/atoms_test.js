@@ -27,7 +27,7 @@ describe("Basic Atoms operations", () => {
 
     it("Should return the original pairs", () => {
         assert.equal(JSON.stringify(pairs), JSON.stringify(atoms.toPairs()));
-    })
+    });
 
     it("Should convert Atoms to bytes and back", () => {
         assert.equal(JSON.stringify(atoms.toPairs()), JSON.stringify(Atoms.fromBytes(atoms.toBytes()).toPairs()));
@@ -65,7 +65,7 @@ describe("Fancy Atoms operations", () => {
     it("Should dedupe atoms", () => {
         a4 = Atoms.fromAtoms(a1, a2, a3);
         assert.equal(JSON.stringify(a4.toPairs()), JSON.stringify(a1.toPairs().concat(a2.toPairs())));
-    })
+    });
 
     it("Should convert Atoms to bytes and back", () => {
         assert.equal(JSON.stringify(a3.toPairs()), JSON.stringify(Atoms.fromBytes(a3.toBytes()).toPairs()));

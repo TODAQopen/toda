@@ -5,13 +5,12 @@
 * Apache License 2.0
 *************************************************************/
 
-import { Packet, BasicTwistPacket, BasicBodyPacket } from '../core/packet.js';
+import { BasicTwistPacket, BasicBodyPacket } from '../core/packet.js';
 
 import { Atoms } from './atoms.js';
 import { HashMap } from './map.js';
 import { HashNotFoundError } from './error.js';
 import { ByteArray } from '../core/byte-array.js';
-import { Hash } from '../core/hash.js';
 
 class PacketStore {
 
@@ -22,7 +21,8 @@ class PacketStore {
     }
 
     /**
-     * @returns <Array.<Hash>> the hashes of packets which reference the supplied hash
+     * @returns <Array.<Hash>> the hashes of 
+     *  packets which reference the supplied hash
      */
     getParentHashes(hash) {
         throw new Error("not implemented");
@@ -39,7 +39,8 @@ class InMemoryPacketStore extends PacketStore {
 
     constructor() {
         super();
-        this.pairs = new Map(); // we also want to preserve the Hash obj so we don't have to parse
+         // we also want to preserve the Hash obj so we don't have to parse
+        this.pairs = new Map();
         this.masterMap = {};
         this.masterReverseIndex = {};
         this.successorMap = {};
@@ -51,7 +52,9 @@ class InMemoryPacketStore extends PacketStore {
 
     async get(hash) {
         // XXX(acg): shortcut if we have this actual object
-        return this.pairs.get(hash) || this.masterMap[hash] || Promise.reject(new HashNotFoundError(hash));
+        return this.pairs.get(hash) || 
+               this.masterMap[hash] || 
+               Promise.reject(new HashNotFoundError(hash));
     }
 
     async successor(hash) {
@@ -101,7 +104,8 @@ class InMemoryPacketStore extends PacketStore {
         super.put(hash, packet);
         this.masterMap[hash] = packet;
         this.pairs.set(hash, packet);
-        packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
+        packet.getContainedHashes().
+            forEach(childHash => this._addChildHash(hash, childHash));
 
         if (packet instanceof BasicTwistPacket) {
             let body = this._getSync(packet.getBodyHash());
@@ -121,7 +125,8 @@ class InMemoryPacketStore extends PacketStore {
     // mostly a hack, doesn't really work over network
     // used for testing atm
     async copyInto(store) {
-        return Promise.all(Array.from(this.pairs).map(([hash, packet]) => store.put(hash, packet)));
+        return Promise.all(Array.from(this.pairs).
+            map(([hash, packet]) => store.put(hash, packet)));
     }
 }
 
@@ -156,13 +161,15 @@ class SerialStore extends InMemoryPacketStore {
    * Adds a file to the serial store, ensuring the twist is put last
    */
     async putFile(file) {
-        return file.copyStoreInto(this).then(async () => this.forcePut(file.getHash(), await file.getTwistPacket()));
+        return file.copyStoreInto(this).then(async () => 
+            this.forcePut(file.getHash(), await file.getTwistPacket()));
     }
 
     put(hash, packet) {
         let existingPacket = this.pairs.get(hash) || this.masterMap[hash];
         if (!existingPacket) {
-            this.byteBuffer = this.byteBuffer.concat(hash.toBytes().concat(packet.toBytes()));
+            this.byteBuffer = this.byteBuffer.concat(
+                hash.toBytes().concat(packet.toBytes()));
             super.put(hash, packet);
         }
     }
@@ -178,7 +185,8 @@ class SerialStore extends InMemoryPacketStore {
     }
 
     forcePut(hash, packet) {
-        this.byteBuffer = this.byteBuffer.concat(hash.toBytes().concat(packet.toBytes()));
+        this.byteBuffer = this.byteBuffer.concat(
+            hash.toBytes().concat(packet.toBytes()));
         super.put(hash, packet);
         this.setPrimaryHash(hash);
     }
@@ -195,7 +203,8 @@ class SerialStore extends InMemoryPacketStore {
     }
 
     /**
-     * Reads and parses a serialized packet store and returns the "primary hash".
+     * Reads and parses a serialized packet store
+     *  and returns the "primary hash".
      * @param {ByteArray} bytes
      * @returns {Hash}
      */
@@ -205,16 +214,7 @@ class SerialStore extends InMemoryPacketStore {
         pairs.forEach(([hash, packet]) => {
             super.put(hash, packet);
             this.setPrimaryHash(hash);
-        })
-    }
-}
-
-
-class SyncPacketStore {
-    get(hash) {
-    }
-
-    put(hash, packet) {
+        });
     }
 }
 
@@ -253,7 +253,9 @@ class MemorySyncPacketStore extends PacketStore {
     }
 
     _throwConflictingSuccessor(existing, conflicting) {
-        throw new Error("Conflicting successors.  This packet store does not support conflicting successors: " + existing.toString() + " vs " + conflicting.toString());
+        throw new Error("Conflicting successors." +  
+            " This packet store does not support conflicting successors: " + 
+            existing.toString() + " vs " + conflicting.toString());
     }
 
     // returns a HASH (change from async)
@@ -261,12 +263,14 @@ class MemorySyncPacketStore extends PacketStore {
         return this.successors.get(hash);
     }
 
-    // dx: think: is this just copied from line.js? is store.js used anywhere? what even is this?
+    // dx: think: is this just copied from line.js? 
+    //  is store.js used anywhere? what even is this?
     put(hash, packet) {
         super.put(hash, packet);
         this.atoms.set(hash, packet);
         this.atoms.focus = hash;
-        packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
+        packet.getContainedHashes().forEach(childHash => 
+            this._addChildHash(hash, childHash));
 
         if (packet instanceof BasicTwistPacket) {
             let body = this.get(packet.getBodyHash());
@@ -297,7 +301,8 @@ class MemorySyncPacketStore extends PacketStore {
                     if (existingSuccessor.equals(twistHash)) {
                         return;
                     }
-                    this._throwConflictingSuccessor(existingSuccessor, twistHash);
+                    this._throwConflictingSuccessor(
+                        existingSuccessor, twistHash);
                 }
                 if (!prev.isNull()) {
                     this.successors.set(prev, twistHash);

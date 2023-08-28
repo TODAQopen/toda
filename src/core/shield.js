@@ -14,7 +14,8 @@ class Shield {
      * @returns <Hash>
      */
     static _shield(twistHash, bytesToShield, shieldBytes) {
-        return twistHash.constructor.fromBytes(shieldBytes ? shieldBytes.concat(bytesToShield) : bytesToShield);
+        return twistHash.constructor.fromBytes(shieldBytes ? 
+               shieldBytes.concat(bytesToShield) : bytesToShield);
     }
 
     /**
@@ -40,10 +41,10 @@ class Shield {
     }
 
     static rigForHoist(leadHash, meatHash, shieldPacket) {
-        return PairTriePacket.createFromUnsorted(new Map([[this.shield(leadHash, leadHash, shieldPacket), meatHash],
-            [this.doubleShield(leadHash, leadHash, shieldPacket),
-                this.shield(leadHash, meatHash, shieldPacket)]
-        ]));
+        return PairTriePacket.createFromUnsorted(
+            new Map([[this.shield(leadHash, leadHash, shieldPacket), meatHash],
+                     [this.doubleShield(leadHash, leadHash, shieldPacket),
+                      this.shield(leadHash, meatHash, shieldPacket)]]));
     }
 }
 

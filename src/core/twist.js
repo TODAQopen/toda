@@ -7,7 +7,7 @@
 
 import { BasicBodyPacket, BasicTwistPacket, PairTriePacket } from './packet.js';
 
-import { Sha256, NullHash, Hash } from './hash.js';
+import { Sha256, NullHash } from './hash.js';
 import { HashMap } from './map.js';
 import { Atoms } from './atoms.js';
 import { Shield } from './shield.js';
@@ -33,11 +33,13 @@ class ShapeError extends Error {
     }
 }
 
-// it would sort of be nice for this to be the same as the below class, but it's annoying.
+// it would sort of be nice for this to be the same 
+//  as the below class, but it's annoying.
 class TwistBuilder {
     static defaultHashImp = Sha256;
 
-    constructor(atoms, cargo, satisfactions, tether, requirements, shield, rigging) {
+    constructor(atoms, cargo, satisfactions, 
+                tether, requirements, shield, rigging) {
         this.atoms = atoms ? Atoms.fromAtoms(atoms) : new Atoms();
         this.data = new HashMap(cargo || []);
         this.satisfactions = satisfactions || null;
@@ -82,7 +84,8 @@ class TwistBuilder {
     }
 
     setKeyRequirement(type, pubKey) {
-        this.setRequirements(new SignatureRequirement(this.getHashImp(), type, pubKey));
+        this.setRequirements(new SignatureRequirement(
+            this.getHashImp(), type, pubKey));
     }
 
     /** Sets the twist requirements
@@ -116,7 +119,8 @@ class TwistBuilder {
         this.tether = tether;
     }
 
-    //todo(mje): Do we even need this or should we always be including the whole tether line?
+    //todo(mje): Do we even need this or should we 
+    //  always be including the whole tether line?
     setTetherHash(tetherHash) {
         this.tetherHash = tetherHash;
     }
@@ -156,7 +160,8 @@ class TwistBuilder {
      */
     setCargo(atoms) {
         this.addAtoms(atoms);
-        let thisisdumb = atoms.toPairs(); // dx: todo: remove this! replace with twist.focus
+        // dx: todo: remove this! replace with twist.focus
+        let thisisdumb = atoms.toPairs(); 
         this.cargoHash = atoms.focus || thisisdumb[thisisdumb.length-1][0];
     }
 
@@ -181,7 +186,8 @@ class TwistBuilder {
     }
 
     getRiggingPacket() {
-        return this.riggingPacket || PairTriePacket.createFromUnsorted(this.rigging);
+        return this.riggingPacket ||
+               PairTriePacket.createFromUnsorted(this.rigging);
     }
 
     getAtoms() {
@@ -216,7 +222,8 @@ class TwistBuilder {
         if (this.riggingPacket || this.rigging.size > 0) {
             if (this.riggingPacket && this.rigging.size > 0) {
                 for (let k of this.rigging.keys()) {
-                    this.riggingPacket = this.riggingPacket.set(k, this.rigging.get(k));
+                    this.riggingPacket = 
+                        this.riggingPacket.set(k, this.rigging.get(k));
                 }
             }
             let rigging = this.getRiggingPacket(hashImp);
@@ -241,9 +248,10 @@ class TwistBuilder {
     }
 
     // dx: NOTE! changes the focus!! why????
-    // dx: TODO: change this so it doesn't change the focus, do that manually if desired
+    // dx: TODO: change this so it doesn't 
+    //  change the focus, do that manually if desired
     addAtoms(atoms) {
-        this.atoms.merge(atoms)
+        this.atoms.merge(atoms);
     }
 
     createSuccessor() {
@@ -300,7 +308,8 @@ class Twist {
         }
 
         if (!this.packet.getBodyHash) {
-            return null; // dx: maybe should throw here? this returns an improper twist...
+            // dx: maybe should throw here? this returns an improper twist...
+            return null; 
         }
 
         this.body = atoms.get(this.packet.getBodyHash());
@@ -357,7 +366,8 @@ class Twist {
     }
 
     /**
-      * Walks backwards, looking for the most recent prev that matches `predicate`
+      * Walks backwards, looking for the most
+      *  recent prev that matches `predicate`
       * @param predicate <Function(this)>
       * @
      */
@@ -386,8 +396,7 @@ class Twist {
      *  exists in the this.atoms
      * @returns <Twist>
      */
-    findLastStoredTether()
-    {
+    findLastStoredTether() {
         if (this.get(this.getTetherHash())) {
             return this.tether();
         }
@@ -399,19 +408,18 @@ class Twist {
      *  whose twist exists in this.atoms
      * @returns <Hash>
      */
-    findLastStoredTetherHash()
-    {
+    findLastStoredTetherHash() {
         return this.findLastStoredTether()?.getHash();
     }
 
     /**
-      * Looks to see if `previousHash` is one of the previous twists of this twist,
+      * Looks to see if `previousHash` 
+      *  is one of the previous twists of this twist,
       *  returning that twist if it does.
       * @param previousHash <Hash>
       * @returns <Twist>
       */
-    findPrevious(previousHash)
-    {
+    findPrevious(previousHash) {
         return this.findLast(t => t.getHash().equals(previousHash));
     }
 
@@ -434,7 +442,8 @@ class Twist {
             throw new MissingHashPacketError(riggingHash);
         }
         if (!(rigging instanceof PairTriePacket)) {
-            throw new ShapeError(this.body.getRiggingHash(), "Rigging must be pairtrie");
+            throw new ShapeError(this.body.getRiggingHash(), 
+                "Rigging must be pairtrie");
         }
         return rigging.get(hash);
     }
@@ -472,7 +481,8 @@ class Twist {
         }
         let reqs = this.get(reqHash);
         if (!reqs) {
-            throw new MissingHashPacketError(reqHash, "Requirements packet missing");
+            throw new MissingHashPacketError(reqHash, 
+                "Requirements packet missing");
         }
         if (key) {
             return reqs.get(key);

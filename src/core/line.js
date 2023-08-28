@@ -52,7 +52,8 @@ class Line {
      */
     twistList() { //FIXME(acg): what is even going on here?
         let focusHistories = this.history(this.last(this.focus) || this.focus);
-        return Array.from(this.atoms.keys()).filter(h => focusHistories.find(fh => fh.equals(h)));
+        return Array.from(this.atoms.keys()).
+            filter(h => focusHistories.find(fh => fh.equals(h)));
     }
 
     contains(hash) {
@@ -80,7 +81,8 @@ class Line {
     }
 
     /**
-   * Returns a list of hashes of all twist predecessors starting with first and ending the current one.
+   * Returns a list of hashes of all twist predecessors
+   *  starting with first and ending the current one.
    * Returns null if hash doesn't point to a stored twist.
    * @param {Hash} hash
    * @returns {Array<Hash>|null}
@@ -112,8 +114,8 @@ class Line {
         if (!twist) {
             return null;
         }
-
-        let ph = twist.body.getPrevHash(); // I don't want the twist here; just the hash
+        // I don't want the twist here; just the hash
+        let ph = twist.body.getPrevHash(); 
         return ph.isNull() ? null : ph;
     }
 
@@ -140,7 +142,8 @@ class Line {
     }
 
     /**
-   * Returns the last successor for a given twist hash if exist and null otherwize
+   * Returns the last successor for a given 
+   *  twist hash if exist and null otherwize
    * @param {Hash} hash
    * @returns {Hash} The last successor in a twist line
    */
@@ -149,6 +152,7 @@ class Line {
         if (successors) {
             return this.successorList(hash).slice(-1)[0] || null;
         }
+        return null;
     }
 
     //XXX(acg): do we really need 15 different history functions?
@@ -179,10 +183,12 @@ class Line {
                 return h;
             }
         }
+        return null;
     }
 
     /**
-     * Returns the hash of the latest tethered twist before the given one (searches backwards from the given hash.)
+     * Returns the hash of the latest tethered twist before the 
+     *  given one (searches backwards from the given hash.)
      * Returns null if input hash is not found in store.
      * @param {Hash} hash
      * @returns {Hash}
@@ -202,11 +208,13 @@ class Line {
                 return h;
             }
         }
+        return null;
     }
 
 
     /**
-   * Returns a Twist object corresponding to the given hash if exists nd null otherwize
+   * Returns a Twist object corresponding to 
+   *  the given hash if exists nd null otherwize
    * @param {Hash} hash
    * @returns {Twist} Twist corresponding to the given hash
    */
@@ -239,8 +247,9 @@ class Line {
      * @param {Twist} twist
      */
     putTwist(twist) {
-        this.focus = twist.atoms.focus
-        return twist.atoms.toPairs().forEach(([hash, packet]) => this.put(hash, packet));
+        this.focus = twist.atoms.focus;
+        return twist.atoms.toPairs().
+            forEach(([hash, packet]) => this.put(hash, packet));
     }
 
 
@@ -261,7 +270,9 @@ class Line {
     }
 
     _throwConflictingSuccessor(existing, conflicting) {
-        throw new Error("Conflicting successors.  This packet store does not support conflicting successors: " + existing.toString() + " vs " + conflicting.toString());
+        throw new Error("Conflicting successors." + 
+            " This packet store does not support conflicting successors: " 
+            + existing.toString() + " vs " + conflicting.toString());
     }
 
     // returns a HASH (change from async)
@@ -277,7 +288,8 @@ class Line {
 
     processPacket(hash, packet) {
         if (packet instanceof BasicTwistPacket) {
-            packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
+            packet.getContainedHashes().
+                forEach(childHash => this._addChildHash(hash, childHash));
             let body = this.get(packet.getBodyHash());
             if (body) {
                 let prev = body.getPrevHash();
@@ -298,7 +310,8 @@ class Line {
         }
 
         if (packet instanceof BasicBodyPacket) {
-            packet.getContainedHashes().forEach(childHash => this._addChildHash(hash, childHash));
+            packet.getContainedHashes().
+                forEach(childHash => this._addChildHash(hash, childHash));
             let parentHashes = this.parents.get(hash);
             let twistHash = parentHashes ? parentHashes[0] : null;
             if (twistHash) {
@@ -308,7 +321,8 @@ class Line {
                     if (existingSuccessor.equals(twistHash)) {
                         return;
                     }
-                    this._throwConflictingSuccessor(existingSuccessor, twistHash);
+                    this._throwConflictingSuccessor(
+                        existingSuccessor, twistHash);
                 }
                 if (!prev.isNull()) {
                     this.successors.set(prev, twistHash);

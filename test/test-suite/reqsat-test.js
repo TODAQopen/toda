@@ -8,8 +8,7 @@ import { Twist } from "../../src/core/twist.js";
 import { listTests, loadTest } from './util.js';
 import assert from "assert";
 
-async function checkInterpret(b)
-{
+async function checkInterpret(b) {
     try {
         let atoms = Atoms.fromBytes(b);
         let line = Line.fromAtoms(atoms);
@@ -25,9 +24,8 @@ async function checkInterpret(b)
     }
 }
 
-function runTest(test)
-// Returns string if error
-{
+function runTest(test) {
+    // Returns string if error
     describe("test-suite/reqsat-test " + test["moniker"], async () => {
         it("Test input properly loaded", async () => {
             assert(test["input"] instanceof Buffer);
@@ -60,7 +58,8 @@ function testFilter(testName) {
 let testNames = listTests().filter(testFilter);
 
 describe("test-suite/reqsat-test", () => {
-    it("Make sure at least one test was loaded.", () => assert(testNames.length > 0));
+    it("Make sure at least one test was loaded.", 
+       () => assert(testNames.length > 0));
 
     // it("should wait forever for perf debugging", () => {
     //     while(1) {}

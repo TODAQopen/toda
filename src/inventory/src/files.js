@@ -11,7 +11,8 @@ import fs from 'fs/promises';
 import path from 'path';
 
 /**
- * Parses input byte-array into atoms and writes a toda file to disk. Returns the focus hash (serialized)
+ * Parses input byte-array into atoms and writes a toda 
+ *  file to disk. Returns the focus hash (serialized)
  * @param {string} invPath Absolute path to inventory on disk
  * @param {Buffer|ByteArray} bytes A ByteArray containing the file contents
  * @returns {ByteArray} The fucos hash of the input atom list

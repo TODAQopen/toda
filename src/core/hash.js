@@ -10,15 +10,18 @@ import { ByteArray } from './byte-array.js';
 class Hash {
     /**
      * Raw constructor of a hash object. Users are recommended to use the static
-     * parsing method if reading off the wire, so you can take advantage of the subclasses.
+     * parsing method if reading off the wire, so you can 
+     *  take advantage of the subclasses.
      *
-     * @param hashValue <ByteArray> representing the result of applying the hashing algorithm specified by algoCode.  Length depends on selected algorithm.
-     *
+     * @param hashValue <ByteArray> representing the result of applying the 
+     *  hashing algorithm specified by algoCode. 
+     *  Length depends on selected algorithm.
      */
     constructor(bytes, offset) {
         this.bytes = bytes;
         this.offset = offset || 0;
-        this.length = Hash.ALGO_CODE_LENGTH + this.constructor.getHashValueLength();
+        this.length = Hash.ALGO_CODE_LENGTH + 
+            this.constructor.getHashValueLength();
 
         // just guard against bad coding
         if (bytes.length < this.offset + this.length) {
@@ -36,9 +39,10 @@ class Hash {
     toBytes() {
         if (!this.bytesValue) {
             if (!this.offset && this.length === this.bytes.length) {
-                this.bytesValue = this.bytes
+                this.bytesValue = this.bytes;
             } else {
-                this.bytesValue = new ByteArray(this.bytes.subarray(this.offset, this.offset + this.length));
+                this.bytesValue = new ByteArray(this.bytes.subarray(
+                    this.offset, this.offset + this.length));
             }
         }
 
@@ -60,7 +64,7 @@ class Hash {
     }
 
     toJSON() {
-        return this.toString()
+        return this.toString();
     }
 
     /**
@@ -76,7 +80,8 @@ class Hash {
      * this Hash's algo is used.
      */
     verifiesPacket(packet) {
-        return this.toString() === this.constructor.fromPacket(packet).toString()
+        return this.toString() === 
+            this.constructor.fromPacket(packet).toString();
     }
 
     assertVerifiesPacket(packet) {
@@ -127,14 +132,17 @@ class Hash {
     }
 
     /**
-     * @param <ByteArray> data the data to hash with this alg and represent as a Hash
+     * @param <ByteArray> data the data to hash with this 
+     *  alg and represent as a Hash
      * @returns <Hash> a newly created instance of a subclass of Hash
      */
     static fromBytes(data) {
         let hashBytes = this.hash(data);
 
-        // dx: todo: add a helper function for this and Symbol.fromStr... or move it into SHA256 directly?
-        // dx: perf: this.hash returns a bytearray, and then we turn around and make a new one... can we do better?
+        // dx: todo: add a helper function for this and Symbol.fromStr... 
+        //   or move it into SHA256 directly?
+        // dx: perf: this.hash returns a bytearray, and then we turn 
+        //  around and make a new one... can we do better?
         let bytes = new ByteArray(hashBytes.byteLength + 1);
         bytes[0] = this.algoCode;
         bytes.set(hashBytes, 1);
@@ -210,7 +218,9 @@ class Sha256 extends Hash {
     }
 
     static getHashValueLength() {
-        return 32; // This implementation always yields hashValues that are precisely 32 bytes
+        // This implementation always yields hashValues that 
+        //  are precisely 32 bytes
+        return 32; 
     }
 }
 
@@ -346,6 +356,7 @@ export { Symbol };
 
 
 // TODO: put this somewhere else, or replace it entirely
+/* eslint-disable */
 var sjcl={cipher:{},hash:{},keyexchange:{},mode:{},misc:{},codec:{},exception:{corrupt:function(a){this.toString=function(){return"CORRUPT: "+this.message;};this.message=a;},invalid:function(a){this.toString=function(){return"INVALID: "+this.message;};this.message=a;},bug:function(a){this.toString=function(){return"BUG: "+this.message;};this.message=a;},notReady:function(a){this.toString=function(){return"NOT READY: "+this.message;};this.message=a;}}};
 sjcl.cipher.aes=function(a){this.s[0][0][0]||this.O();var b,c,d,e,f=this.s[0][4],g=this.s[1];b=a.length;var h=1;if(4!==b&&6!==b&&8!==b)throw new sjcl.exception.invalid("invalid aes key size");this.b=[d=a.slice(0),e=[]];for(a=b;a<4*b+28;a++){c=d[a-1];if(0===a%b||8===b&&4===a%b)c=f[c>>>24]<<24^f[c>>16&255]<<16^f[c>>8&255]<<8^f[c&255],0===a%b&&(c=c<<8^c>>>24^h<<24,h=h<<1^283*(h>>7));d[a]=d[a-b]^c;}for(b=0;a;b++,a--)c=d[b&3?a:a-4],e[b]=4>=a||4>b?c:g[0][f[c>>>24]]^g[1][f[c>>16&255]]^g[2][f[c>>8&255]]^g[3][f[c&
 255]];};

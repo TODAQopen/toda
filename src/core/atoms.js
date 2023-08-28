@@ -18,8 +18,8 @@ class Atoms {
     static packets = {};
 
     hashes = {};
-    _focus = null; // dx: think: hash or string? what about list? maybe it's a list of hashes? then we don't need Atoms.hashes? ...
-
+    _focus = null; // dx: think: hash or string? what about list? 
+    // maybe it's a list of hashes? then we don't need Atoms.hashes? ...
 
     static fromAtoms(...listOfAtoms) {
         let atoms = new Atoms();
@@ -38,7 +38,8 @@ class Atoms {
     }
 
     toPairs(focus) {
-        // dx: perf: keep pairs as a cached structure internally once focus is removed
+        // dx: perf: keep pairs as a cached structure 
+        //  internally once focus is removed
         let pairs = [];
         let fh = focus+"";
 
@@ -56,8 +57,9 @@ class Atoms {
     }
 
     keys() {
-        // dx: todo: delete this function? it's only used three places, and two are tests
-        return Object.values(this.hashes)
+        // dx: todo: delete this function? 
+        // it's only used three places, and two are tests
+        return Object.values(this.hashes);
     }
 
     set focus(hash) {
@@ -86,8 +88,9 @@ class Atoms {
             throw new Error("Cannot set an undefined hash");
         }
 
-        if (!Atoms.packets.hasOwnProperty(h)) {
-            // dx: think: could throw if packet != p already... but then we'd have to do an expensive equality check every time
+        if (!Object.prototype.hasOwnProperty.call(Atoms.packets, h)) {
+            // dx: think: could throw if packet != p already... 
+            //  but then we'd have to do an expensive equality check every time
             hash.assertVerifiesPacket(packet); // throws
             Atoms.packets[h] = packet;
         }
@@ -104,10 +107,12 @@ class Atoms {
         if (this.hashes[h]) {
             return Atoms.packets[h];
         }
+        return null;
     }
 
     mergeNOFOCUS(atoms) {
-        // dx: todo: this is very silly, remove this whole function once focus is removed
+        // dx: todo: this is very silly, remove this whole 
+        //  function once focus is removed
         this.hashes = {...this.hashes, ...atoms.hashes};
     }
 
@@ -118,10 +123,12 @@ class Atoms {
 
 
     toBytes(focus) {
-        focus = focus || this._focus; // dx: todo: remove the || once we lose focus
+        // dx: todo: remove the || once we lose focus
+        focus = focus || this._focus; 
         let a = this.toPairs(focus);
 
-        let len = a.reduce((acc, [h,p]) => acc + h.numBytes() + p.getLength(), 0)
+        let len = a.reduce((acc, [h,p]) => 
+            acc + h.numBytes() + p.getLength(), 0);
         let ret = new ByteArray(len);
         let off = 0;
         a.forEach(([h, p]) => {
@@ -129,7 +136,7 @@ class Atoms {
             off += h.toBytes().byteLength;
             ret.set(p.toBytes(), off);
             off += p.getLength();
-        })
+        });
         return ret;
     }
 
@@ -138,7 +145,9 @@ class Atoms {
      * @returns {Atoms}
      **/
     static fromBytes(bytes) {
-        bytes = new ByteArray(bytes); // dx: todo: skip if already ByteArray? or make this cheap in that case?
+         // dx: todo: skip if already ByteArray? or 
+         //  make this cheap in that case?
+        bytes = new ByteArray(bytes);
         let atoms = new Atoms();
         let lasthash;
         let i = 0, bl = bytes.length;
@@ -153,8 +162,9 @@ class Atoms {
                 packet = Packet.parse(bytes, i);
                 hash.assertVerifiesPacket(packet); // throws
                 Atoms.packets[h] = packet;
+            } else {  
+                //todo(dx): make sure the bytes match... how is this not tested?
             }
-            // else { /* dx: todo: make sure the bytes match... how is this not tested? */ }
 
             i += packet.getLength();
             atoms.hashes[h] = hash;

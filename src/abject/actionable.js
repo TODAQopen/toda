@@ -10,7 +10,6 @@ import { Hash } from '../core/hash.js';
 import { HashMap } from '../core/map.js';
 import { Abject } from './abject.js';
 import { Interpreter } from '../core/interpret.js';
-import { ByteArray } from '../core/byte-array.js';
 import { PairTriePacket } from '../core/packet.js';
 import { Twist, TwistBuilder } from '../core/twist.js';
 import { Line } from '../core/line.js';
@@ -33,7 +32,8 @@ class Actionable extends Abject {
         if (this.twistHash) {
             return this.twistHash;
         }
-        // otherwise we calculate it on-the-fly as a builder... not going to be quick:
+        // otherwise we calculate it on-the-fly as a builder... 
+        //  not going to be quick:
         return this.buildTwist().getHash();
     }
 
@@ -66,7 +66,8 @@ class Actionable extends Abject {
     static parse(atoms, focusHash, cargoHash) {
         let x = new this();
         x.atoms = atoms;
-        x.data = new HashMap(atoms.get(cargoHash).getShapedValue()); // does htis work?
+        // does htis work?
+        x.data = new HashMap(atoms.get(cargoHash).getShapedValue()); 
         x.twistHash = focusHash || atoms.focus;
         return x;
     }
@@ -138,7 +139,8 @@ class Actionable extends Abject {
     }
 
     setContext(abject, hashImp) {
-        return this.setFieldAbject(Actionable.fieldSyms.context, abject, hashImp);
+        return this.setFieldAbject(Actionable.fieldSyms.context, 
+            abject, hashImp);
     }
 
     // Returns the timestamp of the abject's poptop hitch
@@ -146,12 +148,15 @@ class Actionable extends Abject {
         let atoms = this.serialize();
         let pt = new Twist(atoms, this.popTop());
 
-        //todo(mje): This could become a performance bottleneck, let's find a way to optimize
-        let interpreter = new Interpreter(Line.fromAtoms(atoms), pt.first().getHash());
+        //todo(mje): This could become a performance bottleneck, 
+        //           let's find a way to optimize
+        let interpreter = new Interpreter(Line.fromAtoms(atoms), 
+            pt.first().getHash());
         let hitch = interpreter.getToplineHitch(this.getHash());
         if (hitch) {
             return this.getAbject(hitch.getHash()).timestamp();
         }
+        return null;
     }
 }
 
@@ -171,7 +176,8 @@ class DelegableActionable extends Actionable {
         return d;
     }
 
-    // XXX(acg): *overwrites* confirmation entry. do not call multiple times for same twist
+    // XXX(acg): *overwrites* confirmation entry. 
+    //  do not call multiple times for same twist
     confirmDelegate(d) {
         this.confirmDelegates([d]);
     }
@@ -241,7 +247,8 @@ class DelegableActionable extends Actionable {
         if (this.isFirst()) {
             return [];
         }
-        return this.prev().allConfirmedDelegates().concat(this.confirmedDelegates());
+        return this.prev().allConfirmedDelegates().
+            concat(this.confirmedDelegates());
     }
 
     /**

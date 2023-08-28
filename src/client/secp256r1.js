@@ -8,17 +8,8 @@
 
 import { LocalKeyPair } from './keypair.js';
 import { SignatureRequirement, RequirementSatisfier } from '../core/reqsat.js';
-import { Crypto } from '@peculiar/webcrypto'
+import { Crypto } from '@peculiar/webcrypto';
 const crypto = new Crypto();
-
-// function _isNode() {
-//     return ((typeof document === "undefined") && (typeof navigator === "undefined" || navigator.product !== "ReactNative"));
-// }
-
-// if (_isNode()) {
-//     const { Crypto } = eval("require('@peculiar/webcrypto');");
-//     crypto = new Crypto();
-// }
 
 class SECP256r1 extends LocalKeyPair {
     static requirementTypeHash = SignatureRequirement.REQ_SECP256r1;
@@ -88,6 +79,7 @@ class SECP256r1 extends LocalKeyPair {
     }
 }
 
-RequirementSatisfier.registerSatisfier(SECP256r1.requirementTypeHash, SECP256r1);
+RequirementSatisfier.registerSatisfier(
+    SECP256r1.requirementTypeHash, SECP256r1);
 
 export { SECP256r1 };

@@ -51,7 +51,8 @@ class HashMap extends Map {
     }
 
     set(key, value) {
-        // XXX(acg): hack - if args are passed to super(), 'set' will otherwise fail
+        // XXX(acg): hack - if args are passed to super(), 
+        //  'set' will otherwise fail
         if (this.hashes === undefined) {
             this.hashes = {};
         }

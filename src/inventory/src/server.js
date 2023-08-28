@@ -76,7 +76,8 @@ function app(invPath=__dirname, config={}) {
             return res.status(413).send(err.message);
         }
         console.error(err.stack);
-        return res.status(500).send("This should not be happening -- see logs!");
+        return res.status(500).
+            send("This should not be happening -- see logs!");
     });
 
     return express().use("/files", expressapp);

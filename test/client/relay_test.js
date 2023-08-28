@@ -262,7 +262,7 @@ describe("RemoteNextRelayClient", async () => {
         let toda = new TodaClient(new VirtualInventoryClient());
         toda._getSalt = () => ByteArray.fromHex("012345");
         let tether = Hash.fromHex("41e6e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4cb829ed640be4");
-        let a = await toda.create(tether)
+        let a = await toda.create(tether);
         let b = await toda.append(a);
 
 
@@ -283,7 +283,7 @@ describe("RemoteNextRelayClient", async () => {
 
 describe("LocalNextRelayClient", async () => {
     it("Simple next", async () => {
-        const inv = new LocalInventoryClient("./files/" + uuid())
+        const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClientV2(inv, "http://localhost:8009");
         toda._getSalt = () => ByteArray.fromUtf8("some salty");
 
@@ -310,7 +310,7 @@ describe("LocalNextRelayClient", async () => {
     });
 
     it("Simple .shield, last fast", async() => {
-        const inv = new LocalInventoryClient("./files/" + uuid())
+        const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClientV2(inv, "http://localhost:8009");
         toda._getSalt = () => ByteArray.fromUtf8("some salty");
         const t0 = await toda.create(null, null, uuidCargo());
@@ -327,7 +327,7 @@ describe("LocalNextRelayClient", async () => {
     });
 
     it("Simple .shield, last loose", async() => {
-        const inv = new LocalInventoryClient("./files/" + uuid())
+        const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClientV2(inv, "http://localhost:8009");
         toda._getSalt = () => ByteArray.fromUtf8("some salty");
         const t0 = await toda.create(null, null, uuidCargo());

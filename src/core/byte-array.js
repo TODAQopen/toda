@@ -9,7 +9,7 @@ class ByteArray extends Uint8Array {
 
     // Reads utf8 string data into a Uint8Array
     static fromUtf8(str) {
-        return ByteArray.from(str.split("").map(x => x.charCodeAt()))
+        return ByteArray.from(str.split("").map(x => x.charCodeAt()));
     }
 
     // Reads hex string data into a Uint8Array
@@ -22,7 +22,9 @@ class ByteArray extends Uint8Array {
     }
 
     static toInt(bytes, offset=0, length=0) {
-        return new DataView(bytes.buffer, offset || bytes.byteOffset, length || bytes.byteLength).getUint32(0, false);
+        return new DataView(bytes.buffer, offset || 
+                            bytes.byteOffset, length || 
+                            bytes.byteLength).getUint32(0, false);
     }
 
     static fourByteInt(n) {
@@ -34,7 +36,8 @@ class ByteArray extends Uint8Array {
         return bytes;
     }
 
-    static hexes_helper = Array.from(Array(256)).map((n,i)=>i.toString(16).padStart(2, '0'));
+    static hexes_helper = Array.from(Array(256)).
+        map((n,i)=>i.toString(16).padStart(2, '0'));
 
 
     concat(bytes) { // dx: exterminate
@@ -61,10 +64,12 @@ class ByteArray extends Uint8Array {
     }
 
     toUTF8String() { // dx: perf: make this fast; accept offset and length
-        return this.reduce((acc, n) => acc + String.fromCharCode(n), '')
+        return this.reduce((acc, n) => acc + String.fromCharCode(n), '');
     }
 
-    toString() { // dx: don't call this deliberately, it's only here for console output and a few low-level tests
+    // dx: don't call this deliberately, 
+    // it's only here for console output and a few low-level tests
+    toString() { 
         return this.toHex();
     }
 }

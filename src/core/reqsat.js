@@ -37,7 +37,8 @@ class RequirementList extends Requirement {
         super(hashImp, new PairTriePacket());
     }
 
-    // dx: this isn't used anywhere, so I don't know if this conversion is correct
+    // dx: this isn't used anywhere, 
+    //  so I don't know if this conversion is correct
     weightToBytes(weight) {
         return new ByteArray([weight]);
         // return new ByteArray(Buffer.from([weight]));
@@ -108,7 +109,8 @@ class DefaultSignatureRequirement extends Requirement {
    * @param publicKey <ByteArray> the public key to require
    */
     constructor(publicKey) {
-        super(DefaultSignatureRequirement.DEFAULT_HASH_IMP, DefaultSignatureRequirement.DEFAULT_SIG, publicKey);
+        super(DefaultSignatureRequirement.DEFAULT_HASH_IMP, 
+              DefaultSignatureRequirement.DEFAULT_SIG, publicKey);
     }
 }
 
@@ -146,7 +148,8 @@ class DefaultSignatureSatisfaction extends SignatureSatisfaction {
    * @param signature <ByteArray> the signature bytes
    */
     constructor(signature) {
-        super(DefaultSignatureSatisfaction.DEFAULT_HASH_IMP, DefaultSignatureRequirement.DEFAULT_SIG, signature);
+        super(DefaultSignatureSatisfaction.DEFAULT_HASH_IMP, 
+              DefaultSignatureRequirement.DEFAULT_SIG, signature);
     }
 }
 
@@ -154,7 +157,8 @@ class DefaultSignatureSatisfaction extends SignatureSatisfaction {
 class SatisfactionList extends Satisfaction {
 
     /**
-   * @param sats <Array.<Satisfaction>> list of satisfactions in the same order as reqs were specd
+   * @param sats <Array.<Satisfaction>> list of 
+   *  satisfactions in the same order as reqs were specd
    */
     constructor(hashImp, sats) {
         let satsListPacket = new HashPacket(sats);
@@ -166,7 +170,6 @@ class SatisfactionList extends Satisfaction {
         sats.copyInto(this);
     }
 }
-
 
 class ReqSatError extends Error {
     constructor(reqHash, reqPacket, satPacket, message) {
@@ -183,11 +186,10 @@ class UnsupportedRequirementError extends ReqSatError {}
 
 const RequirementMonikers = {
     [RequirementList.REQ_LIST]: RequirementList.REQ_LIST_MONIKER,
-    // [RequirementList.REQ_LIST_DEPRECATED]: RequirementList.REQ_LIST_MONIKER,
-    [SignatureRequirement.REQ_SECP256r1]: SignatureRequirement.REQ_SECP256r1_MONIKER,
-    // [SignatureRequirement.REQ_SECP256r1_DEPRECATED]: SignatureRequirement.REQ_SECP256r1_MONIKER,
-    [SignatureRequirement.REQ_ED25519]: SignatureRequirement.REQ_ED25519_MONIKER,
-    // [SignatureRequirement.REQ_ED25519_DEPRECATED]: SignatureRequirement.REQ_ED25519_MONIKER,
+    [SignatureRequirement.REQ_SECP256r1]: 
+        SignatureRequirement.REQ_SECP256r1_MONIKER,
+    [SignatureRequirement.REQ_ED25519]: 
+        SignatureRequirement.REQ_ED25519_MONIKER,
     _: "Unknown"
 };
 
@@ -208,7 +210,8 @@ class RequirementSatisfier {
     static verifySatisfaction(reqTypeHash, twist, reqPacket, satPacket) {
         let imp = this.implementationForReqType(reqTypeHash);
         if (!imp) {
-            throw new ReqSatError("Unsupported requirement type:", reqTypeHash.toString());
+            throw new ReqSatError("Unsupported requirement type:", 
+                reqTypeHash.toString());
         }
         return imp.verifySatisfaction(reqTypeHash, twist, reqPacket, satPacket);
     }

@@ -25,7 +25,8 @@ class Primitive extends Abject {
     };
 
     value() {
-        return this.constructor.parsePrimitive(this.getField(Primitive.fieldSyms.value));
+        return this.constructor.parsePrimitive(
+            this.getField(Primitive.fieldSyms.value));
     }
 
     setPrimitiveValue(valuePacket) {
@@ -44,7 +45,8 @@ class Primitive extends Abject {
 
         let primitiveValueHash = cargo.get(this.fieldSyms.value);
         if (!primitiveValueHash) {
-            throw new PrimitiveFieldMissingError(atoms, Primitive.fieldSyms.value);
+            throw new PrimitiveFieldMissingError(atoms, 
+                Primitive.fieldSyms.value);
         }
 
         let primitiveValue = atoms.get(primitiveValueHash);
@@ -119,7 +121,8 @@ class P1Date extends Primitive {
      */
     constructor(date) {
         super();
-        this.setPrimitiveValue(new ArbitraryPacket(ByteArray.fromUtf8(date.toISOString())));
+        this.setPrimitiveValue(new ArbitraryPacket(
+            ByteArray.fromUtf8(date.toISOString())));
     }
 
     /**
@@ -142,7 +145,8 @@ class P1Boolean extends Primitive {
      */
     constructor(truthVal) {
         super();
-        this.setPrimitiveValue(new ArbitraryPacket(new ByteArray([truthVal? 1 : 0])));
+        this.setPrimitiveValue(new ArbitraryPacket(
+            new ByteArray([truthVal? 1 : 0])));
     }
 
     /**
@@ -173,4 +177,3 @@ export { P1String };
 export { P1Float };
 export { P1Date };
 export { P1Boolean };
-

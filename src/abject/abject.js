@@ -6,7 +6,8 @@
 *************************************************************/
 
 import { NullHash, Sha256, Symbol } from '../core/hash.js';
-import { BasicTwistPacket, PairTriePacket, HashPacket } from '../core/packet.js';
+import { BasicTwistPacket, PairTriePacket, HashPacket } 
+    from '../core/packet.js';
 import { HashMap } from '../core/map.js';
 import { Atoms } from '../core/atoms.js';
 
@@ -28,7 +29,8 @@ class Abject {
 
     static interpreter = null;
 
-    static interpreters = new HashMap(); /** @type <Map.<NoFollow, Class<Abject>>> */
+    /** @type <Map.<NoFollow, Class<Abject>>> */
+    static interpreters = new HashMap(); 
 
     constructor() {
 
@@ -56,7 +58,8 @@ class Abject {
      */
     setFieldHash(field, val) {
         if (!field || !val) {
-            throw new AbjectError(this.atoms, "both params required setting a field value");
+            throw new AbjectError(this.atoms, 
+                "both params required setting a field value");
         }
         this.data.set(field, val);
     }
@@ -91,7 +94,8 @@ class Abject {
         let atoms = abject.serialize(hashImp);
         this.atoms.merge(atoms);
         this.setFieldHash(field, atoms.focus);
-        // this.setFieldHash(field, abject.focus); // dx: todo: change it to this
+        // dx: todo: change it to this
+        // this.setFieldHash(field, abject.focus); 
     }
 
     /**
@@ -104,7 +108,8 @@ class Abject {
 
         let abjectAtoms = abjects.map(a => a.serialize(hashImp));
         let abjectHashes = abjectAtoms.map(a => a.focus);
-        // let abjectHashes = abjects.map(a => a.focus); // dx: todo: change it to this
+        // dx: todo: change it to this
+        // let abjectHashes = abjects.map(a => a.focus); 
         let packet = new HashPacket(abjectHashes);
 
         for (let atoms of abjectAtoms) {
@@ -168,23 +173,13 @@ class Abject {
      */
     serialize(hashImp) {
         let [h,p] = this.dataAtom(hashImp);
-        let atoms = Atoms.fromAtoms(this.atoms)
+        let atoms = Atoms.fromAtoms(this.atoms);
         atoms.set(h,p);
-        atoms.focus = h; // dx: leaving this for now because it's used for exporting bytes... need to figure out how to do it better
+        // dx: leaving this for now because it's used for 
+        //  exporting bytes... need to figure out how to do it better
+        atoms.focus = h; 
         return atoms;
     }
-
-    /**
-     * FIXME(acg): naming, etc. etc.....
-     */
-    // serializeToBytes(hashImp) {
-    //     //todo(acg): initialize with the actual num of bytes we'll need
-    //     let byteBuffer = new ByteArray();
-    //     for (const [hash,packet] in this.atoms) {
-    //         byteBuffer = byteBuffer.concat(hash.toBytes().concat(packet.serialize()));
-    //     }
-    //     return byteBuffer.concat(dataHash.toBytes().concat(dataPacket.serialize()));
-    // }
 
     /**
      * @return <Class.<Hash>>
@@ -281,7 +276,8 @@ class Abject {
             }
             cargoHash = body.getCargoHash();
             if (cargoHash.isNull()) {
-                throw new AbjectError(this.atoms, "Abject cargo hash cannot be null");
+                throw new AbjectError(this.atoms, 
+                    "Abject cargo hash cannot be null");
             }
             cargo = atoms.get(cargoHash);
 
@@ -336,7 +332,7 @@ class AbjectError extends Error {
 
     constructor(abjectAtoms, msg) {
         super();
-        this.msg = msg
+        this.msg = msg;
         if (abjectAtoms) {
             this.abjectHash = abjectAtoms.focus;
 
@@ -350,7 +346,8 @@ class AbjectError extends Error {
 class AbjectAtomMissingError extends AbjectError {
     /**
      * @param missingHash <Hash> the missing hash
-     * @param pathIfKnown <Array.<Hash>> path from root cargo to the key referencing the hash we can't follow
+     * @param pathIfKnown <Array.<Hash>> path from root 
+     *  cargo to the key referencing the hash we can't follow
      */
     constructor(atoms, missingHash, pathIfKnown) {
         super(atoms);
@@ -367,10 +364,8 @@ class AbjectMissingInterpreterError extends AbjectError {
     }
 }
 
-class AbjectEmptyError extends AbjectError {}
 class AbjectMissingBodyPacket extends AbjectError {}
 class AbjectMissingCargoPacket extends AbjectError {}
-
 
 export { Abject };
 export { AbjectError };
