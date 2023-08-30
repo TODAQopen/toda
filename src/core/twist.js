@@ -60,6 +60,11 @@ class TwistBuilder {
         this.riggingHash = new NullHash();
     }
 
+    setPrev(prev) {
+        this.addAtoms(prev.getAtoms());
+        this.setPrevHash(prev.getHash());
+    }
+
     /** Sets the prev hash. Useful for when creating a Twist successor
      * @param prevHash <Hash> the prev hash
      */

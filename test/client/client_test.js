@@ -5,8 +5,7 @@ import { SECP256r1 } from "../../src/client/secp256r1.js";
 import { LocalInventoryClient, VirtualInventoryClient } from "../../src/client/inventory.js";
 import { Interpreter } from "../../src/core/interpret.js";
 import { HashMap } from "../../src/core/map.js";
-import { Atoms } from "../../src/core/atoms.js";
-import { Twist, TwistBuilder } from "../../src/core/twist.js";
+import { Twist } from "../../src/core/twist.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { Hash, Sha256 } from "../../src/core/hash.js";
 import { PairTriePacket } from "../../src/core/packet.js";
@@ -18,7 +17,6 @@ import nock from "nock";
 
 import path from "path";
 import { fileURLToPath } from "url";
-import { LocalRelayClient, RemoteNextRelayClient } from "../../src/client/relay.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

@@ -18,6 +18,7 @@ import { Line } from '../core/line.js';
 import { Abject } from "../../src/abject/abject.js";
 import { DQ } from "../../src/abject/quantity.js";
 import fs from 'fs-extra';
+import { P1String } from '../abject/primitive.js';
 
 class TodaClient {
 
@@ -273,6 +274,7 @@ class TodaClient {
 
         const nextTwist = next.twist();
         const lastFast = nextTwist.lastFast();
+
         if (tether && !tether.isNull() && lastFast && !noHoist) {
             // TODO(acg): ensure this is FIRMLY written before hoisting.
             try {
@@ -644,6 +646,58 @@ class TodaClient {
 
         throw new Error("Insufficient funds");
     }
+
+    /**
+     * @param {Hash || Null} tetherHash : default relay hash if null
+     * @param {Int} quantity : must be positive
+     * @param {Int || Null} precision : default 0
+     * @param {String || Null} mintingInfo : string to put into 
+     *      the mintingInfo field of abject,
+     *      if null does not populate the mintingInfo field
+     * @param {Hash || Null} popTop : the hash to put into 
+     *      the poptop field; client's default if unspecified
+     * @returns {Promise<{dq: Twist, root: Hash}>}
+     */
+    async mint(quantity, precision, tetherHash, popTop, mintingInfo) {
+        tetherHash ||= this.defaultRelayHash;
+        popTop ||= this.defaultTopLineHash;
+
+        let mintingAbject;
+        if (mintingInfo) {
+            mintingAbject = new P1String(mintingInfo);
+        }
+
+        const dq = DQ.mint(quantity, precision, mintingAbject);
+
+        // Note: If no popTop, the DQ is malformed (since it can never 
+        //       be supported)
+        if (popTop) {
+            dq.setPopTop(popTop);
+        }
+        const dqTwist = await this.finalizeTwist(dq.buildTwist(),
+                                                 tetherHash);
+
+        // HACK: This is a temporary solution for populating older poptops
+        if (popTop) {
+            const relay = new RemoteNextRelayClient(this.defaultRelayUrl, 
+                                                    this.fileServerUrl, 
+                                                    popTop,
+                                                    () => true);
+            let prevToplineAtoms = (await relay.get()).getAtoms();
+            dqTwist.addAtoms(prevToplineAtoms);
+            this.inv.put(dqTwist.getAtoms());
+        }
+
+        const dqNextTB = Abject.fromTwist(dqTwist)
+                               .createSuccessor()
+                               .buildTwist();
+
+        dqNextTB.setPrev(dqTwist);
+        const dqNextTwist = await this.finalizeTwist(dqNextTB,
+                                                     dqTwist.getTetherHash());
+
+        return {twist: dqNextTwist, root: dqTwist.getHash()};
+    }
 }
 
 class TodaClientV2 extends TodaClient {
@@ -677,7 +731,7 @@ class TodaClientV2 extends TodaClient {
         let relayLineIsFast;
         try {
             lastKnownRelayTwist = fastTwist.tether() ?? 
-                fastTwist.findLastStoredTether();
+                                  fastTwist.findLastStoredTether();
             relayLineIsFast = lastKnownRelayTwist?.lastFast();
         } catch (err) {
             // MissingPrevError is acceptable: we don't expect a relay line
@@ -703,7 +757,8 @@ class TodaClientV2 extends TodaClient {
     _defaultRelay(fastTwist) {
         if (this.defaultRelayUrl) {
             return new RemoteNextRelayClient(this.defaultRelayUrl, 
-                this.fileServerUrl, fastTwist.getTetherHash(), 
+                this.fileServerUrl, 
+                fastTwist.getTetherHash(), 
                 this._backwardsStopPredicate(fastTwist));
         }
         console.error("No default relay found.");
