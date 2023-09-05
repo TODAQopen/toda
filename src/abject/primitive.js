@@ -106,7 +106,8 @@ class P1Float extends Primitive {
      */
     static parsePrimitive(value) {
         // TODO: ensure this is not NaN or Infinity or -Infinity
-        return new DataView(value.getShapedValue().buffer).getFloat64(0);
+        const sv = value.getShapedValue();
+        return new DataView(sv.buffer.slice(sv.byteOffset, sv.byteLength + sv.byteOffset)).getFloat64(0);
     }
 }
 
