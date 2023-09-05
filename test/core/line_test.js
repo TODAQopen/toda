@@ -1,8 +1,8 @@
-import { Sha256 } from "../../src/core/hash.js";
+import { Hash, NullHash, Sha256 } from "../../src/core/hash.js";
 import { Atoms } from "../../src/core/atoms.js";
 import { Twist, TwistBuilder } from "../../src/core/twist.js";
 import { Line } from "../../src/core/line.js";
-import { ArbitraryPacket } from "../../src/core/packet.js";
+import { ArbitraryPacket, BasicBodyPacket, BasicTwistPacket } from "../../src/core/packet.js";
 import { sbh } from "../util.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import assert from "assert";
@@ -315,5 +315,91 @@ describe("Line/lastFastBeforeHash", () => {
         assert.equal(line.lastFastBeforeHash(tw1.getHash()), undefined);
         assert(line.lastFastBeforeHash(tw2.getHash()).equals(tw1.getHash()));
         assert(line.lastFastBeforeHash(tw3.getHash()).equals(tw2.getHash()));
+    });
+});
+
+describe("Colinear", async function () {
+    it("Backwards ✅", async function() {
+        const line = new Line();
+        const t0 = simpleTwist("Alice", "Bob", "Charlotte");
+        const t1 = new Twist(t0.createSuccessor().serialize());
+        const t2 = new Twist(t1.createSuccessor().serialize());
+        const t3 = new Twist(t2.createSuccessor().serialize());
+        const t4 = new Twist(t3.createSuccessor().serialize());
+        const t5 = new Twist(t4.createSuccessor().serialize());
+        [t0, t1, t2, t3, t4, t5].forEach(t => line.putTwist(t));
+        assert.ok(line.colinear(t2.getHash(), t5.getHash()));
+    });
+
+    it("Forwards ✅", async function() {
+        const line = new Line();
+        const t0 = simpleTwist("Alice", "Bob", "Charlotte");
+        const t1 = new Twist(t0.createSuccessor().serialize());
+        const t2 = new Twist(t1.createSuccessor().serialize());
+        const t3 = new Twist(t2.createSuccessor().serialize());
+        const t4 = new Twist(t3.createSuccessor().serialize());
+        const t5 = new Twist(t4.createSuccessor().serialize());
+        [t0, t1, t2, t3, t4, t5].forEach(t => line.putTwist(t));
+        assert.ok(line.colinear(t5.getHash(), t2.getHash()));
+    });
+
+    it("Hash does not exist", async function() {
+        const line = new Line();
+        const t0 = simpleTwist("Alice", "Bob", "Charlotte");
+        const t1 = new Twist(t0.createSuccessor().serialize());
+        const t2 = new Twist(t1.createSuccessor().serialize());
+        const t3 = new Twist(t2.createSuccessor().serialize());
+        const t4 = new Twist(t3.createSuccessor().serialize());
+        const t5 = new Twist(t4.createSuccessor().serialize());
+        [t0, t1, t2, t3, t4, t5].forEach(t => line.putTwist(t));
+        assert.ok(!line.colinear(Hash.fromHex("41a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"), 
+                                 t5.getHash()));
+    });
+
+    it("Not colinear; different lines", async function() {
+        const line = new Line();
+        const a0 = simpleTwist("Alice", "Bob", "Charlotte");
+        const a1 = new Twist(a0.createSuccessor().serialize());
+        const a2 = new Twist(a1.createSuccessor().serialize());
+        const a3 = new Twist(a2.createSuccessor().serialize());
+        const b0 = simpleTwist("Denise", "Eliza", "Fredrico");
+        const b1 = new Twist(b0.createSuccessor().serialize());
+        const b2 = new Twist(b1.createSuccessor().serialize());
+        const b3 = new Twist(b2.createSuccessor().serialize());
+        [a0, a1, a2, a3, b0, b1, b2, b3].forEach(t => line.putTwist(t));
+        assert.ok(!line.colinear(a2.getHash(), 
+                                 b1.getHash()));
+    });
+
+    it("Same twist", async function() {
+        const line = new Line();
+        const t0 = simpleTwist("Alice", "Bob", "Charlotte");
+        const t1 = new Twist(t0.createSuccessor().serialize());
+        const t2 = new Twist(t1.createSuccessor().serialize());
+        [t0, t1, t2].forEach(t => line.putTwist(t));
+        assert.ok(line.colinear(t1.getHash(), 
+                                t1.getHash()));
+    });
+
+    it("Backwards prev missing", async function() {
+        const line = new Line();
+        // Ugh...
+        const t0Body = new BasicBodyPacket(Hash.fromHex("41c973b83261cfc9e5ca46e4017729394d6ef61141a3ba816aa7a601f18909595b"),
+                                           new NullHash(),new NullHash(),new NullHash(),new NullHash(),new NullHash());
+        const t0BodyH = Sha256.fromPacket(t0Body);
+        const t0Twist = new BasicTwistPacket(t0BodyH, new NullHash());
+        const t0TwistH = Sha256.fromPacket(t0Twist);
+        const atoms = new Atoms();
+        atoms.set(t0BodyH, t0Body);
+        atoms.set(t0TwistH, t0Twist);
+        const t0 = new Twist(atoms, t0TwistH);
+        const t1 = new Twist(t0.createSuccessor().serialize());
+        const t2 = new Twist(t1.createSuccessor().serialize());
+        const t3 = new Twist(t2.createSuccessor().serialize());
+        const t4 = new Twist(t3.createSuccessor().serialize());
+        const t5 = new Twist(t4.createSuccessor().serialize());
+        [t0, t1, t2, t3, t4, t5].forEach(t => line.putTwist(t));
+        assert.ok(!line.colinear(Hash.fromHex("41a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"), 
+                                 t5.getHash()));
     });
 });

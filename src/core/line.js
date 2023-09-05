@@ -60,6 +60,29 @@ class Line {
         return this.twistList().find(h => h.equals(hash));
     }
 
+    _colinearForwards(hash0, hash1) {
+        if (!hash0 || !hash1) return false;
+        if (hash0.equals(hash1)) return true;
+        if (this.successor(hash0)) { 
+            return this._colinearForwards(this.successor(hash0), hash1);
+        }
+        return false;
+    }
+
+    _colinearBackwards(hash0, hash1) {
+        if (!hash0 || !hash1) return false;
+        if (hash0.equals(hash1)) return true;
+        if (this.prev(hash0)) { 
+            return this._colinearBackwards(this.prev(hash0), hash1);
+        }
+        return false;
+    }
+
+    colinear(hash0, hash1 = this.focus) {
+        return this._colinearBackwards(hash0, hash1) || 
+               this._colinearForwards(hash0, hash1);
+    }
+
     latestTwist() {
         return this.last(this.focus) || this.focus;
     }

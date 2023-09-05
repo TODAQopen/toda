@@ -382,9 +382,10 @@ class TodaClient {
             let upstream = await relay.get(startHash);
             twist.addAtoms(upstream.getAtoms());
             let relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
+            const relayLine = Line.fromTwist(relayTwist);
 
             try {
-                if (relayTwist.findPrevious(poptopHash)) {
+                if (relayLine.colinear(relayTwist.getHash(), poptopHash)) {
                     break;
                 }
             } catch (err) {

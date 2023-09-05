@@ -77,19 +77,7 @@ class Interpreter {
     }
 
     isTopline(hash) {
-        if (hash.equals(this.topHash)) {
-            return true;
-        }
-        let prev;
-        try {
-            prev = this.prev(hash);
-        } catch (err) {
-            return false;
-        }
-        if (prev) {
-            return this.isTopline(prev.hash);
-        }
-        return false;
+        return this.line.colinear(hash, this.topHash);
     }
 
     async verifyTopline() {
