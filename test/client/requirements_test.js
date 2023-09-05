@@ -4,11 +4,11 @@ import {
 
 import { Line } from "../../src/core/line.js";
 import { SerialStore } from "../../src/core/store.js";
-import { TodaClient, CannotSatisfyError } from "../../src/client/client.js";
+import { TodaClientV2, CannotSatisfyError } from "../../src/client/client.js";
 import { SECP256r1 } from "../../src/client/secp256r1.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { VirtualInventoryClient } from "../../src/client/inventory.js";
-import { Twist, MissingHashPacketError } from "../../src/core/twist.js";
+import { Twist } from "../../src/core/twist.js";
 import assert from "assert";
 import fs from "fs";
 
@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 describe("setRequirements", () => {
     it("should set the requirements trie on the twistbuilder", async () => {
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new VirtualInventoryClient());
+        let toda = new TodaClientV2(new VirtualInventoryClient());
 
         let x = await toda.create(null, keyPair);
         assert(SECP256r1.requirementTypeHash.equals(Array.from(x.reqs().getShapedValue().keys())[0]));
@@ -51,7 +51,7 @@ describe("setRequirements", () => {
 describe("satisfyRequirements", () => {
     it("should set the satisfactions trie on the twistbuilder", async () => {
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new VirtualInventoryClient());
+        let toda = new TodaClientV2(new VirtualInventoryClient());
         toda.addSatisfier(keyPair);
 
         let prev = await toda.create(null, keyPair);
@@ -61,7 +61,7 @@ describe("satisfyRequirements", () => {
 
     it("should throw an exception if a requirement cannot be met", async () => {
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new VirtualInventoryClient());
+        let toda = new TodaClientV2(new VirtualInventoryClient());
 
         let prev = await toda.create(null, keyPair);
 

@@ -1,19 +1,17 @@
-import { Hash, Sha256 } from "../../src/core/hash.js";
+import { Hash } from "../../src/core/hash.js";
 import { Atoms } from "../../src/core/atoms.js";
-import { RemoteRelayClient, RemoteNextRelayClient, LocalRelayClient, LocalNextRelayClient } from "../../src/client/relay.js";
-import { TodaClient, TodaClientV2 } from "../../src/client/client.js";
+import { RemoteRelayClient, RemoteNextRelayClient, LocalNextRelayClient } from "../../src/client/relay.js";
+import { TodaClientV2 } from "../../src/client/client.js";
 import { LocalInventoryClient, VirtualInventoryClient } from "../../src/client/inventory.js";
 import { Twist } from "../../src/core/twist.js";
 import { ByteArray } from "../../src/core/byte-array.js";
-import { nockLocalFileServer, nock404FileServer } from "./mocks.js";
+import { nockLocalFileServer } from "./mocks.js";
 import { randH, uuidCargo } from "../util.js";
 import nock from "nock";
 import assert from "assert";
 import fs from "fs-extra";
 import path from "path";
 import { v4 as uuid } from "uuid";
-import { PairTriePacket } from "../../src/core/packet.js";
-import { HashMap } from "../../src/core/map.js";
 
 const url = "https://localhost:8080";
 
@@ -34,7 +32,7 @@ describe("submitHoist", () => {
         let scope = nock(url).post("/");
         scope.reply(200, (uri, requestBody) => requestBody);
 
-        let toda = new TodaClient(new VirtualInventoryClient());
+        let toda = new TodaClientV2(new VirtualInventoryClient());
         let a = await toda.create();
         let b = await toda.append(a);
 
@@ -46,22 +44,9 @@ describe("submitHoist", () => {
     });
 });
 
-//FIXME: relay client *will* break with fake (non-atom) data.
-/*describe("getLine", () => {
-    it("should make a get request to the specified line server", () => {
-        let scope = nock(url).get("/");
-        scope.reply(200, Buffer.from("foo"));
-
-        let relay = new RemoteRelayClient(url);
-        return relay.get().then(r => {
-            assert.deepEqual(r, new ByteArray(Buffer.from("foo")));
-        });
-    });
-});*/
-
 describe("getHoist", () => {
     it("should verify that a hoist hitch exists for the provided lead on the specified line server", async () => {
-        let toda = new TodaClient(new VirtualInventoryClient());
+        let toda = new TodaClientV2(new VirtualInventoryClient());
         let x = await toda.getExplicitPath( new URL('./files/test.toda', import.meta.url));
 
         let scope = nock(url).get("/");
@@ -74,59 +59,6 @@ describe("getHoist", () => {
         });
     });
 });
-
-/*
-describe("isValidAndControlled", async () => {
-    let store = new URL('./files', import.meta.url)
-    let linePath = path.resolve(store, "cap-line.toda");
-    let keyPair, acTwist, poptop;
-
-    beforeEach(() => setConfig({ line: linePath, store: store }));
-
-    it("Should verify the integrity of the hoist line and that control belongs to the specified line", async () => {
-        keyPair = await crypto.subtle.generateKey({name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
-        let req = {
-            type: SignatureRequirement.REQ_SECP256r1,
-            key: keyPair.publicKey
-        };
-        let tb = await create(null, req, null, keyPair.privateKey, null);
-        fs.outputFileSync(linePath, tb.serialize().toBytes());
-
-        // create a capability with this poptop, append to it, hoist it locally (should be automatic), verify that integrity and matchy matchy
-        let cap = await capability("http://test-url.com", ["GET"], new Date(), ByteArray.fromUtf8("foo"), linePath, linePath);
-        let ac = await authorize(cap, "http://localhost", "POST", null, null, linePath, keyPair.privateKey);
-        let lt = new Twist(Atoms.fromBytes(await getFileOrInput(linePath)));
-
-        poptop = lt.getHash();
-
-        let refreshedAtoms = await getTetheredAtoms(ac, poptop);
-        acTwist = new Twist(refreshedAtoms, ac.getHash());
-
-        // Verify that the Authed Cap is controlled by the local line
-        assert(await isValidAndControlled(acTwist, poptop, keyPair.privateKey));
-    });
-
-    it("Should verify that a different key does not have control", async () => {
-        // Verify that a different key does not have control
-        let keyPair2 = await generateKey();
-        await assert.rejects(
-            isValidAndControlled(acTwist, poptop, keyPair2.privateKey),
-            new ProcessException(7, "Unable to establish local control of this file (verifying controller)"));
-    });
-
-    it("Should fail to verify a hitch line with a different poptop", async () => {
-        // throw missing info error
-        let tb2 = await create(null, null, null, keyPair.privateKey, null);
-        let lt2 = new Twist(tb2.serialize());
-        let poptop2 = lt2.getHash();
-
-        //assert throws error
-        await assert.rejects(
-            isValidAndControlled(acTwist, poptop2, keyPair.privateKey),
-            new ProcessException(6, "Unable to establish local control of this file (verifying hitch line)"));
-    });
-});
-*/
 
 describe("RemoteNextRelayClient", async () => {
     const twistHexes = ["418f79797eca5a8d46d3183737f0a9c50e4950a1f86298621785939cf6d41bee5b",
@@ -259,7 +191,7 @@ describe("RemoteNextRelayClient", async () => {
             .post("/")
             .reply(200, (_, requestBody) => requestBody);
 
-        let toda = new TodaClient(new VirtualInventoryClient());
+        let toda = new TodaClientV2(new VirtualInventoryClient());
         toda._getSalt = () => ByteArray.fromHex("012345");
         let tether = Hash.fromHex("41e6e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4cb829ed640be4");
         let a = await toda.create(tether);

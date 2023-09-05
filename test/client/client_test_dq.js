@@ -2,7 +2,7 @@ import assert from "assert";
 import { Abject } from "../../src/abject/abject.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { Hash } from "../../src/core/hash.js";
-import { TodaClient, TodaClientV2 } from "../../src/client/client.js";
+import { TodaClientV2 } from "../../src/client/client.js";
 import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { v4 as uuid } from "uuid";
 import { createLine, initRelay, mint } from "./util.js";
@@ -24,7 +24,7 @@ describe("getQuantity", async () => {
 
     it("getCombinedQuantities for DQs", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClient(inv, "http://localhost:8000");
+        let toda = new TodaClientV2(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
         let {twist} = await mint(toda, 43, 1);
@@ -691,9 +691,9 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
         assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
     });
 
-    //FIXME: Still failing. TodaClient.pull() does not 
+    //FIXME: Still failing. TodaClientV2.pull() does not 
     //       understand where it needs to stop; it assumes 
-    //       it should stop at TodaClient.defaultTopLineHash
+    //       it should stop at TodaClientV2.defaultTopLineHash
     xit("Alice => Bob => Charlie, multi layered poptop, DQ has a higher poptop than addresses", async function() {
         const { toda: alice, hash: aliceHash } = 
             await createLine(this.lowerRelay.twists[2].getHash());
