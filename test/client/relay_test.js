@@ -77,7 +77,7 @@ describe("RemoteNextRelayClient", async () => {
         nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", null);
         let randomH = Hash.fromHex("41ecb829ed640be46e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4");
-        assert.ok(!(await relay._getNext(randomH)));
+        assert.ifError((await relay._getNext(randomH)));
         nock.cleanAll();
     });
 
@@ -90,7 +90,7 @@ describe("RemoteNextRelayClient", async () => {
         assert.ok(twist.getHash().equals(twistHashes[3]));
         assert.ok(twist.prev().getHash().equals(twistHashes[2]));
         // Sanity check: .next.toda test files do not contain shields
-        assert.ok(!twist.prev().shield());
+        assert.ifError(twist.prev().shield());
         nock.cleanAll();
     });
 
@@ -99,7 +99,7 @@ describe("RemoteNextRelayClient", async () => {
         nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", null);
         let randomH = Hash.fromHex("41ecb829ed640be46e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4");
-        assert.ok(!(await relay._getShield(randomH)));
+        assert.ifError((await relay._getShield(randomH)));
         nock.cleanAll();
     });
 
@@ -124,7 +124,7 @@ describe("RemoteNextRelayClient", async () => {
         let twist = await relay.get();
         assert.ok(twist.getHash().equals(twistHashes[8]));
         assert.ok(twist.get(twistHashes[2])); // Went backwards until the fast twist (twists[2])
-        assert.ok(!twist.get(twistHashes[1])); // Does not include prior to that (twists[1])
+        assert.ifError(twist.get(twistHashes[1])); // Does not include prior to that (twists[1])
 
         // Check that all shields have been populated
         twist = new Twist(twist.getAtoms(), twistHashes[7]);
@@ -144,7 +144,7 @@ describe("RemoteNextRelayClient", async () => {
         let twist = await relay.get();
         assert.ok(twist.getHash().equals(twistHashes[8]));
         assert.ok(twist.get(twistHashes[3])); // Went backwards and stopped at the requested predicate
-        assert.ok(!twist.get(twistHashes[1])); // Does not include prior to that (twists[1])
+        assert.ifError(twist.get(twistHashes[1])); // Does not include prior to that (twists[1])
 
         // Check that all shields have been populated
         twist = new Twist(twist.getAtoms(), twistHashes[7]);
@@ -165,7 +165,7 @@ describe("RemoteNextRelayClient", async () => {
         let twist = await relay.get();
         assert.ok(twist.getHash().equals(twistHashes[8]));
         assert.ok(twist.get(twistHashes[5])); // Went backwards until the fast twist (twists[5])
-        assert.ok(!twist.get(twistHashes[4])); // Does not include prior to that (twists[4])
+        assert.ifError(twist.get(twistHashes[4])); // Does not include prior to that (twists[4])
 
         // Check that all shields have been populated
         twist = new Twist(twist.getAtoms(), twistHashes[7]);
@@ -181,7 +181,7 @@ describe("RemoteNextRelayClient", async () => {
         nockLocalFileServer("test/client/remoteNextRelay_files", 8080);
         let randomH = Hash.fromHex("41ecb829ed640be46e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4");
         let relay = new RemoteNextRelayClient("http://wikipedia.com", "http://localhost:8080", randomH);
-        assert.ok(!(await relay.get()));
+        assert.ifError((await relay.get()));
         nock.cleanAll();
     });
 
@@ -228,17 +228,17 @@ describe("LocalNextRelayClient", async () => {
         assert.ok(twist);
         assert.ok(twist.getHash().equals(t1.getHash()));
         assert.ok(twist.prev());
-        assert.ok(!twist.get(t2.getHash()));
+        assert.ifError(twist.get(t2.getHash()));
 
         twist = relay._getNext(t1.getHash());
         assert.ok(twist);
         assert.ok(twist.getHash().equals(t2.getHash()));
         assert.ok(twist.prev());
-        assert.ok(!twist.get(t0.getHash()));
+        assert.ifError(twist.get(t0.getHash()));
         assert.throws(() => twist.prev().prev());
 
         twist = relay._getNext(t2.getHash()); // TOO RECENT! Doesn't have a 'next'
-        assert.ok(!twist);
+        assert.ifError(twist);
     });
 
     it("Simple .shield, last fast", async() => {
@@ -251,11 +251,11 @@ describe("LocalNextRelayClient", async () => {
         const t3 = await toda.append(t2, randH(), null, null, () => {}, null, { noHoist: true });
 
         const relay = new LocalNextRelayClient(toda, t3.getHash());
-        assert.ok(!relay._getShield(t0.getHash())); // dne: loose
+        assert.ifError(relay._getShield(t0.getHash())); // dne: loose
         assert.ok(relay._getShield(t1.getHash())); // Public!
         assert.equal((relay._getShield(t1.getHash())).toString(), t1.shield().toString());
-        assert.ok(!relay._getShield(t2.getHash())); // dne: loose
-        assert.ok(!relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
+        assert.ifError(relay._getShield(t2.getHash())); // dne: loose
+        assert.ifError(relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
     });
 
     it("Simple .shield, last loose", async() => {
@@ -269,11 +269,11 @@ describe("LocalNextRelayClient", async () => {
         const t4 = await toda.append(t3);
 
         const relay = new LocalNextRelayClient(toda, t3.getHash());
-        assert.ok(!relay._getShield(t0.getHash())); // dne: loose
+        assert.ifError(relay._getShield(t0.getHash())); // dne: loose
         assert.ok(relay._getShield(t1.getHash())); // Public!
         assert.equal((relay._getShield(t1.getHash())).toString(), t1.shield().toString());
-        assert.ok(!relay._getShield(t2.getHash())); // dne: loose
-        assert.ok(!relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
-        assert.ok(!relay._getShield(t4.getHash())); // dne: loose
+        assert.ifError(relay._getShield(t2.getHash())); // dne: loose
+        assert.ifError(relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
+        assert.ifError(relay._getShield(t4.getHash())); // dne: loose
     });
 });

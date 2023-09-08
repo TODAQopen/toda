@@ -36,7 +36,7 @@ function runTest(test) {
             });
         } else {
             it("Reqsat should fail", async () => {
-                assert(!(await checkInterpret(test["input"])));
+                assert.ifError(await checkInterpret(test["input"]) || null);
             });
         }
     });
@@ -58,7 +58,7 @@ function testFilter(testName) {
 let testNames = listTests().filter(testFilter);
 
 describe("test-suite/reqsat-test", () => {
-    it("Make sure at least one test was loaded.", 
+    it("Make sure at least one test was loaded.",
        () => assert(testNames.length > 0));
 
     // it("should wait forever for perf debugging", () => {

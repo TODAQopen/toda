@@ -317,7 +317,7 @@ describe("pull should include all required info", async () => {
         let aNNNext = await toda.append(aNNext, remoteLine.getHash());
         toda2.inv.put(aNNNext.getAtoms());
 
-        assert(!(await toda.isSatisfiable(aNNNext)));
+        assert.ifError(await toda.isSatisfiable(aNNNext) || null);
         assert(await toda2.isSatisfiable(aNNNext));
 
         // append another fast twist, causing a hitch, requiring previous (local) hoist info

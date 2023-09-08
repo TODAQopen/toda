@@ -78,7 +78,7 @@ describe("Line/prev", () => {
         let tw2 = new Twist(tw1.createSuccessor().serialize());
         line.putTwist(tw2);
         assert(line.prev(tw2.getHash()).equals(tw1.getHash()));
-        assert(!line.prev(tw1.getHash()));
+        assert.ifError(line.prev(tw1.getHash()));
     });
 });
 
@@ -125,7 +125,7 @@ describe("Line/successor", () => {
         assert(line.successor(tw1.getHash()).equals(tw2.getHash()));
     });
     it("Should return nothing if there is no successor found", () => {
-        assert(!line.successor(tw2.getHash()));
+        assert.ifError(line.successor(tw2.getHash()));
     });
 });
 
@@ -145,7 +145,7 @@ describe("Line/last", () => {
         assert.equal(line.last(tw3.getHash()), null);
     });
     it("Should not have defined behaviour for looking up a successor for an unknown hash", () => {
-        assert(!line.last(sbh("soemthing random this time")));
+        assert.ifError(line.last(sbh("soemthing random this time")));
     });
 });
 
@@ -352,8 +352,8 @@ describe("Colinear", async function () {
         const t4 = new Twist(t3.createSuccessor().serialize());
         const t5 = new Twist(t4.createSuccessor().serialize());
         [t0, t1, t2, t3, t4, t5].forEach(t => line.putTwist(t));
-        assert.ok(!line.colinear(Hash.fromHex("41a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"), 
-                                 t5.getHash()));
+        assert.ifError(line.colinear(Hash.fromHex("41a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"),
+                                 t5.getHash()) || null);
     });
 
     it("Not colinear; different lines", async function() {
@@ -367,8 +367,8 @@ describe("Colinear", async function () {
         const b2 = new Twist(b1.createSuccessor().serialize());
         const b3 = new Twist(b2.createSuccessor().serialize());
         [a0, a1, a2, a3, b0, b1, b2, b3].forEach(t => line.putTwist(t));
-        assert.ok(!line.colinear(a2.getHash(), 
-                                 b1.getHash()));
+        assert.ifError(line.colinear(a2.getHash(),
+                                 b1.getHash()) || null);
     });
 
     it("Same twist", async function() {
@@ -377,7 +377,7 @@ describe("Colinear", async function () {
         const t1 = new Twist(t0.createSuccessor().serialize());
         const t2 = new Twist(t1.createSuccessor().serialize());
         [t0, t1, t2].forEach(t => line.putTwist(t));
-        assert.ok(line.colinear(t1.getHash(), 
+        assert.ok(line.colinear(t1.getHash(),
                                 t1.getHash()));
     });
 
@@ -399,7 +399,7 @@ describe("Colinear", async function () {
         const t4 = new Twist(t3.createSuccessor().serialize());
         const t5 = new Twist(t4.createSuccessor().serialize());
         [t0, t1, t2, t3, t4, t5].forEach(t => line.putTwist(t));
-        assert.ok(!line.colinear(Hash.fromHex("41a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"), 
-                                 t5.getHash()));
+        assert.ifError(line.colinear(Hash.fromHex("41a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"),
+                                 t5.getHash()) || null);
     });
 });
