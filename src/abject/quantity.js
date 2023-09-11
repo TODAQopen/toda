@@ -19,15 +19,14 @@ class DQ extends DelegableActionable {
     //  it shouldn't? it could easily be a one-liner.
     static displayToQuantity(value, displayPrecision) {
         if (DQ.safeDisplayPrecision(displayPrecision) === false) {
-            throw new Error("displayPrecision must be an integer " + 
-                "between 0 and 15, inclusive");
+            throw new InvalidDisplayPrecision(displayPrecision);
         }
 
         let quantity = value * 10**displayPrecision;
         quantity = +quantity.toFixed(0);
 
         if (DQ.safeQuantity(quantity) < 0) {
-            throw new Error("Quantity must be a non-negative integer");
+            throw new InvalidQuantity(quantity);
         }
 
         return quantity;
@@ -35,12 +34,11 @@ class DQ extends DelegableActionable {
 
     static quantityToDisplay(quantity, displayPrecision) {
         if (DQ.safeDisplayPrecision(displayPrecision) === false) {
-            throw new Error("displayPrecision must be an integer " +
-                "between 0 and 15, inclusive");
+            throw new InvalidDisplayPrecision(displayPrecision);
         }
 
         if (DQ.safeQuantity(quantity) < 0) {
-            throw new Error("Quantity must be a non-negative whole number");
+            throw new InvalidQuantity(quantity);
         }
 
         let value = quantity / 10**displayPrecision;
@@ -75,11 +73,10 @@ class DQ extends DelegableActionable {
 
     static mint(quantity, displayPrecision=0, mintingInfo) {
         if (DQ.safeQuantity(quantity) <= 0) {
-            throw new Error("Quantity minted must be a positive integer");
+            throw new InvalidQuantity(quantity);
         }
         if (DQ.safeDisplayPrecision(displayPrecision) === false) {
-            throw new Error("displayPrecision must be an " + 
-                "integer between 0 and 15, inclusive");
+            throw new InvalidDisplayPrecision(displayPrecision);
         }
 
         let c = new DI();
@@ -101,14 +98,14 @@ class DQ extends DelegableActionable {
     //  _must_ be confirmed, then completed.
     delegate(quantity) {
         if (DQ.safeQuantity(quantity) <= 0) {
-            throw new Error("Quantity delegated must be a positive integer");
+            throw new InvalidQuantity(quantity);
         }
 
         if (quantity > this.quantity) {
             // NOTE: on write we block this, but on read we allow 
             //  this and make it equal to parent's quantity
-            throw new Error("The delegate's quantity must "
-                + "not be greater than the delegator's quantity");
+            throw new InsufficientQuantity(quantity,
+                                           this.quantity);
         }
 
         let x = this.createDelegate();
@@ -212,6 +209,33 @@ class DQ extends DelegableActionable {
 
 }
 
+class InvalidDisplayPrecision extends Error {
+    constructor(value) {
+        super(`Invalid display precision: ${value}. ` + 
+              `Must be an integer between 0 and 15 inclusive`);
+        this.value = value;
+    }
+}
+
+class InvalidQuantity extends Error {
+    constructor(value) {
+        super(`Invalid quantity: ${value}. ` + 
+              `Must be a positive integer.`);
+        this.value = value;
+    }
+}
+
+class InsufficientQuantity extends Error {
+    constructor(delegatedQuantity, delegatorQuantity) {
+        super(`The delegated quantity must not be greater` +
+              ` than the delegator's quantity. Delegated quantity:` +
+              ` ${delegatedQuantity}.` +
+              ` Delegator's quantity: ${delegatorQuantity}`);
+        this.delegatedQuantity = delegatedQuantity;
+        this.delegatorQuantity = delegatorQuantity;
+    }
+}
+
 DQ.context = new DIAssetClassClass();
 
 DQ.context.fieldSyms = {
@@ -236,4 +260,7 @@ DQ.context.addACField(DQ.context.fieldSyms.displayPrecision, fDisplayPrecision);
 DQ.context.addACField(DQ.context.fieldSyms.mintingInfo, fMintingInfo);
 
 Abject.registerInterpreter(DQ);
-export { DQ };
+export { DQ, 
+         InvalidDisplayPrecision,
+         InvalidQuantity,
+         InsufficientQuantity };

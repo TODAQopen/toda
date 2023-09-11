@@ -6,6 +6,7 @@ import { TodaClientV2 } from "../../src/client/client.js";
 import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { v4 as uuid } from "uuid";
 import { createLine, initRelay, mint } from "./util.js";
+import { InsufficientQuantity, InvalidDisplayPrecision, InvalidQuantity } from "../../src/abject/quantity.js";
 
 describe("getQuantity", async () => {
     it("getQuantity for DQ", async () => {
@@ -155,7 +156,8 @@ describe("delegateValue", async () => {
                                                 .encode("I am salty!"));
         let {twist} = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
-        await assert.rejects(toda.delegateValue(dq, 8.2));
+        await assert.rejects(toda.delegateValue(dq, 8.2),
+                                                InsufficientQuantity);
     });
 
     it("NaN", async () => {
@@ -811,5 +813,72 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
         assert.equal((await bob.getBalance(dq, true)).balance, 3);
         assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+});
+
+describe("Mint tests", async function () {
+    it("As little as possible specified, a-okay", async function () {
+        const { toda, hash } = await createLine();
+        const { twist, root } = await toda.mint(1232);
+        const abj = Abject.fromTwist(twist);
+        assert.equal(abj.quantity, 1232);
+        assert.equal(abj.displayPrecision, 0);
+        assert.equal(abj.popTop(), null);
+        assert.ok(root.equals(abj.rootId()));
+        assert.ok(hash.equals(twist.getTetherHash()));
+    });
+
+    it("Multiple things specified, a-okay", async function () {
+        const topline = await initRelay(8091, null, null, 5);
+        try {
+            const { toda, hash } = await createLine(
+                topline.twists[2].getHash(),
+                topline.twists[2].getHash(),
+                "http://localhost:8091/files",
+                "http://localhost:8091/hoist");
+            const t0 = await toda.create(hash);
+            const t1 = await toda.append(t0, hash);
+            const { twist, root } = await toda.mint(1232, 
+                                                    1, 
+                                                    t1.getHash(), 
+                                                    topline.twists[2]
+                                                           .getHash(), 
+                                                    "Hello!");
+            const abj = Abject.fromTwist(twist);
+            assert.equal(abj.quantity, 1232);
+            assert.equal(abj.displayPrecision, 1);
+            assert.ok(topline.twists[2].getHash().equals(abj.popTop()));
+            assert.ok(root.equals(abj.rootId()));
+            assert.ok(t1.getHash().equals(twist.getTetherHash()));
+            assert.equal(abj.mintingInfo, "Hello!");
+        } finally {
+            await topline.server.stop();
+        }
+    });
+
+    it("Quantity error", async function () {
+        const { toda } = await createLine();
+        await assert.rejects(toda.mint(123.2),
+                             InvalidQuantity);
+        await assert.rejects(toda.mint(0),
+                             InvalidQuantity);
+        await assert.rejects(toda.mint(null),
+                             InvalidQuantity);
+        await assert.rejects(toda.mint(-4),
+                             InvalidQuantity);
+        await assert.rejects(toda.mint("HELLO!"),
+                             InvalidQuantity);
+    });
+
+    it("Display precision error", async function () {
+        const { toda } = await createLine();
+        await assert.rejects(toda.mint(123, 0.2),
+                             InvalidDisplayPrecision);
+        await assert.rejects(toda.mint(123, -2),
+                             InvalidDisplayPrecision);
+        await assert.rejects(toda.mint(123, 16),
+                             InvalidDisplayPrecision);
+        await assert.rejects(toda.mint(123, "HELLO!"),
+                             InvalidDisplayPrecision);
     });
 });

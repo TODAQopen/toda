@@ -662,6 +662,7 @@ class TodaClient {
     async mint(quantity, precision, tetherHash, popTop, mintingInfo) {
         tetherHash ||= this.defaultRelayHash;
         popTop ||= this.defaultTopLineHash;
+        precision ||= 0;
 
         let mintingAbject;
         if (mintingInfo) {
