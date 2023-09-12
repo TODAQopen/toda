@@ -8,8 +8,11 @@
 
 import { LocalKeyPair } from './keypair.js';
 import { SignatureRequirement, RequirementSatisfier } from '../core/reqsat.js';
-import { Crypto } from '@peculiar/webcrypto';
-const crypto = new Crypto();
+
+if(typeof window === 'undefined') {
+    const { Crypto } = await import('@peculiar/webcrypto');
+    globalThis.crypto = new Crypto();
+}
 
 class SECP256r1 extends LocalKeyPair {
     static requirementTypeHash = SignatureRequirement.REQ_SECP256r1;
@@ -33,22 +36,29 @@ class SECP256r1 extends LocalKeyPair {
         this.publicKey = publicKey;
     }
 
-    static importRawKey(keyFormat, buffer) {
+    static importRawPubKey(keyFormat, buffer) {
+        // NB: webcrypto will subtly throw if you import a pubkey with "sign" usage
         return crypto.subtle.importKey(
             keyFormat,
             buffer,
+            this.curve,
+            true, // extractable
+            ["verify"]
+        );
+    }
+
+    static importKey(keyFormat, buffer) {
+        let b = this._fromPEM(buffer.toString());
+        return crypto.subtle.importKey(
+            keyFormat,
+            b,
             this.curve,
             true, // extractable
             ["sign", "verify"]
         );
     }
 
-    static importKey(keyFormat, buffer) {
-        return this.importRawKey(keyFormat, this._fromPEM(buffer.toString()));
-    }
-
     static async generate() {
-
         let keyPair = await crypto.subtle.generateKey(
             this.curve,
             true, // extractable
@@ -69,7 +79,7 @@ class SECP256r1 extends LocalKeyPair {
 
     static async verifySig(rawPublicKeyBuffer, derSignatureBuffer, data) {
         let signedString = this._fromDER(derSignatureBuffer);
-        let pubKey = await this.importRawKey("spki", rawPublicKeyBuffer);
+        let pubKey = await this.importRawPubKey("spki", rawPublicKeyBuffer);
         return crypto.subtle.verify(
             this.sigParams,
             pubKey,

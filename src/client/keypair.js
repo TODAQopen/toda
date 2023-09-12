@@ -1,9 +1,10 @@
 import { RequirementSatisfier, SignatureSatisfaction } from '../core/reqsat.js';
 import { ByteArray } from '../core/byte-array.js';
-import { Crypto } from '@peculiar/webcrypto';
-const crypto = new Crypto();
 
-import fs from 'fs-extra';
+if(typeof window === 'undefined') {
+    const { Crypto } = await import('@peculiar/webcrypto');
+    globalThis.crypto = new Crypto();
+}
 
 class KeyPair extends RequirementSatisfier {
 
@@ -32,7 +33,7 @@ class KeyPair extends RequirementSatisfier {
             return false;
         }
         let pubkey = await this.exportPublicKey();
-        return requirementPacket.getShapedValue().toString() === 
+        return requirementPacket.getShapedValue().toString() ===
             pubkey.toString();
     }
 
@@ -57,33 +58,6 @@ class LocalKeyPair extends KeyPair {
         return new ByteArray(await this.exportRawPublicKey());
     }
 
-    async toDisk(privateKeyPath, publicKeyPath) {
-        let publicKey = await crypto.subtle.exportKey(
-            "spki",
-            this.publicKey
-        );
-        let privateKey = await crypto.subtle.exportKey(
-            "pkcs8",
-            this.privateKey
-        );
-        fs.outputFileSync(publicKeyPath,
-                          this.constructor._toPEM(Buffer.from(publicKey), 
-                            "PUBLIC KEY"), {mode: 0o600});
-
-        fs.outputFileSync(privateKeyPath,
-                          this.constructor._toPEM(Buffer.from(privateKey), 
-                            "PRIVATE KEY"), {mode: 0o600});
-    }
-
-    static async fromDisk(privateKeyPath, publicKeyPath) {
-        publicKeyPath = publicKeyPath || privateKeyPath + ".pub";
-
-        return new this(await this.importKey("pkcs8",
-                            fs.readFileSync(privateKeyPath)),
-                        await this.importKey("spki",
-                            fs.readFileSync(publicKeyPath)));
-    }
-
     /** Converts a Buffer representing a key into a PEM string
      * Modified with love from https://www.npmjs.com/package/pemtools
      * @param buffer <Buffer> A buffer representing the key
@@ -99,7 +73,7 @@ class LocalKeyPair extends KeyPair {
     }
 
     /** Converts a pem string to a Buffer
-     * Ignores any characters before the header boundary and removes 
+     * Ignores any characters before the header boundary and removes
      * all whitespace between the header and footer boundaries
      * Modified with love from https://www.npmjs.com/package/pemtools
      * @param pem <String> The PEM string representing a key
@@ -116,7 +90,7 @@ class LocalKeyPair extends KeyPair {
             throw new Error("parse PEM: BEGIN not found");
         }
 
-        let keyString = pem.slice(headerMatch.index + headerMatch[0].length, 
+        let keyString = pem.slice(headerMatch.index + headerMatch[0].length,
             footerMatch.index).replace(/\s/g, "");
         return ByteArray.fromUtf8(this.base64ToUtf8(keyString));
     }
@@ -157,7 +131,7 @@ class LocalKeyPair extends KeyPair {
         s = this._derRemovePadding(s);
 
         // I don't think this should be needed -> its covered by rmPadding(s)
-        //  but was in elliptic library. 
+        //  but was in elliptic library.
         //  Is there a case I'm missing by removing this?
         while (!s[0] && !(s[1] & 0x80)) {
             s = s.slice(1);
@@ -173,7 +147,7 @@ class LocalKeyPair extends KeyPair {
         arr = this._derConstructLength(arr, s.length);
         arr = arr.concat(s);
 
-        // Create the final signed array. It starts with 0x30 and 
+        // Create the final signed array. It starts with 0x30 and
         //  then the full length of the new (r + s)
         let res = new ByteArray([ 0x30 ]);
         res = this._derConstructLength(res, arr.length);
@@ -193,13 +167,13 @@ class LocalKeyPair extends KeyPair {
         var view = new ByteArray(bytes);
 
         // Strip(/check?) the DER header for the whole signature
-        // sig[0] should yield 0x30 and there should probably 
-        //  be an exception thrown if it isn't sig[1] should 
+        // sig[0] should yield 0x30 and there should probably
+        //  be an exception thrown if it isn't sig[1] should
         // yield sig.length-2 (because the type and length bytes aren't counted)
         var offset = 2;
 
         // extract r (and its header)
-        // sig[2] shoule be 0x02 and there should probably 
+        // sig[2] shoule be 0x02 and there should probably
         // be an exception thrown if it isn't
         var length = sig[offset + 1]; // should be =< 32
         offset += 2;
@@ -220,7 +194,7 @@ class LocalKeyPair extends KeyPair {
         offset += length;
 
         // extract s (and its header)
-        // sig[offset] shoule be 0x02 and there 
+        // sig[offset] shoule be 0x02 and there
         // should probably be an exception thrown if it isn't
         length = sig[offset + 1]; // should be =< 32
         offset += 2;
