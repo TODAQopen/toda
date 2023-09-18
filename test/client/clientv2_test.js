@@ -584,7 +584,7 @@ describe("Stopping conditions", async () => {
 });
 
 // TODO: This test is broken due to logic in the client
-xdescribe("pull should include all required info", async () => {
+describe("pull should include all required info", async () => {
     it("send to remote and back", async () => {
         const dir0 = "./files/" + uuid();
         const dir1 = "./files/" + uuid();
@@ -621,7 +621,7 @@ xdescribe("pull should include all required info", async () => {
         let aNNNext = await toda.append(aNNext, remoteLine.getHash());
         toda2.inv.put(aNNNext.getAtoms());
 
-        assert.ifError(await toda.isSatisfiable(aNNNext));
+        assert.equal(await toda.isSatisfiable(aNNNext), false);
         assert(await toda2.isSatisfiable(aNNNext));
 
         // append another fast twist, causing a hitch,
@@ -732,6 +732,49 @@ describe("Multi-remote pull test", () => {
         }
     });
 
+    it("Won't reach up all the way if no defaultTopLineHash specified", async () => {
+        const top = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()));
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
+
+        const mid = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8090/files");
+        mid._getSalt = () => ByteArray.fromUtf8("some salty2");
+        mid.defaultRelayUrl = "http://localhost:8090/hoist";
+        const midRelay = await new TestRelayServer(mid, { port: 8091, 
+                                                          fileServerRedirects: ["http://localhost:8090/files"] }).start();
+
+        const foot = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()), 
+                                        "http://localhost:8091/files");
+        foot.defaultRelayUrl = "http://localhost:8091/hoist";
+        foot._getSalt = () => ByteArray.fromUtf8("some salty2");
+        try {
+            const t0 = await top.create(null, null, uuidCargo());
+            await top.append(t0);
+
+            const m0 = await mid.create(t0.getHash());
+            await mid.append(m0, t0.getHash());
+
+            const f0 = await foot.create(m0.getHash());
+            const f1 = await foot.append(f0, m0.getHash());
+            const f2 = await foot.append(f1, m0.getHash());
+
+            const t1 = top.get(t0.getHash());
+            const m1 = mid.get(m0.getHash());
+
+            assert.ok(!f2.get(t1.getHash()));
+            assert.ok(f2.get(m1.getHash()));
+
+            const f3 = await foot.append(f2, m0.getHash());
+
+            assert.ok(!f3.get(t1.getHash()));
+            assert.ok(f3.get(m1.getHash()));
+        } finally {
+            await midRelay.stop();
+            await topRelay.stop();
+        }
+    });
+
     it("Deep pull, no loose twists", async () => {
         const d = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()));
         d._getSalt = () => ByteArray.fromUtf8("some salty");
@@ -750,7 +793,6 @@ describe("Multi-remote pull test", () => {
         b.defaultRelayUrl = "http://localhost:8091/hoist";
         const bRelay = await new TestRelayServer(b, { port: 8092,
                                                         fileServerRedirects: ["http://localhost:8091/files"] }).start();
-
         const a = new TodaClientV2(new LocalInventoryClient("./files/" + uuid()),
                                       "http://localhost:8092/files");
         a.defaultRelayUrl = "http://localhost:8092/hoist";
