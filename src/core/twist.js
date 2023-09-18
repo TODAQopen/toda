@@ -33,12 +33,12 @@ class ShapeError extends Error {
     }
 }
 
-// it would sort of be nice for this to be the same 
+// it would sort of be nice for this to be the same
 //  as the below class, but it's annoying.
 class TwistBuilder {
     static defaultHashImp = Sha256;
 
-    constructor(atoms, cargo, satisfactions, 
+    constructor(atoms, cargo, satisfactions,
                 tether, requirements, shield, rigging) {
         this.atoms = atoms ? Atoms.fromAtoms(atoms) : new Atoms();
         this.data = new HashMap(cargo || []);
@@ -124,7 +124,7 @@ class TwistBuilder {
         this.tether = tether;
     }
 
-    //todo(mje): Do we even need this or should we 
+    //todo(mje): Do we even need this or should we
     //  always be including the whole tether line?
     setTetherHash(tetherHash) {
         this.tetherHash = tetherHash;
@@ -166,7 +166,7 @@ class TwistBuilder {
     setCargo(atoms) {
         this.addAtoms(atoms);
         // dx: todo: remove this! replace with twist.focus
-        let thisisdumb = atoms.toPairs(); 
+        let thisisdumb = atoms.toPairs();
         this.cargoHash = atoms.focus || thisisdumb[thisisdumb.length-1][0];
     }
 
@@ -227,7 +227,7 @@ class TwistBuilder {
         if (this.riggingPacket || this.rigging.size > 0) {
             if (this.riggingPacket && this.rigging.size > 0) {
                 for (let k of this.rigging.keys()) {
-                    this.riggingPacket = 
+                    this.riggingPacket =
                         this.riggingPacket.set(k, this.rigging.get(k));
                 }
             }
@@ -253,7 +253,7 @@ class TwistBuilder {
     }
 
     // dx: NOTE! changes the focus!! why????
-    // dx: TODO: change this so it doesn't 
+    // dx: TODO: change this so it doesn't
     //  change the focus, do that manually if desired
     addAtoms(atoms) {
         this.atoms.merge(atoms);
@@ -314,7 +314,7 @@ class Twist {
 
         if (!this.packet.getBodyHash) {
             // dx: maybe should throw here? this returns an improper twist...
-            return null; 
+            return null;
         }
 
         this.body = atoms.get(this.packet.getBodyHash());
@@ -418,7 +418,7 @@ class Twist {
     }
 
     /**
-      * Looks to see if `previousHash` 
+      * Looks to see if `previousHash`
       *  is one of the previous twists of this twist,
       *  returning that twist if it does.
       * @param previousHash <Hash>
@@ -447,22 +447,67 @@ class Twist {
             throw new MissingHashPacketError(riggingHash);
         }
         if (!(rigging instanceof PairTriePacket)) {
-            throw new ShapeError(this.body.getRiggingHash(), 
+            throw new ShapeError(this.body.getRiggingHash(),
                 "Rigging must be pairtrie");
         }
         return rigging.get(hash);
     }
 
+    /**
+     * Returns the hash of the shield packet
+     * @returns <Hash>
+     */
     getShieldHash() {
         return this.body.getShieldHash();
     }
 
     /**
+     * Returns the shield packet
      * @returns <ArbitraryPacket>
      */
     shield() {
         return this.get(this.getShieldHash());
     }
+
+    /**
+     * Returns the singly hashed key for the rigging trie
+     * @returns <Hash>
+     */
+    getShieldedKey() {
+        if (!this._shieldedKey) {
+            let hashBytes = this.hash.toBytes();
+            this._shieldedKey = this.shieldFunction(hashBytes);
+        }
+
+        return this._shieldedKey;
+    }
+
+    /**
+     * Returns the doubly hashed key for the rigging trie
+     * @returns <Hash>
+     */
+    getDoubleShieldedKey() {
+        if (!this.shieldedKeyDouble) {
+            let single = this.getShieldedKey();
+            this.shieldedKeyDouble = this.shieldFunction(single.toBytes());
+        }
+
+        return this.shieldedKeyDouble;
+    }
+
+    /**
+     * Applies the shield function for this twist to the bytes
+     * @param bytes <ByteArray> Bytes to shield
+     * @returns <Hash>
+     */
+    shieldFunction(bytes) {
+        let hashfun = this.hash.constructor;
+        let shieldPacket = this.shield(); // can be null
+        let shieldBytes = shieldPacket ? shieldPacket.getShapedValue() : null;
+        let bytesToShield = shieldBytes ? shieldBytes.concat(bytes) : bytes;
+        return hashfun.fromBytes(bytesToShield);
+    }
+
 
     tether() {
         if (this.isTethered()) {
@@ -486,7 +531,7 @@ class Twist {
         }
         let reqs = this.get(reqHash);
         if (!reqs) {
-            throw new MissingHashPacketError(reqHash, 
+            throw new MissingHashPacketError(reqHash,
                 "Requirements packet missing");
         }
         if (key) {

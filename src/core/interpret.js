@@ -105,7 +105,7 @@ class Interpreter {
         // TODO: verify shape
         let sigPacketHash = twist.sats(reqHash);
         if (!sigPacketHash) {
-            throw new MissingEntryError(twist.hash, reqHash, 
+            throw new MissingEntryError(twist.hash, reqHash,
                 "missing sig entry");
         }
         // TODO: verify shape
@@ -116,7 +116,7 @@ class Interpreter {
 
         if (!(await RequirementSatisfier.verifySatisfaction(
                 reqHash, twist, keyPacket, sigPacket))) {
-            throw new ReqSatError(reqHash, twist.packet.getBodyHash(), 
+            throw new ReqSatError(reqHash, twist.packet.getBodyHash(),
                 keyPacket, sigPacket);
         }
     }
@@ -204,15 +204,12 @@ class Interpreter {
     }
 
     isHoist(lead, twist) {
-        // dx: perf: hey, cache these values! 
-        // this happens a lot and hashing is slow!
-        let s = Shield.shield(lead.hash, lead.hash, lead.shield());
-        let ss = Shield.doubleShield(lead.hash, lead.hash, lead.shield());
+        let s = lead.getShieldedKey();
+        let ss = lead.getDoubleShieldedKey();
         let v = twist.rig(s);
         let vv = twist.rig(ss);
 
-        return v && vv && !v.equals(s) && 
-               Shield.shield(lead.hash, v, lead.shield()).equals(vv);
+        return v && vv && !v.equals(s) && lead.shieldFunction(v.toBytes()).equals(vv);
     }
 
     hoistForwardSearch(lead, twist) {
@@ -243,7 +240,7 @@ class Interpreter {
         let hoist = this.hitchHoist(hash);
 
         if (!hoist) {
-            throw new MissingHoistError(hash, undefined, 
+            throw new MissingHoistError(hash, undefined,
                 {atoms: this.line.atoms.hashes});
         }
 
@@ -331,11 +328,11 @@ class Interpreter {
             this.nextTetheredTwist(unverifiedFast).hash,
             optLastSupported)) {
             // success - hitches have been verified back to desired point.
-            return undefined; 
+            return undefined;
         }
         if (this.twist(unverifiedFast).prev()) {
             return this._verifyHitchLine(
-                this.prevTetheredTwist(unverifiedFast).hash, 
+                this.prevTetheredTwist(unverifiedFast).hash,
                 optLastSupported, false);
         }
         if (optLastSupported) {
@@ -356,7 +353,7 @@ class Interpreter {
             console.log("WARN!! This line ends loosely. Are we chill with that?!");
             twist = this.prevTetheredTwist(hash);
         }
-        return this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash, 
+        return this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash,
                                      startHash, true);
     }
 
