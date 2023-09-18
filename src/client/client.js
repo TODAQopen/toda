@@ -165,31 +165,32 @@ class TodaClient {
         throw new WaitForHitchError();
     }
 
+    async _getHoistFromLocal(lead) {
+         // Check if this twist already contains the hoist
+         const i = new Interpreter(Line.fromTwist(lead));
+         try {
+             return i.hitchHoist(lead.getHash());
+         } catch {
+            return null;
+         }
+    }
+
+    async _getHoistFromRelay(lead) {
+        const relay = this.getRelay(lead);
+        if (!relay) {
+            console.error("NO RELAY FOUND FOR:", lead.getHash().toString());
+            throw new WaitForHitchError(); //TODO: specialize this error
+        }
+        return (await this._waitForHoist(lead, relay)).hoist;
+    }
+
     async _setPost(tb) {
         const lead = tb.twist().lastFast()?.lastFast();
-        let hoist, relayTwist;
         if (lead) {
-            // temporary hackitty hack
-            // does this twist already contain the hoisting info?
-            let local = new LocalRelayClient(this, 
-                tb.twist().lastFast().getHash());
-            ({hoist, relayTwist} = await local.getHoist(lead));
-            if (hoist) {
-                tb.addRigging(lead.getHash(), hoist.getHash());
-                return {hoist, relayTwist};
-            }
-
-            // orig:
-            let relay = this.getRelay(lead);
-            if (!relay) {
-                console.error("NO RELAY FOUND FOR:", lead.getHash().toString());
-                throw new WaitForHitchError(); //TODO: specialize this error
-            }
-
-            ({hoist, relayTwist} = await this._waitForHoist(lead, relay));
+            const hoist = (await this._getHoistFromLocal(lead)) ?? 
+                          (await this._getHoistFromRelay(lead));
             tb.addRigging(lead.getHash(), hoist.getHash());
         }
-        return {hoist, relayTwist};
     }
 
     create(tether, req, cargo, opts) {
@@ -245,7 +246,7 @@ class TodaClient {
         if (cargo) {
             next.setCargo(cargo);
         }
-        let hoist, relayTwist;
+        let relayTwist;
         if (tether) {
             // Attempts to bump the tether to the latest in
             //  its line using local data
@@ -255,10 +256,7 @@ class TodaClient {
             this._setShield(next);
 
             // XXX(acg): This will fail if we cannot retrieve the hoist.
-            ({hoist, relayTwist} = await this._setPost(next));
-            if (relayTwist) {
-                next.addAtoms(relayTwist.getAtoms());
-            }
+            await this._setPost(next);
         }
 
         if (rigging) {
@@ -776,34 +774,6 @@ class TodaClientV2 extends TodaClient {
 
     getRelayFromString() {
         throw new Error("Not implemented; use getRelay instead");
-    }
-
-    async _setPost(tb) {
-        const lead = tb.twist().lastFast()?.lastFast();
-        let hoist, relayTwist;
-        if (lead) {
-            // temporary hackitty hack
-            // does this twist already contain the hoisting info?
-            let local = new LocalNextRelayClient(this, lead.getHash());
-            ({hoist, relayTwist} = await local.getHoist(lead));
-            if (hoist) {
-                tb.addRigging(lead.getHash(), hoist.getHash());
-                return {hoist, relayTwist};
-            }
-
-            // orig:
-            let relay = this.getRelay(lead);
-            if (!relay) {
-                console.error("NO RELAY FOUND FOR:", lead.getHash().toString());
-                throw new WaitForHitchError(); //TODO: specialize this error
-            }
-
-            ({hoist, relayTwist} = await this._waitForHoist(lead, relay));
-            tb.addRigging(lead.getHash(), hoist.getHash());
-        }
-        return {hoist, relayTwist};
-        //TODO(acg): why wouldn't we also not take advantage of having grabbed
-        //all those proof atoms and save em?
     }
 }
 
