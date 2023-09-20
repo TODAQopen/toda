@@ -5,7 +5,12 @@ const packageJSON = JSON.parse(fs.readFileSync('./package.json'));
 
 export * as reqsat from  "./src/core/reqsat.js";
 export { Packet } from  "./src/core/packet.js";
+// TODO: Do not export * as hash
 export * as hash from  "./src/core/hash.js";
+export { Hash, 
+         Sha256 as Sha256Hash, 
+         Symbol as SymbolHash,
+         NullHash } from "./src/core/hash.js";
 export { Interpreter } from  "./src/core/interpret.js";
 export { Twist, TwistBuilder } from  "./src/core/twist.js";
 export { Atoms } from  "./src/core/atoms.js";
