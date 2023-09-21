@@ -1,53 +1,46 @@
-import { Abject } from "../../src/abject/abject.js";
-import { SimpleHistoric } from "../../src/abject/simple-historic.js";
-import { TodaClient, TodaClientV2, WaitForHitchError } from "../../src/client/client.js";
-import { SECP256r1 } from "../../src/client/secp256r1.js";
-import { LocalInventoryClient, VirtualInventoryClient } from "../../src/client/inventory.js";
+import { TodaClient, WaitForHitchError } from "../../src/client/client.js";
+import { LocalInventoryClient } from "../../src/client/inventory.js";
+import { v4 as uuid } from "uuid";
+import { uuidCargo } from "../util.js";
 import { Interpreter } from "../../src/core/interpret.js";
-import { HashMap } from "../../src/core/map.js";
-import { Twist } from "../../src/core/twist.js";
-import { ByteArray } from "../../src/core/byte-array.js";
-import { Hash, Sha256 } from "../../src/core/hash.js";
-import { PairTriePacket } from "../../src/core/packet.js";
 import { Line } from "../../src/core/line.js";
-import { MockSimpleHistoricRelay, isolateSegment } from "./mocks.js";
 import assert from "assert";
-import fs from "fs-extra";
-import nock from "nock";
+import { Hash, Sha256 } from "../../src/core/hash.js";
+import { TwistBuilder } from "../../src/core/twist.js";
+import { ByteArray } from "../../src/core/byte-array.js";
+import { SimpleHistoric } from "../../src/abject/simple-historic.js";
+import { RemoteRelayClient, LocalRelayClient }
+    from "../../src/client/relay.js";
+import { TestRelayServer } from "./relay_server.js";
+import { SECP256r1 } from "../../src/client/secp256r1.js";
 
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { HashMap } from "../../src/core/map.js";
+import { PairTriePacket } from "../../src/core/packet.js";
+import { Abject } from "../../src/abject/abject.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 describe("create", async () => {
-
     it("should create a Twist with the correct properties", async () => {
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new LocalInventoryClient("./files"));
+        let toda = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
         toda.shieldSalt = path.resolve(__dirname, "./files/salt");
         toda.addSatisfier(keyPair);
 
         let tether = Hash.fromHex("2208318633b506017519e9b90b0bdc8451772415ba29144ab7778cb09cc2d2fa6a");
 
-        // FIXME(acg): delete this function
-        //let cargo = await getAtomsFromPath(path.resolve(__dirname, "./files/out4.sr.toda"));
         let twist = await toda.create(tether, keyPair); //, cargo);
 
         assert(twist.getTetherHash().equals(tether));
         assert.equal(twist.shield().getShapedValue().length, 32);
         assert.equal(twist.reqs().shapedVal.size, 1);
-
-        //let key = Hash.fromHex("2208318633b506017519e9b90b0bdc8451772415ba29144ab7778cb09cc2d2fa6a");
-        //let val = Hash.fromHex("41c3b37b9d9eba8478ae44e1d95f3b6de2a40db91ea9d1e7440914b66b6eb6f932");
-        //assert(twist.cargo(new NullHash()).equals(SimpleRigged.interpreter));
-        //assert.equal(twist.get(twist.cargo(Actionable.fieldSyms.popTop)), cargo.get(Actionable.fieldSyms.popTop));
-        //assert.deepEqual(twist.get(twist.cargo(key)), cargo.get(val));
-
     });
 
     it("should not add a default shield to a locally tethered Twist", async () => {
-        let toda = new TodaClient(new LocalInventoryClient("./files"));
+        let toda = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
         let localLine = await toda.create();
         let t = await toda.create(localLine.getHash());
         assert.equal(t.shield(), null);
@@ -57,7 +50,7 @@ describe("create", async () => {
 describe("append", async () => {
     it("should append to a twist with the correct properties", async () => {
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new LocalInventoryClient("./files"));
+        let toda = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
         toda.shieldSalt = path.resolve(__dirname, "./files/salt");
         toda.addSatisfier(keyPair);
         let localLine = await toda.create();
@@ -83,7 +76,7 @@ describe("append", async () => {
 
     it("should append to a twist with the specified rigging and make a post", async () => {
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new LocalInventoryClient("./files"));
+        let toda = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
         toda.shieldSalt = path.resolve(__dirname, "./files/salt");
         toda.addSatisfier(keyPair);
         let localLine = await toda.create();
@@ -112,31 +105,6 @@ describe("append", async () => {
         assert(hoist.getHash().equals(c.rig(a.getHash())));
     });
 
-    // TODO(acg): Not sure what's up with the below.
-
-    /*
-    let refreshedAtoms = await getTetheredAtoms(twistB, lineTwist.getHash());
-    twistB = new Twist(refreshedAtoms, twistB.getHash());
-    // we can't verify the tether, we don't know what it is, so this should fail!
-    await assert.rejects(
-        async () => isValidAndControlled(twistB, lineTwist.getHash(), keyPair.privateKey),
-        (err) => {
-            assert.equal(err.exitCode, 7);
-            assert.equal(err.reason, "Unable to establish local control of this file (verifying controller)");
-            return true;
-        });
-    // Now let's sneakily update the twist without validation anyway to prove it doesn't validate
-    let appended2 = await append(twistB, null, null, tetherHash.toString(), keyPair.privateKey, () => {}, null);
-    let twistC = new Twist(appended2.serialize());
-    await assert.rejects(
-        async () => isValidAndControlled(twistC, lineTwist.getHash(), keyPair.privateKey),
-        (err) => {
-            assert.equal(err.exitCode, 6);
-            assert.equal(err.reason, "Unable to establish local control of this file (verifying hitch line)");
-            return true;
-        });
-        */
-
     it("should hoist", async () => {
         let toda = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
         //toda.defaultRelayPath = `${__dirname}/files/line.toda`;
@@ -146,7 +114,6 @@ describe("append", async () => {
         let {hoist: expectedHoist} = await (toda.getRelay(prev).getHoist(prev));
         assert.deepEqual(next.rig(prev), expectedHoist);
     });
-
 
     it("should 'do nothing' if the twist is not tethered or has no lead or meet", async () => {
         let keyPair = await SECP256r1.generate();
@@ -180,31 +147,9 @@ describe("append", async () => {
         }));
     });
 
-    it("append with remote test", async () => {
-        try {
-            nock.cleanAll();
-
-            let top = new MockSimpleHistoricRelay("http://localhost:8090");
-            await top.initialize();
-            top.serve();
-
-            let foot = new MockSimpleHistoricRelay(undefined, "http://localhost:8090", top.latest().getHash());
-            await foot.initialize();
-            await foot.append(top.latest().getHash());
-            await foot.append(top.latest().getHash());
-            await foot.append(top.latest().getHash());
-
-            assert.equal(4, foot.twists().length);
-            assert.ok(foot.latest().get(top.latest().getHash()));
-            assert.equal("http://localhost:8090", Abject.fromTwist(foot.latest()).tetherUrl());
-        } finally {
-            nock.cleanAll();
-        }
-    });
-
     it("should have valid req + sats", async () => {
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new LocalInventoryClient("./files"));
+        let toda = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
         toda.shieldSalt = path.resolve(__dirname, "./files/salt");
         toda.addSatisfier(keyPair);
 
@@ -217,29 +162,146 @@ describe("append", async () => {
         await i.verifyReqSat(SECP256r1.requirementTypeHash, t0, t1);
     });
 
-    it("append automatically updates tether where possible", async () => {
-        let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new LocalInventoryClient("./files"));
-        toda.shieldSalt = path.resolve(__dirname, "./files/salt");
-        toda.addSatisfier(keyPair);
-        let tetherLine_0 = await toda.create(Hash.fromHex("41b5c5ab593c91b676d6dbae3d561cef0180701099a580dddbf2374b23b138455"));
-        let tetherLine_1 = await toda.append(tetherLine_0);
-        let tetherLine_2 = await toda.append(tetherLine_1);
+    it("append local test", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const toda = new TodaClient(inv, "http://localhost:1234");
+        toda._getSalt = () => ByteArray.fromUtf8("some salty");
+        const t0 = await toda.create(null, null, uuidCargo());
+        toda.defaultTopLineHash = t0.getHash();
+        const f0 = await toda.create(t0.getHash());
+        const f1 = await toda.append(f0, t0.getHash());
+        const f2 = await toda.append(f1, t0.getHash());
+        const f3 = await toda.append(f2, t0.getHash());
+        const f4 = await toda.append(f3, t0.getHash());
 
-        let localLine_0 = await toda.create();
-        localLine_0.addAtoms(tetherLine_2.getAtoms());
-        let localLine_1 = await toda.append(localLine_0, tetherLine_0.getHash());
+        const i = new Interpreter(Line.fromTwist(f4), t0.getHash());
+        await i.verifyHitchLine(f4.getHash());
 
-        // Even though we specified an old tether, append is smart enough to use the latest known twist of that specified line
-        assert(localLine_1.getTetherHash().equals(tetherLine_2.getHash()));
     });
 
+    it("append stacked local test", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const toda = new TodaClient(inv, "http://localhost:1234");
+        toda._getSalt = () => ByteArray.fromUtf8("some salty");
+        const t0 = await toda.create(null, null, uuidCargo());
+        toda.defaultTopLineHash = t0.getHash();
+        const m0 = await toda.create(t0.getHash());
+        const f0 = await toda.create(m0.getHash());
+        const f1 = await toda.append(f0, m0.getHash());
+        const f2 = await toda.append(f1, m0.getHash());
+        const f3 = await toda.append(f2, m0.getHash());
+        const f4 = await toda.append(f3, m0.getHash());
+
+        const i = new Interpreter(Line.fromTwist(f4), t0.getHash());
+        await i.verifyHitchLine(f4.getHash());
+    });
+
+    it("append with remote test", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const top = new TodaClient(inv, "http://localhost:1234");
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
+        try {
+            const t0 = await top.create(null, null, uuidCargo());
+            const foot = new TodaClient(
+                new LocalInventoryClient("./files/" + uuid()),
+                "http://localhost:8090/files");
+            foot._getSalt = () => ByteArray.fromUtf8("some salty2");
+            foot.defaultRelayHash = t0.getHash();
+            foot.defaultRelayUrl = "http://localhost:8090/hoist";
+            foot.defaultTopLineHash = t0.getHash();
+
+            const f0 = await foot.create(t0.getHash());
+            const f1 = await foot.append(f0, t0.getHash());
+            const f2 = await foot.append(f1, t0.getHash());
+            const f3 = await foot.append(f2, t0.getHash());
+            const f4 = await foot.append(f3, t0.getHash());
+
+            const i = new Interpreter(Line.fromTwist(f4), t0.getHash());
+            await i.verifyHitchLine(f4.getHash());
+        } finally {
+            topRelay.stop();
+        }
+    });
+
+    it("append stacked remote test", async () => {
+        const top = new TodaClient(new LocalInventoryClient("./files/" + uuid()), "http://localhost:1234");
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
+
+        const mid = new TodaClient(new LocalInventoryClient("./files/" + uuid()), "http://localhost:8090/files");
+        mid._getSalt = () => ByteArray.fromUtf8("some salty2");
+        const midRelay = await new TestRelayServer(mid, { port: 8091, fileServerRedirects: ["http://localhost:8090/files"] }).start();
+        try {
+            const t0 = await top.create(null, null, uuidCargo());
+            await top.append(t0);
+            mid.defaultRelayHash = t0.getHash();
+            mid.defaultRelayUrl = "http://localhost:8090/hoist";
+            mid.defaultTopLineHash = t0.getHash();
+            const m0 = await mid.create(t0.getHash(), null, uuidCargo());
+
+
+            const foot = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8091/files");
+            foot._getSalt = () => ByteArray.fromUtf8("some salty");
+            foot.defaultRelayHash = m0.getHash();
+            foot.defaultRelayUrl = "http://localhost:8091/hoist";
+            foot.defaultTopLineHash = t0.getHash();
+
+            const f0 = await foot.create(m0.getHash());
+            const f1 = await foot.append(f0, m0.getHash());
+            const f2 = await foot.append(f1, m0.getHash());
+            const f3 = await foot.append(f2, m0.getHash());
+            const f4 = await foot.append(f3, m0.getHash());
+
+            const i = new Interpreter(Line.fromTwist(f4), t0.getHash());
+
+            await i.verifyHitchLine(f4.getHash());
+        } finally {
+            await topRelay.stop();
+            await midRelay.stop();
+        }
+    });
+
+    it("tether is auto-updated", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const top = new TodaClient(inv, "http://localhost:1234");
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
+        try {
+            const t0 = await top.create(null, null, uuidCargo());
+
+            const foot = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8090/files");
+            foot._getSalt = () => ByteArray.fromUtf8("some salty");
+            foot.defaultRelayHash = t0.getHash();
+            foot.defaultRelayUrl = "http://localhost:8090/hoist";
+            foot.defaultTopLineHash = t0.getHash();
+
+            const f0 = await foot.create(t0.getHash());
+            const f1 = await foot.append(f0, t0.getHash());
+            const f2 = await foot.append(f1, t0.getHash());
+            const f3 = await foot.append(f2, t0.getHash());
+            const f4 = await foot.append(f3, t0.getHash());
+
+            const i = new Interpreter(Line.fromTwist(f4), t0.getHash());
+            await i.verifyHitchLine(f4.getHash());
+
+            const t = top.get(t0.getHash());
+
+            assert.ok(f1.getTetherHash().equals(t.prev().prev().prev().getPrevHash()));
+            assert.ok(f2.getTetherHash().equals(t.prev().prev().getPrevHash()));
+            assert.ok(f3.getTetherHash().equals(t.prev().getPrevHash()));
+            assert.ok(f4.getTetherHash().equals(t.getPrevHash()));
+        } finally {
+            await topRelay.stop();
+        }
+    });
 });
 
 describe("finalize twist", async () => {
-
     it("should correctly make a successor to the first abject", async () => {
-        let toda = new TodaClient(new VirtualInventoryClient());
+        let toda = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
         toda.shieldSalt = path.resolve(__dirname, "./files/salt");
 
         let a0 = new SimpleHistoric();
@@ -256,7 +318,7 @@ describe("finalize twist", async () => {
     });
 
     it("test simple historic fields properly populated", async () => {
-        let toda = new TodaClient(new VirtualInventoryClient());
+        let toda = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
         toda.shieldSalt = path.resolve(__dirname, "./files/salt");
 
         let timestamp = new Date().toISOString();
@@ -278,27 +340,268 @@ describe("finalize twist", async () => {
     });
 });
 
+describe("TodaClient unit tests", async () => {
+    it("getRelay: Twist has a tether url => use RemoteRelayClient", async () => {
+        let inv = new LocalInventoryClient("./files/" + uuid());
+        let toda = new TodaClient(inv, "http://localhost:8081");
+        let tether = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
+        let abj = new SimpleHistoric();
+        abj.set("SOMETIMESTAMP", "http://localhost:9000");
+        abj.buildTwist().setTetherHash(tether);
+        abj = abj.createSuccessor();
+        let twist = abj.buildTwist().twist();
+        let relay = toda.getRelay(twist);
+        assert.ok(relay instanceof RemoteRelayClient);
+        assert.ok(relay.tetherHash.equals(tether));
+        assert.equal(relay.fileServerUrl, "http://localhost:8081");
+        assert.ok(relay.relayUrl == "http://localhost:9000");
+    });
 
+    it("getRelay: No tether url => use LocalRelayClient", async () => {
+        let inv = new LocalInventoryClient("./files/" + uuid());
+        let toda = new TodaClient(inv, "http://localhost:8081");
+        let tb = new TwistBuilder();
+        tb.setTetherHash = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
+        let tether = tb.twist();
+        tb = new TwistBuilder();
+        tb.setTetherHash(tether.getHash());
+        tb = tb.createSuccessor();
+        let twist = tb.twist();
+        inv.put(tether.getAtoms());
+        let relay = toda.getRelay(twist);
+        assert.ok(relay instanceof LocalRelayClient);
+        assert.ok(relay.tetherHash.equals(tether.getHash()));
+    });
+
+    it("getRelay: No tether url => not in local => use DefaultRelay", async () => {
+        let inv = new LocalInventoryClient("./files/" + uuid());
+        let toda = new TodaClient(inv, "http://localhost:8081");
+        toda.defaultRelayUrl = "http://localhost:9000";
+        let tether = Hash.fromHex("4129383a4196c763eec6d96380db76dcee831d5c43208b92fcf81e563bb411d0b7");
+        let tb = new TwistBuilder();
+        tb.setTetherHash(tether);
+        tb = tb.createSuccessor();
+        let twist = tb.twist();
+        let relay = toda.getRelay(twist);
+        assert.ok(relay instanceof RemoteRelayClient);
+        assert.ok(relay.tetherHash.equals(tether));
+        assert.equal(relay.fileServerUrl, "http://localhost:8081");
+        assert.ok(relay.relayUrl == "http://localhost:9000");
+    });
+});
+
+describe("Stopping conditions", async () => {
+    it("No data seeded: stops at specified poptop", async () => {
+        const invTop = new LocalInventoryClient("./files/" + uuid());
+        const top = new TodaClient(invTop, "http://localhost:1234");
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, {port: 8090}).start();
+        try {
+            const top0 = await top.create(null, null, uuidCargo());
+            const top1 = await top.append(top0);
+            const top2 = await top.append(top1);
+            const top3 = await top.append(top2);
+            const top4 = await top.append(top3);
+
+            const invFoot = new LocalInventoryClient("./files/" + uuid());
+            const foot = new TodaClient(invFoot, "http://localhost:8090/files");
+            foot._getSalt = () => ByteArray.fromUtf8("some salty");
+            foot.defaultRelayUrl = "http://localhost:8090/hoist";
+            foot.defaultTopLineHash = top1.getHash();
+            foot.defaultRelayHash = top1.getHash();
+
+            const f0 = await foot.create(top4.getHash());
+            const f1 = await foot.append(f0, top4.getHash());
+
+            // Does not grab top0: it has already gone back to the poptop
+            assert.ifError(topRelay.requestLogs.includes(`GET /files/${top0.getHash()}.next.toda`) || null);
+            // Does grab top1: the poptop
+            assert.ok(topRelay.requestLogs.includes(`GET /files/${top1.getHash()}.next.toda`));
+        } finally {
+            await topRelay.stop();
+        }
+    });
+
+    it("No data seeded: stops at fast twist before proceeding to poptop", async () => {
+        const invTop = new LocalInventoryClient("./files/" + uuid());
+        const top = new TodaClient(invTop, "http://localhost:1234");
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, {port: 8090}).start();
+        const invMid = new LocalInventoryClient("./files/" + uuid());
+        const mid = new TodaClient(invMid, "http://localhost:8090/files");
+        mid._getSalt = () => ByteArray.fromUtf8("mose malty");
+        const midRelay = await new TestRelayServer(mid, {port: 8091, fileServerRedirects: ["http://localhost:8090/files"]}).start();
+        try {
+            const top0 = await top.create(null, null, uuidCargo());
+            const top1 = await top.append(top0);
+            const top2 = await top.append(top1);
+            const top3 = await top.append(top2);
+
+            mid.defaultRelayUrl = "http://localhost:8090/hoist";
+            mid.defaultTopLineHash = top1.getHash();
+            mid.defaultRelayHash = top1.getHash();
+
+            const mid0 = await mid.create(null, null, uuidCargo());
+            const mid1 = await mid.append(mid0);
+            const mid2 = await mid.append(mid1, top1.getHash());
+            const mid3 = await mid.append(mid2);
+            const mid4 = await mid.append(mid3);
+            const mid5 = await mid.append(mid4, top3.getHash());
+
+            const invFoot = new LocalInventoryClient("./files/" + uuid());
+            const foot = new TodaClient(invFoot, "http://localhost:8091/files");
+            foot._getSalt = () => ByteArray.fromUtf8("some salty");
+            foot.defaultRelayUrl = "http://localhost:8091/hoist";
+            foot.defaultTopLineHash = top1.getHash();
+            foot.defaultRelayHash = mid4.getHash();
+
+            const f0 = await foot.create(mid4.getHash());
+            const f1 = await foot.append(f0, mid4.getHash());
+
+            // Does not grab mid1: it has already reached a fast twist (mid2)
+            assert.ifError(midRelay.requestLogs.includes(`GET /files/${mid1.getHash()}.next.toda`) || null);
+            // Does grab mid2: the fast twist
+            assert.ok(midRelay.requestLogs.includes(`GET /files/${mid2.getHash()}.next.toda`));
+        } finally {
+            await midRelay.stop();
+            await topRelay.stop();
+        }
+    });
+
+    it("When data already exists and there are no fast twists in the relay, will stopRelay at the most recently known loose twist", async () => {
+        const invTop = new LocalInventoryClient("./files/" + uuid());
+        const top = new TodaClient(invTop, "http://localhost:1234");
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, {port: 8090}).start();
+        try {
+            const top0 = await top.create(null, null, uuidCargo());
+            const top1 = await top.append(top0);
+
+            const invFoot = new LocalInventoryClient("./files/" + uuid());
+            const foot = new TodaClient(invFoot, "http://localhost:8090/files");
+
+            foot._getSalt = () => ByteArray.fromUtf8("some salty");
+            foot.defaultRelayUrl = "http://localhost:8090/hoist";
+            foot.defaultTopLineHash = top1.getHash();
+            foot.defaultRelayHash = top1.getHash();
+
+            const f0 = await foot.create(top1.getHash());
+            const f1 = await foot.append(f0, top1.getHash());
+
+            const top2 = top.get(top1.getHash());
+            const f2 = await foot.append(f1, top1.getHash());
+            const top3 = top.get(top1.getHash());
+            const f3 = await foot.append(f2, top1.getHash());
+            const top4 = top.get(top1.getHash());
+            const f4 = await foot.append(f3, top1.getHash());
+            const top5 = top.get(top1.getHash());
+
+            // Clear the logs
+            topRelay.requestLogs.length = 0;
+
+            const f5 = await foot.append(f4, top1.getHash());
+            const top6 = top.get(top1.getHash());
+
+            // For sanity check; double check that all of the twists did end up in f5
+            assert.ok(f5.get(top1.getHash()));
+            assert.ok(f5.get(top2.getHash()));
+            assert.ok(f5.get(top3.getHash()));
+            assert.ok(f5.get(top4.getHash()));
+            assert.ok(f5.get(top5.getHash()));
+            assert.ok(f5.get(top6.getHash()));
+
+            // Does not grab top1; really old twist that is already stored
+            assert.ifError(topRelay.requestLogs.includes(`GET /files/${top1.getHash()}.next.toda`) || null);
+            // Does not grab top2; still too old
+            assert.ifError(topRelay.requestLogs.includes(`GET /files/${top2.getHash()}.next.toda`) || null);
+            // Needs to grab top3: it's the tether of f3 (ie, of the lead), and onwards
+            // cached.
+            //assert.ok(topRelay.requestLogs.includes(`GET /files/${top3.getHash()}.next.toda`));
+            //assert.ok(topRelay.requestLogs.includes(`GET /files/${top4.getHash()}.next.toda`));
+            //assert.ok(topRelay.requestLogs.includes(`GET /files/${top5.getHash()}.next.toda`));
+            //assert.ok(topRelay.requestLogs.includes(`GET /files/${top6.getHash()}.next.toda`));
+        } finally {
+            await topRelay.stop();
+        }
+    });
+
+    it("When data already exists and the relay has fast twists, won't stopRelay at known loose twists: keep going until it hits a fast twist", async () => {
+        const invTop = new LocalInventoryClient("./files/" + uuid());
+        const top = new TodaClient(invTop, "http://localhost:1234");
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, {port: 8090}).start();
+        const invMid = new LocalInventoryClient("./files/" + uuid());
+        const mid = new TodaClient(invMid, "http://localhost:8090/files");
+        mid._getSalt = () => ByteArray.fromUtf8("mose malty");
+        const midRelay = await new TestRelayServer(mid, {port: 8091, fileServerRedirects: ["http://localhost:8090/files"]}).start();
+        try {
+            const top0 = await top.create(null, null, uuidCargo());
+            const top1 = await top.append(top0);
+            const top2 = await top.append(top1);
+            const top3 = await top.append(top2);
+
+            mid.defaultRelayUrl = "http://localhost:8090/hoist";
+            mid.defaultTopLineHash = top1.getHash();
+            mid.defaultRelayHash = top1.getHash();
+
+            const mid0 = await mid.create(null, null, uuidCargo());
+            const mid1 = await mid.append(mid0);
+            const mid2 = await mid.append(mid1, top1.getHash());
+            const mid3 = await mid.append(mid2);
+            const mid4 = await mid.append(mid3);
+            const mid5 = await mid.append(mid4, top3.getHash());
+
+            const invFoot = new LocalInventoryClient("./files/" + uuid());
+            const foot = new TodaClient(invFoot, "http://localhost:8091/files");
+            foot._getSalt = () => ByteArray.fromUtf8("some salty");
+            foot.defaultRelayUrl = "http://localhost:8091/hoist";
+            foot.defaultTopLineHash = top1.getHash();
+            foot.defaultRelayHash = mid4.getHash();
+
+            const f0 = await foot.create(mid4.getHash());
+            const f1 = await foot.append(f0, mid4.getHash());
+
+            // Make doubly sure the new data made it into f1 for the sake of this test
+            f1.addAtoms(mid5.getAtoms());
+
+            // Clear the logs
+            midRelay.requestLogs.length = 0;
+
+            const f2 = await foot.append(f1, mid4.getHash());
+
+            // Even though we already have info for mid4, since the midline has tethers we know about,
+            //  we keep going until we see a fast twist (ie, mid2)
+            //cached.
+            //assert.ok(midRelay.requestLogs.includes(`GET /files/${mid2.getHash()}.next.toda`));
+            // Doesn't go beyond that
+            assert.ifError(midRelay.requestLogs.includes(`GET /files/${mid1.getHash()}.next.toda`) || null);
+        } finally {
+            await midRelay.stop();
+            await topRelay.stop();
+        }
+    });
+});
+
+// TODO: This test is broken due to logic in the client
 describe("pull should include all required info", async () => {
     it("send to remote and back", async () => {
-
-        fs.mkdirSync("/tmp/todatest/files1", { recursive: true });
-        fs.mkdirSync("/tmp/todatest/files2", { recursive: true });
-        fs.writeFileSync("/tmp/todatest/files1/salt", "aaaaaa");
-        fs.writeFileSync("/tmp/todatest/files2/salt", "bbbbbb");
+        const dir0 = "./files/" + uuid();
+        const dir1 = "./files/" + uuid();
 
         // set up a local address
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new LocalInventoryClient("/tmp/todatest/files1"));
-        toda.shieldSalt = "/tmp/todatest/files1/salt";
+        let toda = new TodaClient(new LocalInventoryClient(dir0));
+        toda.shieldSalt = dir0 + "/salt";
+        fs.writeFileSync(toda.shieldSalt, "aaaaaa");
         toda.addSatisfier(keyPair);
         let localLine = await toda.create(null, keyPair);
         let localLineNext = await toda.append(localLine, null, keyPair);
 
         // set up a "remote" address
         let keyPair2 = await SECP256r1.generate();
-        let toda2 = new TodaClient(new LocalInventoryClient("/tmp/todatest/files2"));
-        toda2.shieldSalt = "/tmp/todatest/files2/salt";
+        let toda2 = new TodaClient(new LocalInventoryClient(dir1));
+        toda2.shieldSalt = dir1 + "/salt";
+        fs.writeFileSync(toda2.shieldSalt, "bbbbbb");
         toda2.addSatisfier(keyPair2);
         let remoteLine = await toda2.create(null, keyPair2);
         let remoteLineNext = await toda2.append(remoteLine, null, keyPair2);
@@ -317,10 +620,11 @@ describe("pull should include all required info", async () => {
         let aNNNext = await toda.append(aNNext, remoteLine.getHash());
         toda2.inv.put(aNNNext.getAtoms());
 
-        assert.ifError(await toda.isSatisfiable(aNNNext) || null);
+        assert.equal(await toda.isSatisfiable(aNNNext), false);
         assert(await toda2.isSatisfiable(aNNNext));
 
-        // append another fast twist, causing a hitch, requiring previous (local) hoist info
+        // append another fast twist, causing a hitch,
+        //  requiring previous (local) hoist info
         let b = await toda2.append(aNNNext, remoteLineNext.getHash());
         assert(await toda2.isSatisfiable(b));
 
@@ -334,170 +638,302 @@ describe("pull should include all required info", async () => {
 
 describe("Multi-remote pull test", () => {
     it("Should be able to recursively reach up to the topline", async () => {
+        const top = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
+
+        const mid = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8090/files");
+        mid._getSalt = () => ByteArray.fromUtf8("some salty2");
+        mid.defaultRelayUrl = "http://localhost:8090/hoist";
+        const midRelay = await new TestRelayServer(mid, { port: 8091,
+                                                          fileServerRedirects: ["http://localhost:8090/files"] }).start();
+
+        const foot = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8091/files");
+        foot.defaultRelayUrl = "http://localhost:8091/hoist";
+        foot._getSalt = () => ByteArray.fromUtf8("some salty2");
         try {
-            nock.cleanAll();
+            const t0 = await top.create(null, null, uuidCargo());
+            await top.append(t0);
 
-            let top = new MockSimpleHistoricRelay("http://localhost:8090");
-            await top.initialize();
-            top.serve();
-            await top.append();
+            const m0 = await mid.create(t0.getHash());
+            await mid.append(m0, t0.getHash());
 
-            let mid = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8090");
-            await mid.initialize();
-            mid.serve();
-            await mid.append(top.latest().getHash());
-            await mid.append(top.latest().getHash());
+            foot.defaultTopLineHash = t0.getHash();
 
-            let foot = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", top.latest().getHash());
-            await foot.initialize();
-            let foot0 = foot.latest();
-            let foot1 = await foot.append(mid.latest().getHash());
-            let foot2 = await foot.append(mid.latest().getHash());
+            const f0 = await foot.create(m0.getHash());
+            const f1 = await foot.append(f0, m0.getHash());
+            const f2 = await foot.append(f1, m0.getHash());
 
-            assert.ok(foot2.get(mid.latest().getHash()));
-            assert.ok(foot2.get(top.latest().getHash()));
+            const t1 = top.get(t0.getHash());
+            const m1 = mid.get(m0.getHash());
 
-            let foot3 = await foot.append(mid.latest().getHash());
+            assert.ok(f2.get(t1.getHash()));
+            assert.ok(f2.get(m1.getHash()));
 
-            assert.ok(foot3.get(mid.latest().getHash()));
-            assert.ok(foot3.get(top.latest().getHash()));
+            const f3 = await foot.append(f2, m0.getHash());
 
-            assert.equal(6, mid.twists().length);
+            assert.ok(f3.get(t1.getHash()));
+            assert.ok(f3.get(m1.getHash()));
 
         } finally {
-            nock.cleanAll();
+            await midRelay.stop();
+            await topRelay.stop();
         }
     });
 
-    it("Should never pull http://localhost:8094, since 8093 is the topline", async () => {
+    it("Will stop when it hits the defaultTopLineHash", async () => {
+        const top = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
+
+        const mid = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8090/files");
+        mid._getSalt = () => ByteArray.fromUtf8("some salty2");
+        mid.defaultRelayUrl = "http://localhost:8090/hoist";
+        const midRelay = await new TestRelayServer(mid, { port: 8091,
+                                                          fileServerRedirects: ["http://localhost:8090/files"] }).start();
+
+        const foot = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8091/files");
+        foot.defaultRelayUrl = "http://localhost:8091/hoist";
+        foot._getSalt = () => ByteArray.fromUtf8("some salty2");
         try {
-            nock.cleanAll();
+            const t0 = await top.create(null, null, uuidCargo());
+            await top.append(t0);
 
-            // A tethers into B (8091), into C (8092), ... into E (8094)
-            let E = new MockSimpleHistoricRelay("http://localhost:8094");
-            await E.initialize();
-            E.serve();
-            let D = new MockSimpleHistoricRelay("http://localhost:8093", "http://localhost:8094");
-            await D.initialize();
-            D.serve();
-            let C = new MockSimpleHistoricRelay("http://localhost:8092", "http://localhost:8093");
-            await C.initialize();
-            C.serve();
-            let B = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
-            await B.initialize();
-            B.serve();
-            // D is declared as A's topline
-            let A = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", D.latest().getHash());
-            await A.initialize();
-            await A.append(B.latest().getHash());
+            const m0 = await mid.create(t0.getHash());
+            await mid.append(m0, t0.getHash());
 
-            E.clearLogs();
-            D.clearLogs();
-            C.clearLogs();
-            B.clearLogs();
+            foot.defaultTopLineHash = m0.getHash();
 
-            await A.client.pull(A.latest(), A.client.defaultTopLineHash);
+            const f0 = await foot.create(m0.getHash());
+            const f1 = await foot.append(f0, m0.getHash());
+            const f2 = await foot.append(f1, m0.getHash());
 
-            // Pull pinged B, C, and D
-            assert.deepEqual(["get"], B.logs.map(x => x.method));
-            assert.deepEqual(["get"], C.logs.map(x => x.method));
-            assert.deepEqual(["get"], D.logs.map(x => x.method));
-            // Pull did NOT ping E (since D is the topline)
-            assert.deepEqual([], E.logs.map(x => x.method));
+            const t1 = top.get(t0.getHash());
+            const m1 = mid.get(m0.getHash());
+
+            assert.ifError(f2.get(t1.getHash()));
+            assert.ok(f2.get(m1.getHash()));
+
+            const f3 = await foot.append(f2, m0.getHash());
+
+            const t2 = top.get(t0.getHash());
+            const m2 = mid.get(m0.getHash());
+
+            assert.ifError(f3.get(t2.getHash()));
+            assert.ok(f3.get(m2.getHash()));
         } finally {
-            nock.cleanAll();
-        }
-    });
-});
-
-//TODO(acg): I think we require more detailed tests on when shieldPackets are
-//included.
-
-describe("Deep recursive pull tests", async () => {
-    // For all of these tests, 'a' represents the footline, 'b' represents the line above, ... etc.
-    it("Remote recursive pull, no loose twists", async () => {
-        try {
-            nock.cleanAll();
-
-            let remote_e = new MockSimpleHistoricRelay("http://localhost:8094");
-            remote_e.serve();
-            await remote_e.initialize(true);
-            await remote_e.append();
-
-            let remote_d = new MockSimpleHistoricRelay("http://localhost:8093", "http://localhost:8094");
-            remote_d.serve();
-            await remote_d.initialize();
-            await remote_d.append(remote_e.latest().getHash());
-            await remote_d.append(remote_e.latest().getHash());
-            await remote_d.append(remote_e.latest().getHash());
-
-            let remote_c = new MockSimpleHistoricRelay("http://localhost:8092", "http://localhost:8093");
-            remote_c.serve();
-            await remote_c.initialize();
-            await remote_c.append(remote_d.latest().getHash());
-
-            let remote_b = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
-            remote_b.serve();
-            await remote_b.initialize();
-            await remote_b.append(remote_c.latest().getHash());
-
-            let a = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", remote_d.latest().getHash());
-            await a.initialize();
-            await a.append(remote_b.latest().getHash());
-            await a.append(remote_b.latest().getHash());
-            await a.append(remote_b.latest().getHash());
-
-            // isolate the twists in the bottom line S.T. we can test pull in complete isolation
-            let isolated_twist = new Twist(isolateSegment(a.latest(), a.first().getHash()), a.latest().getHash());
-
-            await a.client.pull(isolated_twist, remote_d.first().getHash());
-            await a.client.isCanonical(isolated_twist, remote_d.first().getHash());
-        } finally {
-            nock.cleanAll();
+            await midRelay.stop();
+            await topRelay.stop();
         }
     });
 
-    // TODO(cs): This fails! Yay!
-    xit("Remote recursive pull, with intermediary loose twists", async () => {
-        nock.cleanAll();
+    it("Won't reach up all the way if no defaultTopLineHash specified", async () => {
+        const top = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
 
-        let remote_e = new MockSimpleHistoricRelay("http://localhost:8094");
-        remote_e.serve();
-        await remote_e.initialize();
-        await remote_e.append();
+        const mid = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8090/files");
+        mid._getSalt = () => ByteArray.fromUtf8("some salty2");
+        mid.defaultRelayUrl = "http://localhost:8090/hoist";
+        const midRelay = await new TestRelayServer(mid, { port: 8091, 
+                                                          fileServerRedirects: ["http://localhost:8090/files"] }).start();
 
-        let remote_d = new MockSimpleHistoricRelay("http://localhost:8093", "http://localhost:8094");
-        remote_d.serve();
-        await remote_d.initialize();
-        await remote_d.append(remote_e.latest().getHash());
-        await remote_d.append(remote_e.latest().getHash());
-        await remote_d.append(remote_e.latest().getHash());
+        const foot = new TodaClient(new LocalInventoryClient("./files/" + uuid()), 
+                                        "http://localhost:8091/files");
+        foot.defaultRelayUrl = "http://localhost:8091/hoist";
+        foot._getSalt = () => ByteArray.fromUtf8("some salty2");
+        try {
+            const t0 = await top.create(null, null, uuidCargo());
+            await top.append(t0);
 
-        let remote_c = new MockSimpleHistoricRelay("http://localhost:8092", "http://localhost:8093");
-        remote_c.serve();
-        await remote_c.initialize();
-        await remote_c.append(remote_d.latest().getHash());
-        await remote_c.append();
-        await remote_c.append(); // loose twists!
+            const m0 = await mid.create(t0.getHash());
+            await mid.append(m0, t0.getHash());
 
+            const f0 = await foot.create(m0.getHash());
+            const f1 = await foot.append(f0, m0.getHash());
+            const f2 = await foot.append(f1, m0.getHash());
 
-        let remote_b = new MockSimpleHistoricRelay("http://localhost:8091", "http://localhost:8092");
-        remote_b.serve();
-        await remote_b.initialize();
-        await remote_b.append(remote_c.latest().getHash());
-        await remote_b.append();
-        await remote_b.append(); // loose twists!
+            const t1 = top.get(t0.getHash());
+            const m1 = mid.get(m0.getHash());
 
-        let a = new MockSimpleHistoricRelay(undefined, "http://localhost:8091", remote_d.latest().getHash());
-        await a.initialize();
-        await a.append(remote_b.latest().getHash());
-        await a.append(remote_b.latest().getHash());
-        await a.append(remote_b.latest().getHash());
+            assert.ok(!f2.get(t1.getHash()));
+            assert.ok(f2.get(m1.getHash()));
 
-        // isolate the twists in the bottom line S.T. we can test pull in complete isolation
-        let isolated_twist = new Twist(isolateSegment(a.latest(), a.first().getHash()), a.latest().getHash());
+            const f3 = await foot.append(f2, m0.getHash());
 
-        await a.client.pull(isolated_twist, remote_d.first().getHash());
-        await a.client.isCanonical(isolated_twist, remote_d.first().getHash());
+            assert.ok(!f3.get(t1.getHash()));
+            assert.ok(f3.get(m1.getHash()));
+        } finally {
+            await midRelay.stop();
+            await topRelay.stop();
+        }
+    });
+
+    it("Deep pull, no loose twists", async () => {
+        const d = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
+        d._getSalt = () => ByteArray.fromUtf8("some salty");
+        const dRelay = await new TestRelayServer(d, { port: 8090 }).start();
+
+        const c = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8090/files");
+        c._getSalt = () => ByteArray.fromUtf8("some salty2");
+        c.defaultRelayUrl = "http://localhost:8090/hoist";
+        const cRelay = await new TestRelayServer(c, { port: 8091,
+                                                          fileServerRedirects: ["http://localhost:8090/files"] }).start();
+
+        const b = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                                            "http://localhost:8091/files");
+        b._getSalt = () => ByteArray.fromUtf8("some salty3");
+        b.defaultRelayUrl = "http://localhost:8091/hoist";
+        const bRelay = await new TestRelayServer(b, { port: 8092,
+                                                        fileServerRedirects: ["http://localhost:8091/files"] }).start();
+        const a = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                      "http://localhost:8092/files");
+        a.defaultRelayUrl = "http://localhost:8092/hoist";
+        a._getSalt = () => ByteArray.fromUtf8("some salty2");
+        try {
+            const d0 = await d.create(null, null, uuidCargo());
+            await d.append(d0);
+
+            const c0 = await c.create(d0.getHash());
+            await c.append(c0);
+
+            const b0 = await b.create(c0.getHash());
+            await b.append(b0);
+
+            a.defaultTopLineHash = d0.getHash();
+
+            const a0 = await a.create(b0.getHash());
+            const a1 = await a.append(a0, b0.getHash());
+            const a2 = await a.append(a1); // loose for fun
+            const a3 = await a.append(a2); // loose for fun
+            const a4 = await a.append(a3, b0.getHash());
+
+            const d1 = d.get(d0.getHash());
+            const c1 = c.get(c0.getHash());
+            const b1 = b.get(b0.getHash());
+
+            assert.ok(a4.get(d1.getHash()));
+            assert.ok(a4.get(c1.getHash()));
+            assert.ok(a4.get(b1.getHash()));
+
+            const a5 = await a.append(a4, b0.getHash());
+
+            const d2 = d.get(d0.getHash());
+            const c2 = c.get(c0.getHash());
+            const b2 = b.get(b0.getHash());
+
+            assert.ok(a5.get(d2.getHash()));
+            assert.ok(a5.get(c2.getHash()));
+            assert.ok(a5.get(b2.getHash()));
+
+            // Grab ONLY the `a` line, s.t. we can
+            //  test pull in complete isolation
+            const aLine = await (new LocalRelayClient(a, a0.getHash())).get();
+
+            // Sanity check
+            assert.ifError(aLine.get(d2.getHash()));
+            assert.ifError(aLine.get(c2.getHash()));
+            assert.ifError(aLine.get(b2.getHash()));
+
+            await a.pull(aLine, d0.getHash());
+            await a.isCanonical(aLine, d0.getHash());
+
+        } finally {
+            await bRelay.stop();
+            await cRelay.stop();
+            await dRelay.stop();
+        }
+    });
+
+    it("Deep pull, intermediary loose twists", async () => {
+        const d = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
+        d._getSalt = () => ByteArray.fromUtf8("some salty");
+        const dRelay = await new TestRelayServer(d, { port: 8090 }).start();
+
+        const c = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                        "http://localhost:8090/files");
+        c._getSalt = () => ByteArray.fromUtf8("some salty2");
+        c.defaultRelayUrl = "http://localhost:8090/hoist";
+        const cRelay = await new TestRelayServer(c, { port: 8091,
+                                                          fileServerRedirects: ["http://localhost:8090/files"] }).start();
+
+        const b = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                                            "http://localhost:8091/files");
+        b._getSalt = () => ByteArray.fromUtf8("some salty3");
+        b.defaultRelayUrl = "http://localhost:8091/hoist";
+        const bRelay = await new TestRelayServer(b, { port: 8092,
+                                                        fileServerRedirects: ["http://localhost:8091/files"] }).start();
+
+        const a = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                      "http://localhost:8092/files");
+        a.defaultRelayUrl = "http://localhost:8092/hoist";
+        a._getSalt = () => ByteArray.fromUtf8("some salty2");
+        try {
+            const d0 = await d.create(null, null, uuidCargo());
+            await d.append(d0);
+
+            const c0 = await c.create(d0.getHash());
+            await c.append(c0);
+
+            const b0 = await b.create(c0.getHash());
+            await b.append(b0);
+
+            a.defaultTopLineHash = d0.getHash();
+
+            const a0 = await a.create(b0.getHash());
+            const a1 = await a.append(a0, b0.getHash());
+            const a2 = await a.append(a1); // loose for fun
+            const a3 = await a.append(a2); // loose for fun
+
+            await c.append(c.get(c0.getHash())); // make a loose twist
+            await c.append(c.get(c0.getHash())); // another one
+
+            await b.append(b.get(b0.getHash())); // make a loose twist
+            await b.append(b.get(b0.getHash())); // another one
+            await b.append(b.get(b0.getHash()), c0.getHash()); // fast
+
+            const a4 = await a.append(a3, b0.getHash());
+
+            const d1 = d.get(d0.getHash());
+            const c1 = c.get(c0.getHash());
+            const b1 = b.get(b0.getHash());
+
+            assert.ok(a4.get(d1.getHash()));
+            assert.ok(a4.get(c1.getHash()));
+            assert.ok(a4.get(b1.getHash()));
+
+            const a5 = await a.append(a4, b0.getHash());
+
+            const d2 = d.get(d0.getHash());
+            const c2 = c.get(c0.getHash());
+            const b2 = b.get(b0.getHash());
+
+            assert.ok(a5.get(d2.getHash()));
+            assert.ok(a5.get(c2.getHash()));
+            assert.ok(a5.get(b2.getHash()));
+
+            // Grab ONLY the `a` line, s.t. we can
+            //  test pull in complete isolation
+            const aLine = await (new LocalRelayClient(a, a0.getHash())).get();
+
+            // Sanity check
+            assert.ifError(aLine.get(d2.getHash()));
+            assert.ifError(aLine.get(c2.getHash()));
+            assert.ifError(aLine.get(b2.getHash()));
+
+            await a.pull(aLine, d0.getHash());
+            await a.isCanonical(aLine, d0.getHash());
+
+        } finally {
+            await bRelay.stop();
+            await cRelay.stop();
+            await dRelay.stop();
+        }
     });
 });

@@ -2,7 +2,7 @@ import express from "express";
 import { PairTriePacket } from "../../src/core/packet.js";
 import { HashMap } from "../../src/core/map.js";
 import axios from "axios";
-import { LocalNextRelayClient } from "../../src/client/relay.js";
+import { LocalRelayClient } from "../../src/client/relay.js";
 import { Hash } from "../../src/core/hash.js";
 
 class TestRelayServer {
@@ -73,7 +73,7 @@ class TestRelayServer {
             const hex = file.substring(0, file.indexOf('.'));
             const ext = file.substring(file.indexOf('.'));
             const hash = Hash.fromHex(hex);
-            const relay = new LocalNextRelayClient(toda, hash);
+            const relay = new LocalRelayClient(toda, hash);
             if (ext == ".shield") {
                 const shield = relay._getShield(hash);
                 if (!shield) {

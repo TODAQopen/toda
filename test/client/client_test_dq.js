@@ -2,16 +2,17 @@ import assert from "assert";
 import { Abject } from "../../src/abject/abject.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { Hash } from "../../src/core/hash.js";
-import { TodaClientV2 } from "../../src/client/client.js";
+import { TodaClient } from "../../src/client/client.js";
 import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { v4 as uuid } from "uuid";
 import { createLine, initRelay, mint } from "./util.js";
-import { InsufficientQuantity, InvalidDisplayPrecision, InvalidQuantity } from "../../src/abject/quantity.js";
+import { InsufficientQuantity, InvalidDisplayPrecision, InvalidQuantity } 
+    from "../../src/abject/quantity.js";
 
 describe("getQuantity", async () => {
     it("getQuantity for DQ", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
         const {twist, root} = await mint(toda, 43, 1);
@@ -25,7 +26,7 @@ describe("getQuantity", async () => {
 
     it("getCombinedQuantities for DQs", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
         let {twist} = await mint(toda, 43, 1);
@@ -43,7 +44,7 @@ describe("getQuantity", async () => {
 describe("getBalance", async () => {
     it("Unknown type hash", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         let result = await toda.getBalance(Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5"));
         assert.deepEqual({balance: 0,
                           quantity: 0,
@@ -55,7 +56,7 @@ describe("getBalance", async () => {
 
     it("Simple", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
         let {twist, root} = await mint(toda, 43, 1);
@@ -75,7 +76,7 @@ describe("getBalance", async () => {
 
     it("Uncontrolled", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
         let {twist, root} = await mint(toda, 43, 1);
@@ -100,7 +101,7 @@ describe("getBalance", async () => {
 describe("delegateValue", async () => {
     it("Simple", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
         let {twist, root} = await mint(toda, 43, 1);
@@ -118,7 +119,7 @@ describe("delegateValue", async () => {
 
     it("Nested", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
         let {twist, root} = await mint(toda, 43, 1);
@@ -138,20 +139,20 @@ describe("delegateValue", async () => {
 
     it("Client cannot satisfy DQ", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let {twist} = await mint(toda, 43, 1);
         let dq = Abject.fromTwist(twist);
 
         // New client does not have satisfier
-        toda = new TodaClientV2(inv, "http://localhost:8000");
+        toda = new TodaClient(inv, "http://localhost:8000");
         await assert.rejects(toda.delegateValue(dq, 2.2));
     });
 
 
     it("Not enough qty", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
         let {twist} = await mint(toda, 43, 1);
@@ -162,7 +163,7 @@ describe("delegateValue", async () => {
 
     it("NaN", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
         let {twist} = await mint(toda, 43, 1);
@@ -172,7 +173,7 @@ describe("delegateValue", async () => {
 
     it("Delegate value updates its tether", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
 
@@ -193,7 +194,7 @@ describe("delegateValue", async () => {
 describe("Transfer tests; simple", async () => {
     it("Exact", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
@@ -211,7 +212,7 @@ describe("Transfer tests; simple", async () => {
 
     it("Excess", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                             .encode("I am salty!"));
@@ -229,7 +230,7 @@ describe("Transfer tests; simple", async () => {
 
     it("Multiple exact change", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                             .encode("I am salty!"));
@@ -249,7 +250,7 @@ describe("Transfer tests; simple", async () => {
 
     it("Multiple change", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
-        let toda = new TodaClientV2(inv, "http://localhost:8000");
+        let toda = new TodaClient(inv, "http://localhost:8000");
         let destHash = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
         toda._getSalt = () => new ByteArray(new TextEncoder()
                                                 .encode("I am salty!"));
@@ -693,9 +694,9 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
         assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
     });
 
-    //FIXME: Still failing. TodaClientV2.pull() does not 
+    //FIXME: Still failing. TodaClient.pull() does not 
     //       understand where it needs to stop; it assumes 
-    //       it should stop at TodaClientV2.defaultTopLineHash
+    //       it should stop at TodaClient.defaultTopLineHash
     xit("Alice => Bob => Charlie, multi layered poptop, DQ has a higher poptop than addresses", async function() {
         const { toda: alice, hash: aliceHash } = 
             await createLine(this.lowerRelay.twists[2].getHash());

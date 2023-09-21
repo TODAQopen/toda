@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "todajs",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "",
   "author": "TodaQ",
   "license": "Apache License 2.0",

@@ -8,9 +8,13 @@ import { Packet } from '../core/packet.js';
 import axios from 'axios';
 
 class RelayClient {
+    constructor(tetherHash, backwardsStopPredicate) {
+        this.tetherHash = tetherHash;
+        this.backwardsStopPredicate = backwardsStopPredicate;
+    }
 
-    hoist(prevTwist, nextHash, opts) {
-        return this.hoistPacket(prevTwist.hoistPacket(nextHash), opts);
+    hoist(prevTwist, nextHash) {
+        return this._hoist(prevTwist, nextHash);
     }
 
     hoistPacket(riggingPacket, opts) {
@@ -18,13 +22,23 @@ class RelayClient {
             [[Sha256.fromPacket(riggingPacket), riggingPacket]]), opts);
     }
 
-    _hoist(atoms) {
-        throw new Error('not implemented');
+    _hoist(prevTwist, nextHash) {
+        throw new Error('Not implemented in abstract class');
     }
 
-    // TODO(acg): add params to request slice
-    get() {
-        throw new Error('not implemented');
+    async get() {
+        const backwardsPromise = this._backwards(this.tetherHash);
+        const forwardsPromise = this._forwards(this.tetherHash);
+        const twists = [...(await backwardsPromise), 
+                        ...(await forwardsPromise)];
+        if (twists.length == 0) {
+            return null;
+        }
+        const twist = twists[twists.length-1];
+        // Significantly more performant than `forEach(twist.safeAdd...`
+        const atoms = Atoms.fromAtoms(...twists.flatMap(t => t.atoms||[]));
+        twist.addAtoms(atoms);
+        return twist;
     }
 
     /** Retrieves the hoist hitch for the specified lead
@@ -42,107 +56,6 @@ class RelayClient {
         } catch (e) {
             return {};
         }
-    }
-}
-
-class RemoteRelayClient extends RelayClient {
-
-    constructor(url) {
-        super();
-        this.url = new URL(url);
-    }
-
-    _hoist(atoms) {
-        return axios({
-            method: "POST",
-            url: this.url.toString(),
-            headers: {
-                "Content-Type": "application/octet-stream"
-            },
-            data: atoms.toBytes()
-        });
-    }
-
-    _getBytes(startHash) {
-        let queryString = "";
-        if (startHash) {
-            queryString = "?start-hash=" + startHash.toString();
-        }
-        return axios({
-            method: "GET",
-            url: this.url.toString() + queryString,
-            responseType: "arraybuffer"
-        }).then(res => new ByteArray(res.data));
-    }
-
-    get(startHash) {
-        return this._getBytes(startHash).then(bytes => 
-            new Twist(Atoms.fromBytes(bytes)));
-    }
-}
-
-class LocalRelayClient extends RelayClient {
-
-    constructor(todaClient, hash) {
-        super();
-
-        if (!hash) {
-            throw Error('relay requires a line.');
-        }
-
-        this.hash = hash;
-        this.client = todaClient;
-    }
-
-    _hoist(atoms, { noFast } = {}) {
-        let relay = this.get();
-
-        // heuristic.  use current key if last update was keyed
-        let req = relay.reqs() ? this.client.requirementSatisfiers[0] : null;
-
-        // semi-heuristic. use last tether if last update was tethered
-        let tether = noFast ? null : (relay.isTethered() ? 
-            relay.getTetherHash() : null);
-
-        return this.client.append(relay, tether, req, undefined, undefined,
-                                  atoms.get(atoms.focus));
-                        //    atoms.lastPacket());
-    }
-
-    get() {
-        return this.client.get(this.hash);
-    }
-}
-
-/**
- * @param backwardsStopPredicate <fn(twist) => bool>: 
- *      if specified, get() will stop
-*       walking backwards when it sees a twist that matches the predicate
- */
-class NextRelayClient extends RelayClient {
-    constructor(tetherHash, backwardsStopPredicate) {
-        super();
-        this.tetherHash = tetherHash;
-        this.backwardsStopPredicate = backwardsStopPredicate;
-    }
-
-    hoist(prevTwist, nextHash) {
-        return this._hoist(prevTwist, nextHash);
-    }
-
-    async get() {
-        const backwardsPromise = this._backwards(this.tetherHash);
-        const forwardsPromise = this._forwards(this.tetherHash);
-        const twists = [...(await backwardsPromise), 
-                        ...(await forwardsPromise)];
-        if (twists.length == 0) {
-            return null;
-        }
-        const twist = twists[twists.length-1];
-        // Significantly more performant than `forEach(twist.safeAdd...`
-        const atoms = Atoms.fromAtoms(...twists.flatMap(t => t.atoms||[]));
-        twist.addAtoms(atoms);
-        return twist;
     }
 
     async _backwards(prevHash) {
@@ -183,10 +96,10 @@ class NextRelayClient extends RelayClient {
     }
 }
 
-class LocalNextRelayClient extends NextRelayClient {
+class LocalRelayClient extends RelayClient {
 
     constructor(todaClient, hash) {
-        super(hash);
+        super(hash, null);
 
         if (!hash) {
             throw Error('relay requires a line.');
@@ -273,7 +186,7 @@ class LocalNextRelayClient extends NextRelayClient {
 
     _getShield(twistHash) {
         const twist = this.client.get(this.tetherHash);
-        if (twist && LocalNextRelayClient.shieldIsPublic(twist, twistHash)) {
+        if (twist && LocalRelayClient.shieldIsPublic(twist, twistHash)) {
             return twist.findPrevious(twistHash)?.shield();
         }
         return null;
@@ -285,7 +198,7 @@ class LocalNextRelayClient extends NextRelayClient {
  *   get() will stop walking backwards when it sees a twist that 
  *   matches the predicate
  */
-class RemoteNextRelayClient extends NextRelayClient {
+class RemoteRelayClient extends RelayClient {
 
     static globalNextCache = {};
     static globalShieldCache = {};
@@ -314,8 +227,8 @@ class RemoteNextRelayClient extends NextRelayClient {
     }
 
     async _getNext(twistHash) {
-        if (RemoteNextRelayClient.globalNextCache[twistHash]) {
-            return RemoteNextRelayClient.globalNextCache[twistHash];
+        if (RemoteRelayClient.globalNextCache[twistHash]) {
+            return RemoteRelayClient.globalNextCache[twistHash];
         }
 
         const resp = await axios({
@@ -326,15 +239,15 @@ class RemoteNextRelayClient extends NextRelayClient {
         }).catch(() => null);
         if (resp) {
             const x = Twist.fromBytes(new ByteArray(resp.data));
-            RemoteNextRelayClient.globalNextCache[twistHash] = x;
+            RemoteRelayClient.globalNextCache[twistHash] = x;
             return x;
         }
         return null;
     }
 
     async _getShield(twistHash) {
-        if (RemoteNextRelayClient.globalShieldCache[twistHash]) {
-            return RemoteNextRelayClient.globalShieldCache[twistHash];
+        if (RemoteRelayClient.globalShieldCache[twistHash]) {
+            return RemoteRelayClient.globalShieldCache[twistHash];
         }
 
         const resp = await axios({
@@ -345,7 +258,7 @@ class RemoteNextRelayClient extends NextRelayClient {
         }).catch(() => null);
         if (resp) {
             const x = Packet.parse(new ByteArray(resp.data));
-            RemoteNextRelayClient.globalShieldCache[twistHash] = x;
+            RemoteRelayClient.globalShieldCache[twistHash] = x;
             return x;
         }
         return null;
@@ -353,6 +266,4 @@ class RemoteNextRelayClient extends NextRelayClient {
 }
 
 export { LocalRelayClient,
-         RemoteRelayClient,
-         LocalNextRelayClient,
-         RemoteNextRelayClient };
+         RemoteRelayClient };

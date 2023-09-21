@@ -1,5 +1,5 @@
 import { LocalInventoryClient } from "../../src/client/inventory.js";
-import { TodaClientV2 } from "../../src/client/client.js";
+import { TodaClient } from "../../src/client/client.js";
 import { SECP256r1 } from "../../src/client/secp256r1.js";
 import { TestRelayServer } from "./relay_server.js";
 import { v4 as uuid } from "uuid";
@@ -8,7 +8,7 @@ import fs from "fs";
 
 async function initRelay(port, upstreamBaseUrl, upstreamHash, initTwists = 2) {
     const inv = new LocalInventoryClient("./files/" + uuid());
-    const toda = new TodaClientV2(inv, upstreamBaseUrl + "/files");
+    const toda = new TodaClient(inv, upstreamBaseUrl + "/files");
     toda.shieldSalt = path.join(inv.invRoot, "salt");
     fs.writeFileSync(toda.shieldSalt, Buffer.from(uuid(), "utf-8"));
     const req = await SECP256r1.generate();
@@ -35,7 +35,7 @@ async function createLine(relayHash,
                           remoteFileServer = "http://localhost:8090/files", 
                           remoteRelayUrl = "http://localhost:8090/hoist") {
     const inv = new LocalInventoryClient("./files/" + uuid());
-    const toda = new TodaClientV2(inv, remoteFileServer);
+    const toda = new TodaClient(inv, remoteFileServer);
     toda.shieldSalt = path.join(inv.invRoot, "salt");
     fs.writeFileSync(toda.shieldSalt, Buffer.from(uuid(), "utf-8"));
     toda.defaultRelayUrl = remoteRelayUrl;

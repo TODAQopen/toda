@@ -7,9 +7,8 @@
 
 //const { keysPaired, SignatureRequirement } = require("../core/reqsat");
 import { ByteArray } from '../core/byte-array.js';
-import { LocalRelayClient, RemoteNextRelayClient, 
-    RemoteRelayClient, LocalNextRelayClient } from './relay.js';
-import { Hash, Sha256, NullHash } from '../core/hash.js';
+import { LocalRelayClient, RemoteRelayClient } from './relay.js';
+import { Sha256, NullHash } from '../core/hash.js';
 import { ArbitraryPacket } from '../core/packet.js';
 import { TwistBuilder, Twist, MissingPrevError, MissingHashPacketError } 
     from '../core/twist.js';
@@ -21,8 +20,7 @@ import fs from 'fs-extra';
 import { P1String } from '../abject/primitive.js';
 
 class TodaClient {
-
-    constructor(inventory) {
+    constructor(inventory, fileServerUrl) {
 
         this.inv = inventory;
 
@@ -39,24 +37,74 @@ class TodaClient {
 
         this.requirementSatisfiers = [];
 
-        this.retryTimes = 3;
-        this.retryInterval = 1000;
-
         this.appendLocks = {};
 
         this.dq = {balances: {},
                    balanceForceRecalc: {},
                    balanceCalculating: {},
                    quantities: {}};
+
+        this.fileServerUrl = fileServerUrl;
+        this.retryTimes = 5;
+        this.retryInterval = 1000;
     }
 
     addSatisfier(rs) {
         this.requirementSatisfiers.push(rs);
     }
 
-    _defaultRelay(twist) {
+    _backwardsStopPredicate(fastTwist) {
+        /* For the sake of performance, there are 3 conditions where we 
+            want to stop moving backwards when pulling the relay:
+            1) when we reach a fast twist
+            2) when we reach a twist that is known to be the `topline hash` 
+                (by definition we do not need any
+                information prior to this point, assuming the abject is 
+                properly defined)
+            3) when we know that the relay line portion we have is loose, 
+                we do not want to walk all the way
+                back looking for the topline hash or a fast twist. Instead, 
+                we can stop whenever we see a twist
+                that has already been gathered in a previous pull. So we:
+                    a) we locally check whether or not the relay line is 
+                        loose; then
+                    b) if it is, locally find the most recent twist we 
+                        know about on that line; then
+                    c) walk back until we see that twist
+        */
+        let lastKnownRelayTwist;
+        let relayLineIsFast;
+        try {
+            lastKnownRelayTwist = fastTwist.tether() ?? 
+                                  fastTwist.findLastStoredTether();
+            relayLineIsFast = lastKnownRelayTwist?.lastFast();
+        } catch (err) {
+            // MissingPrevError is acceptable: we don't expect a relay line
+            //  to contain all twists. If it reaches a missing twist, we can
+            //  safely treat the line as 'loose'
+            // MissingHashPacketError is also acceptable; if the tether 
+            //  is missing
+            if (!(err instanceof MissingPrevError) && 
+                !(err instanceof MissingHashPacketError)) {
+                throw err;
+            }
+        }
+        return (backwardsTwist) => {
+            const isFast = backwardsTwist.isTethered();
+            const isTopLine = this.defaultTopLineHash && 
+                this.defaultTopLineHash.equals(backwardsTwist.getHash());
+            const isKnownLoose = !relayLineIsFast && 
+                lastKnownRelayTwist?.getHash().equals(backwardsTwist.getHash());
+            return isFast || isTopLine || isKnownLoose;
+        };
+    }
+
+    _defaultRelay(fastTwist) {
         if (this.defaultRelayUrl) {
-            return new RemoteRelayClient(this.defaultRelayUrl);
+            return new RemoteRelayClient(this.defaultRelayUrl, 
+                this.fileServerUrl, 
+                fastTwist.getTetherHash(), 
+                this._backwardsStopPredicate(fastTwist));
         }
         console.error("No default relay found.");
         return null;
@@ -64,7 +112,9 @@ class TodaClient {
 
     _getRelay(fastTwist, tetherUrl) {
         if (tetherUrl) {
-            return new RemoteRelayClient(tetherUrl);
+            return new RemoteRelayClient(tetherUrl, 
+                this.fileServerUrl, fastTwist.getTetherHash(), 
+                this._backwardsStopPredicate(fastTwist));
         }
         if (this.get(fastTwist.getTetherHash())) {
             return new LocalRelayClient(this, fastTwist.getTetherHash());
@@ -92,15 +142,6 @@ class TodaClient {
             // not an abj; ergo tether url is null
         }
         return this._getRelay(twist, tetherUrl);
-    }
-
-    getRelayFromString(relayStr) {
-        // mostly used for pulling down poptop reference.
-        if (relayStr.length == 66) { // I SAID, I'm SORRY!
-            return new LocalRelayClient(this, Hash.fromHex(relayStr));
-        }
-        console.error("RELAYSTR:", relayStr, relayStr.length);
-        return new RemoteRelayClient(relayStr);
     }
 
     // typically used for looking up tethers, where we don't know if the proof
@@ -674,10 +715,10 @@ class TodaClient {
 
         // HACK: This is a temporary solution for populating older poptops
         if (popTop) {
-            const relay = new RemoteNextRelayClient(this.defaultRelayUrl, 
-                                                    this.fileServerUrl, 
-                                                    popTop,
-                                                    () => true);
+            const relay = new RemoteRelayClient(this.defaultRelayUrl, 
+                                                this.fileServerUrl, 
+                                                popTop,
+                                                () => true);
             let prevToplineAtoms = (await relay.get()).getAtoms();
             dqTwist.addAtoms(prevToplineAtoms);
             this.inv.put(dqTwist.getAtoms());
@@ -695,93 +736,10 @@ class TodaClient {
     }
 }
 
-class TodaClientV2 extends TodaClient {
-    constructor(inventory, fileServerUrl) {
-        super(inventory);
-        this.fileServerUrl = fileServerUrl;
-        this.retryTimes = 5;
-        this.retryInterval = 1000;
-    }
-
-    _backwardsStopPredicate(fastTwist) {
-        /* For the sake of performance, there are 3 conditions where we 
-            want to stop moving backwards when pulling the relay:
-            1) when we reach a fast twist
-            2) when we reach a twist that is known to be the `topline hash` 
-                (by definition we do not need any
-                information prior to this point, assuming the abject is 
-                properly defined)
-            3) when we know that the relay line portion we have is loose, 
-                we do not want to walk all the way
-                back looking for the topline hash or a fast twist. Instead, 
-                we can stop whenever we see a twist
-                that has already been gathered in a previous pull. So we:
-                    a) we locally check whether or not the relay line is 
-                        loose; then
-                    b) if it is, locally find the most recent twist we 
-                        know about on that line; then
-                    c) walk back until we see that twist
-        */
-        let lastKnownRelayTwist;
-        let relayLineIsFast;
-        try {
-            lastKnownRelayTwist = fastTwist.tether() ?? 
-                                  fastTwist.findLastStoredTether();
-            relayLineIsFast = lastKnownRelayTwist?.lastFast();
-        } catch (err) {
-            // MissingPrevError is acceptable: we don't expect a relay line
-            //  to contain all twists. If it reaches a missing twist, we can
-            //  safely treat the line as 'loose'
-            // MissingHashPacketError is also acceptable; if the tether 
-            //  is missing
-            if (!(err instanceof MissingPrevError) && 
-                !(err instanceof MissingHashPacketError)) {
-                throw err;
-            }
-        }
-        return (backwardsTwist) => {
-            const isFast = backwardsTwist.isTethered();
-            const isTopLine = this.defaultTopLineHash && 
-                this.defaultTopLineHash.equals(backwardsTwist.getHash());
-            const isKnownLoose = !relayLineIsFast && 
-                lastKnownRelayTwist?.getHash().equals(backwardsTwist.getHash());
-            return isFast || isTopLine || isKnownLoose;
-        };
-    }
-
-    _defaultRelay(fastTwist) {
-        if (this.defaultRelayUrl) {
-            return new RemoteNextRelayClient(this.defaultRelayUrl, 
-                this.fileServerUrl, 
-                fastTwist.getTetherHash(), 
-                this._backwardsStopPredicate(fastTwist));
-        }
-        console.error("No default relay found.");
-        return null;
-    }
-
-    _getRelay(fastTwist, tetherUrl) {
-        if (tetherUrl) {
-            return new RemoteNextRelayClient(tetherUrl, 
-                this.fileServerUrl, fastTwist.getTetherHash(), 
-                this._backwardsStopPredicate(fastTwist));
-        }
-        if (this.get(fastTwist.getTetherHash())) {
-            return new LocalNextRelayClient(this, fastTwist.getTetherHash());
-        }
-        return this._defaultRelay(fastTwist);
-    }
-
-    getRelayFromString() {
-        throw new Error("Not implemented; use getRelay instead");
-    }
-}
-
 class TodaClientError extends Error {}
 class WaitForHitchError extends TodaClientError {}
 class CannotSatisfyError extends TodaClientError {}
 
 export { TodaClient,
-         TodaClientV2,
          WaitForHitchError,
          CannotSatisfyError };

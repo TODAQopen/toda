@@ -24,10 +24,10 @@ export * as di from  "./src/abject/di.js";
 export { DQ } from  "./src/abject/quantity.js";
 export { app } from  "./src/inventory/src/server.js";
 export { LocalInventoryClient } from  "./src/client/inventory.js";
-export { LocalRelayClient, RemoteRelayClient, RemoteNextRelayClient } 
+export { LocalRelayClient, RemoteRelayClient } 
     from "./src/client/relay.js";
 export { SECP256r1 } from  "./src/client/secp256r1.js";
-export { TodaClient, TodaClientV2 } from  "./src/client/client.js";
+export { TodaClient } from  "./src/client/client.js";
 export { ByteArray } from  "./src/core/byte-array.js";
 export { Shield } from  "./src/core/shield.js";
 export { TestRelayServer } from "./test/client/relay_server.js";
