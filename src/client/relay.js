@@ -145,9 +145,15 @@ class LocalRelayClient extends RelayClient {
 
         // heuristic.  use current key if last update was keyed
         let req = relay.reqs() ? this.client.requirementSatisfiers[0] : null;
-        // semi-heuristic. use last tether if last update was tethered
-        let tether = noFast ? null : (relay.isTethered() ? 
-            relay.getTetherHash() : null);
+
+        let tether;
+        if (noFast) {
+            // Leave tether undefined
+        } else if (relay.isTethered()) {
+            tether = relay.getTetherHash();
+        } else {
+            tether = relay.lastFast()?.getTetherHash();
+        }
 
         const t = await this.client.append(relay, tether, 
                 req, undefined, undefined,
