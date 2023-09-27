@@ -8,6 +8,7 @@ import { v4 as uuid } from "uuid";
 import { createLine, initRelay, mint } from "./util.js";
 import { InsufficientQuantity, InvalidDisplayPrecision, InvalidQuantity } 
     from "../../src/abject/quantity.js";
+import { SECP256r1 } from "../../src/client/secp256r1.js";
 
 describe("getQuantity", async () => {
     it("getQuantity for DQ", async () => {
@@ -140,11 +141,17 @@ describe("delegateValue", async () => {
     it("Client cannot satisfy DQ", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClient(inv, "http://localhost:8000");
+        let req = await SECP256r1.generate();
+        toda.addSatisfier(req);
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
-        let {twist} = await mint(toda, 43, 1);
+        let localLine = await toda.create(null, req);
+        await toda.append(localLine);
+
+        let {twist} = await mint(toda, 43, 1, localLine.getHash());
         let dq = Abject.fromTwist(twist);
 
         // New client does not have satisfier
+        inv = new LocalInventoryClient("./files/" + uuid());
         toda = new TodaClient(inv, "http://localhost:8000");
         await assert.rejects(toda.delegateValue(dq, 2.2));
     });

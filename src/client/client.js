@@ -589,7 +589,9 @@ class TodaClient {
             throw new Error("Cannot delegate; cannot satisfy dqTwist");
         }
 
-        let dqTether = dqTwist.getTetherHash();
+        let dqTether = dqTwist.isTethered() ? 
+                       dqTwist.getTetherHash() : 
+                       dqTwist.lastFast()?.getTetherHash();
 
         // create delegate
         let dqDel = dq.delegate(quantity);
