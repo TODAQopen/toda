@@ -1,7 +1,7 @@
 import { DI, DIAssetClassClass, AssetClassField } from "../../src/abject/di.js";
 import { Primitive, P1String, P1Float, P1Date, P1Boolean } from "../../src/abject/primitive.js";
 import { Media } from "../../src/abject/media.js";
-import assert from 'node:assert/strict'
+import assert from 'node:assert/strict';
 
 // Output key values for our use
 describe("Give me hashes", () => {

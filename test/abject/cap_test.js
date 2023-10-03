@@ -5,18 +5,18 @@
 * Apache License 2.0
 *************************************************************/
 
-import {DI} from "../../src/abject/di.js"
-import {Actionable} from "../../src/abject/actionable.js"
-import {Capability} from "../../src/abject/capability.js"
-import {P1String, P1Date} from "../../src/abject/primitive.js"
-import {Abject} from "../../src/abject/abject.js"
+import {DI} from "../../src/abject/di.js";
+import {Actionable} from "../../src/abject/actionable.js";
+import {Capability} from "../../src/abject/capability.js";
+import {P1String, P1Date} from "../../src/abject/primitive.js";
+import {Abject} from "../../src/abject/abject.js";
 
-import {TwistBuilder} from "../../src/core/twist.js"
-import {ByteArray} from "../../src/core/byte-array.js"
-import {Shield} from "../../src/core/shield.js"
-import {ArbitraryPacket} from "../../src/core/packet.js"
+import {TwistBuilder} from "../../src/core/twist.js";
+import {ByteArray} from "../../src/core/byte-array.js";
+import {Shield} from "../../src/core/shield.js";
+import {ArbitraryPacket} from "../../src/core/packet.js";
 import { sbh } from "../util.js";
-import assert from 'node:assert/strict'
+import assert from 'node:assert/strict';
 
 describe("Provide cap hashes", () => {
     it("gives me hashes", () => {

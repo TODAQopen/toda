@@ -1,4 +1,4 @@
-import { Primitive, P1String, P1Float, P1Date, P1Boolean } from "../../src/abject/primitive.js";
+import { P1String, P1Float, P1Date, P1Boolean } from "../../src/abject/primitive.js";
 import { Abject } from "../../src/abject/abject.js";
 import { Sha256 } from "../../src/core/hash.js";
 import assert from 'node:assert/strict';

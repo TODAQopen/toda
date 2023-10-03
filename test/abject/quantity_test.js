@@ -5,10 +5,9 @@ import { TwistBuilder } from "../../src/core/twist.js";
 import { Shield } from "../../src/core/shield.js";
 import { sbh } from "../util.js";
 import { DelegableActionable } from '../../src/abject/actionable.js';
-import { putFile } from "../../src/inventory/src/files.js";
 import { NullHash } from "../../src/core/hash.js";
 
-import assert from 'node:assert/strict'
+import assert from 'node:assert/strict';
 
 
 describe("Regular minting works", () => {
@@ -128,7 +127,7 @@ describe("Delegation works correctly", () => {
         fromNext.twistHash = fromNext.getHash();
         fromNext.addAtoms(delNext.serialize());
 
-        return [fromNext, delNext, topNext]
+        return [fromNext, delNext, topNext];
     }
 
     it("can do trivial delegation", async () => {
@@ -157,7 +156,7 @@ describe("Delegation works correctly", () => {
 
         let rootNext = root, delNext, topNext = top;
         for (let i = 0; i < 10; i++) {
-          ;[rootNext, delNext, topNext] = delegator(rootNext, 1, topNext);
+          [rootNext, delNext, topNext] = delegator(rootNext, 1, topNext);
         }
 
         await delNext.checkAllRigs();
@@ -175,7 +174,7 @@ describe("Delegation works correctly", () => {
 
         let rootNext, del, delNext = root, topNext = top;
         for (let i = 0; i < 10; i++) {
-          ;[del, delNext, topNext] = delegator(delNext, 1, topNext);
+          [del, delNext, topNext] = delegator(delNext, 1, topNext);
           if (!rootNext) {
             rootNext = del;
           }
@@ -249,7 +248,7 @@ describe("Adversarial DQs can't break their invariants", () => {
         fromNext.twistHash = fromNext.getHash();
         fromNext.addAtoms(delNext.serialize());
 
-        return [fromNext, delNext, topNext]
+        return [fromNext, delNext, topNext];
     }
 
 
@@ -322,7 +321,7 @@ describe("Probe the edges of delegation", () => {
         fromNext.twistHash = fromNext.getHash();
         fromNext.addAtoms(delNext.serialize());
 
-        return [fromNext, delNext, topNext]
+        return [fromNext, delNext, topNext];
     }
 
     function buildContext(quantity) {
@@ -390,19 +389,19 @@ describe("Probe the edges of delegation", () => {
     // Note: all those delegates initiate directly against root, and are confirmed in subsequent twists
 
     it("regular delegation should work", () => {
-       ;[root, del, top] = completor(root, del, top)
+       [root, del, top] = completor(root, del, top);
         assert.equal(root.quantity, 9900);
         assert.equal(del.quantity, 100);
     });
 
     it("confirm a second time causes no changes", () => {
-       ;[root, del, top] = completor(root, del, top, {noComplete: true})
+       [root, del, top] = completor(root, del, top, {noComplete: true});
         assert.equal(root.quantity, 9900);
         assert.equal(del.quantity, 100);
     });
 
     it("complete a second time causes no changes", () => {
-       ;[root, del, top] = completor(root, del, top, {noConfirm: true})
+       [root, del, top] = completor(root, del, top, {noConfirm: true});
         assert.equal(root.quantity, 9900);
         assert.equal(del.quantity, 100);
     });
@@ -417,7 +416,7 @@ describe("Probe the edges of delegation", () => {
     it("full delegation a second time causes no changes", () => {
         del.setFieldHash(DelegableActionable.fieldSyms.delegateInitiate, root.getHash());
         del = del.createSuccessor();
-       ;[root, del, top] = completor(root, del, top)
+       [root, del, top] = completor(root, del, top);
         assert.equal(root.quantity, 9900);
         assert.equal(del.quantity, 100);
     });
@@ -425,31 +424,31 @@ describe("Probe the edges of delegation", () => {
     // TODO: test confirmation on first twist
 
     it("bad amounts cause no changes", () => {
-       ;[root, del_amt, top] = completor(root, del_amt, top)
+       [root, del_amt, top] = completor(root, del_amt, top);
         assert.equal(root.quantity, 9900);
         assert.equal(del_amt.quantity, 0);
     });
 
     it("incomplete, unconfirmed delegates cause no changes", () => {
-       ;[root, del_cc, top] = completor(root, del_cc, top, {noConfirm: 1, noComplete: 1})
+       [root, del_cc, top] = completor(root, del_cc, top, {noConfirm: 1, noComplete: 1});
         assert.equal(root.quantity, 9900);
         assert.equal(del_cc.quantity, 0);
     });
 
     it("unconfirmed delegates cause no changes", () => {
-        ;[root, del_conf, top] = completor(root, del_conf, top, {noConfirm: 1})
+        [root, del_conf, top] = completor(root, del_conf, top, {noConfirm: 1});
          assert.equal(root.quantity, 9900);
          assert.equal(del_conf.quantity, 0);
      });
 
      it("incomplete delegates have no value but still reduce delegator", () => {
-        ;[root, del_comp, top] = completor(root, del_comp, top, {noComplete: 1})
+        [root, del_comp, top] = completor(root, del_comp, top, {noComplete: 1});
          assert.equal(root.quantity, 9800);
          assert.equal(del_comp.quantity, 0);
      });
 
     it("a delegate with a broken tether still reduces delegator", () => {
-       ;[root, del_teth, top] = completor(root, del_teth, top)
+       [root, del_teth, top] = completor(root, del_teth, top);
         assert.equal(root.quantity, 9700);
         assert.equal(del_teth.quantity, 100); // this is scary spice
         // TODO: check that this throws:
@@ -457,7 +456,7 @@ describe("Probe the edges of delegation", () => {
     });
 
     it("regular delegation still works", () => {
-        ;[root, del_3030, top] = completor(root, del_3030, top)
+        [root, del_3030, top] = completor(root, del_3030, top);
          assert.equal(root.quantity, 6670);
          assert.equal(del_3030.quantity, 3030);
     });
@@ -555,7 +554,7 @@ describe("Full special-cased tests", () => {
         let fromNext = root.createSuccessor();
         fromNext.twistBuilder.tetherHash = top.getHash();
         // Note that we're confirming both delegates:
-        fromNext.confirmDelegates([del, del2])
+        fromNext.confirmDelegates([del, del2]);
 
         let delNext = del.createSuccessor();
         delNext.twistBuilder.tetherHash = top.getHash();
@@ -587,6 +586,4 @@ describe("Full special-cased tests", () => {
         assert.equal(delNext2.quantity, 0);
         assert.equal(fromNext.quantity, 42);
     });
-
-
 });

@@ -42,7 +42,7 @@ async function buildMockDelegate() {
     return {topline: relay.twists(),
             delegate: Abject.fromTwist(final_tw),
             root0_shield, delegate0_shield};
-};
+}
 
 describe("checkAllRigs", async () => {
     it("Valid root, delegate, and topline: ", async () => {
