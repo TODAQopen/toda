@@ -22,7 +22,6 @@ export { SimpleHistoric } from  "./src/abject/simple-historic.js";
 export * as primitive from  "./src/abject/primitive.js";
 export * as di from  "./src/abject/di.js";
 export { DQ } from  "./src/abject/quantity.js";
-export { app } from  "./src/inventory/src/server.js";
 export { LocalInventoryClient } from  "./src/client/inventory.js";
 export { LocalRelayClient, RemoteRelayClient } 
     from "./src/client/relay.js";
