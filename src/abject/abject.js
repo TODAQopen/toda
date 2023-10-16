@@ -10,6 +10,7 @@ import { BasicTwistPacket, PairTriePacket, HashPacket }
     from '../core/packet.js';
 import { HashMap } from '../core/map.js';
 import { Atoms } from '../core/atoms.js';
+import { ByteArray } from '../core/byte-array.js';
 
 const NULL = new NullHash();
 
@@ -241,6 +242,13 @@ class Abject {
         } catch (e) {
             return null;
         }
+    }
+
+    static parseFromBytes(buffer) {
+        if (!(buffer instanceof ByteArray)) {
+            buffer = new ByteArray(buffer);
+        }
+        return Abject.parse(Atoms.fromBytes(buffer));
     }
 
     /**

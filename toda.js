@@ -1,34 +1,36 @@
-import { MemorySyncPacketStore, SerialStore } from  "./src/core/store.js";
-
 import * as fs from 'fs';
 const packageJSON = JSON.parse(fs.readFileSync('./package.json'));
 
-export * as reqsat from  "./src/core/reqsat.js";
-export { Packet } from  "./src/core/packet.js";
-// TODO: Do not export * as hash
-export * as hash from  "./src/core/hash.js";
-export { Hash, 
-         Sha256 as Sha256Hash, 
+/** Core **/
+export { Hash,
+         Sha256 as Sha256Hash,
          Symbol as SymbolHash,
          NullHash } from "./src/core/hash.js";
 export { Interpreter } from  "./src/core/interpret.js";
 export { Twist, TwistBuilder } from  "./src/core/twist.js";
-export { Atoms } from  "./src/core/atoms.js";
-export { Line } from  "./src/core/line.js";
+/** SignatureRequirement used by server/test/test_import_integration */
+export { SignatureRequirement } from  "./src/core/reqsat.js";
+
+/** Abjects **/
 export { Abject } from  "./src/abject/abject.js";
-export * as actionable from  "./src/abject/actionable.js";
+export { SimpleRigged, DelegableActionable } from  "./src/abject/actionable.js";
 export { Capability } from  "./src/abject/capability.js";
-export { SimpleHistoric } from  "./src/abject/simple-historic.js";
-export * as primitive from  "./src/abject/primitive.js";
-export * as di from  "./src/abject/di.js";
+export { P1String, P1Date } from  "./src/abject/primitive.js";
+export { DI, DIAssetClassClass, AssetClassField } from  "./src/abject/di.js";
 export { DQ } from  "./src/abject/quantity.js";
+
+/** Client **/
 export { LocalInventoryClient } from  "./src/client/inventory.js";
-export { LocalRelayClient, RemoteRelayClient } 
+export { LocalRelayClient, RemoteRelayClient }
     from "./src/client/relay.js";
-export { SECP256r1 } from  "./src/client/secp256r1.js";
 export { TodaClient } from  "./src/client/client.js";
-export { ByteArray } from  "./src/core/byte-array.js";
-export { Shield } from  "./src/core/shield.js";
+
+/** Signature Implementations */
+export { SECP256r1 } from  "./src/client/secp256r1.js";
+
+/** Testing */
 export { TestRelayServer } from "./test/client/relay_server.js";
-export const store = { MemorySyncPacketStore, SerialStore };
+
+
+
 export const version = packageJSON.version;
