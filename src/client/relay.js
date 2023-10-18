@@ -13,8 +13,8 @@ class RelayClient {
         this.backwardsStopPredicate = backwardsStopPredicate;
     }
 
-    hoist(prevTwist, nextHash) {
-        return this._hoist(prevTwist, nextHash);
+    hoist(prevTwist, nextHash, opts) {
+        return this._hoist(prevTwist, nextHash, opts);
     }
 
     hoistPacket(riggingPacket, opts) {
