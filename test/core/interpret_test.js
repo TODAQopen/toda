@@ -287,7 +287,8 @@ describe("Runs pickled reqsattrie tests (v1)", () => {
 
             let twist1 = Twist.fromBytes(data);
             let twist0 = twist1.prev();
-            return i.verifyLegit(twist0, twist1);
+            await i._verifyLegit(twist0, twist1);
+            return i.verifyCollectedReqSats();
         } catch (err) {
             assert.ifError(err);
         }
@@ -306,7 +307,8 @@ describe("Runs pickled reqsattrie tests (v1)", () => {
 
         let e;
         try {
-            await i.verifyLegit(twist0, twist1);
+            await i._verifyLegit(twist0, twist1);
+            await i.verifyCollectedReqSats();
             e = 'Did not throw an error';
         } catch (err) {
             e = err instanceof expectedErrorType ? null : err;

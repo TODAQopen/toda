@@ -17,7 +17,8 @@ async function checkInterpret(b) {
         let predecessorH = line.prev(successorH);
         let successor = new Twist(atoms, successorH);
         let predecessor = new Twist(atoms, predecessorH);
-        await interpreter.verifyLegit(predecessor, successor);
+        await interpreter._verifyLegit(predecessor, successor);
+        await interpreter.verifyCollectedReqSats();
         return true;
     } catch (err) {
         return false;

@@ -85,7 +85,7 @@ describe("Runs pickled secp256r1 tests (v1)", () => {
         let twist1 = Twist.fromBytes(data);
         let twist0 = twist1.prev();
 
-        return i.verifyLegit(twist0, twist1);
+        return i._verifyLegit(twist0, twist1);
     };
 
     let runThrowTest = async (todaFile, expectedErrorType) => {
@@ -101,6 +101,7 @@ describe("Runs pickled secp256r1 tests (v1)", () => {
         let err;
         try {
             await i.verifyLegit(twist0, twist1);
+            await i.verifyCollectedReqSats();
         } catch (e) {
             err = e;
         }

@@ -159,7 +159,7 @@ describe("append", async () => {
         let line = new Line();
         line.addAtoms(t1.getAtoms());
         let i = new Interpreter(line, undefined);
-        await i.verifyReqSat(SECP256r1.requirementTypeHash, t0, t1);
+        await i._verifyReqSat(SECP256r1.requirementTypeHash, t0, t1);
     });
 
     it("append local test", async () => {

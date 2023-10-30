@@ -45,6 +45,9 @@ class Interpreter {
     constructor(line, topHash) {
         this.line = line;
         this.topHash = topHash;
+
+        // TODO(acg): we could de-dupe these at some point.
+        this.verificationPromises = [];
     }
 
     twist(hash) {
@@ -80,7 +83,8 @@ class Interpreter {
         return this.line.colinear(hash, this.topHash);
     }
 
-    async verifyTopline() {
+    /** @returns <Promise> verifies collected req-sats */
+    verifyTopline() {
         if (!this.line.get(this.topHash)) {
             throw new MissingError(this.topHash, "Missing topline hash");
         }
@@ -88,15 +92,18 @@ class Interpreter {
         if (!stop) {
             throw new MissingError(this.topHash, "Missing topline successor");
         }
-        await this.verifyLegitSeg(this.topHash, stop);
+        this._verifyLegitSeg(this.topHash, stop);
+
+        return this.verifyCollectedReqSats();
     }
 
     /**
      * @param reqHash <Hash> the type of the requirement (e.g. secp...)
      * @param prevTw <Twist>
      * @param twist <Twist>
+     * Mutates state to push required req/sats onto a list to be checked.
      */
-    async verifyReqSat(reqHash, prevTw, twist) {
+    _verifyReqSat(reqHash, prevTw, twist) {
         let reqPacketHash = prevTw.reqs(reqHash);
         let keyPacket = prevTw.get(reqPacketHash);
         if (!keyPacket) {
@@ -113,24 +120,26 @@ class Interpreter {
         if (!sigPacket) {
             throw new MissingError(sigPacketHash, "missing sig packet...");
         }
-
-        if (!(await RequirementSatisfier.verifySatisfaction(
+        this.verificationPromises.push((async () => {
+            if (! (await RequirementSatisfier.verifySatisfaction(
                 reqHash, twist, keyPacket, sigPacket))) {
-            throw new ReqSatError(reqHash, twist.packet.getBodyHash(),
-                keyPacket, sigPacket);
-        }
+                throw new ReqSatError(reqHash, twist.packet.getBodyHash(),
+                                      keyPacket, sigPacket);
+            } else {
+            }
+        })());
     }
 
-    async verifyLegit(prevTw, twist) {
+    _verifyLegit(prevTw, twist) {
         if (prevTw.reqs() && twist.sats()) {
             let reqKeys = prevTw.reqs().getContainedKeyHashes();
             let satKeys = twist.sats().getContainedKeyHashes();
             if (reqKeys.length != satKeys.length) {
                 throw new Error("req/sat trie key length mismatch");
             }
-            return Promise.all(reqKeys.map(reqHash => {
-                return this.verifyReqSat(reqHash, prevTw, twist);
-            }));
+            for (const reqHash of reqKeys) {
+                this._verifyReqSat(reqHash, prevTw, twist);
+            }
         } else if (!(prevTw.reqs() || twist.sats())) {
             return undefined; //why does js not have xor...
         } else {
@@ -142,12 +151,12 @@ class Interpreter {
      * @param hash <Hash>
      * @returns <Twist>
      */
-    async legitNext(hash) {
+    _legitNext(hash) {
         let next = this.next(hash);
         if (!next) {
             throw new MissingSuccessor(hash);
         }
-        await this.verifyLegit(this.twist(hash), next);
+        this._verifyLegit(this.twist(hash), next);
         return next;
     }
 
@@ -156,12 +165,12 @@ class Interpreter {
      * @param stop <Hash>
      * @throws everything
      */
-    async verifyLegitSeg(start, stop) {
-        let next = await this.legitNext(start);
+    _verifyLegitSeg(start, stop) {
+        let next = this._legitNext(start);
         if (next.hash.equals(stop)) {
             return undefined;
         }
-        return this.verifyLegitSeg(next.hash, stop);
+        return this._verifyLegitSeg(next.hash, stop);
     }
 
     inSegment(start,stop,search) {
@@ -276,10 +285,10 @@ class Interpreter {
      * Assumption: Topline is already verified
      * @return <Twist> meet
      */
-    async verifyHitch(hash) {
+    _verifyHitch(hash) {
         let meet = this.hitchMeet(hash);
 
-        await this.verifyLegitSeg(hash, meet.hash);
+        this._verifyLegitSeg(hash, meet.hash);
 
         if (!(this.prevTetheredTwist(meet.hash).hash.equals(hash))) {
             throw new Error("...fPrev of meet wrong..."); //todo
@@ -295,14 +304,14 @@ class Interpreter {
         if (!presumedLead) {
             throw new LooseTwistError(hoist.hash);
         }
-        await this._verifyHitchLine(presumedLead.hash,
-            this.twist(hash).tether().hash,
-            true);
+        this._verifyHitchLine(presumedLead.hash,
+                              this.twist(hash).tether().hash,
+                              true);
 
         let post = this.hitchPost(hash);
         if (post) {
             // this might not actually be necessary
-            await this.verifyLegitSeg(meet.hash, post.hash);
+            this._verifyLegitSeg(meet.hash, post.hash);
         }
         return meet;
     }
@@ -318,8 +327,8 @@ class Interpreter {
      * Stops at the hitch including optLastSupported, if this param is
      * provided.
      */
-    async _verifyHitchLine(unverifiedFast, optLastSupported, optFirst) {
-        await this.verifyHitch(unverifiedFast);
+    _verifyHitchLine(unverifiedFast, optLastSupported, optFirst) {
+        this._verifyHitch(unverifiedFast);
 
         if (!optFirst && !this.isFullHitch(unverifiedFast)) {
             throw new Error("not a full hitch..."); //todo
@@ -345,16 +354,24 @@ class Interpreter {
     /**
      * Verifies the entire history of these twists is fastened; will
      * end with a half hitch.
+     *
+     * @returns <Promise> Verifies all collected req/stats
      */
-    async verifyHitchLine(hash, startHash = undefined) {
+    verifyHitchLine(hash, startHash = undefined) {
         let twist = this.twist(hash);
 
         if (!twist.isTethered()) {
             console.log("WARN!! This line ends loosely. Are we chill with that?!");
             twist = this.prevTetheredTwist(hash);
         }
-        return this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash,
+        this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash,
                                      startHash, true);
+
+        return this.verifyCollectedReqSats();
+    }
+
+    verifyCollectedReqSats() {
+        return Promise.all(this.verificationPromises);
     }
 
 }
