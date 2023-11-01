@@ -370,6 +370,17 @@ class Twist {
         throw new MissingPrevError(ph);
     }
 
+    safePrev() {
+        let ph = this.body?.getPrevHash();
+        if (!ph || ph.isNull()) {
+            return null;
+        }
+        if (this.get(ph)) {
+            return new Twist(this.atoms, ph);
+        }
+        return null;
+    }
+
     /**
       * Walks backwards, looking for the most
       *  recent prev that matches `predicate`
@@ -435,6 +446,16 @@ class Twist {
         }
 
         return prev.first();
+    }
+    
+    knownHistory() {
+        const hs = [this.getHash()];
+        let prev = this.safePrev();
+        while (prev) {
+            hs.push(prev.getHash());
+            prev = prev.safePrev();
+        }
+        return hs;
     }
 
     rig(hash) {

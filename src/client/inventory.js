@@ -5,7 +5,7 @@ import path from 'path';
 import { Atoms } from '../core/atoms.js';
 import { ByteArray } from '../core/byte-array.js';
 import { HashMap } from '../core/map.js';
-import { Line } from '../core/line.js';
+import { Twist } from '../core/twist.js';
 
 
 // Inventories get and put serialized lists of atoms.
@@ -74,19 +74,12 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     _addAtoms(atoms) {
-        // dx: perf: this is very slow, and we don't actually store the line.
-        //       we're only using it to populate this.files and this.twistIdx
-        let line = Line.fromAtoms(atoms);
-        let firstHash = line.first(line.focus);
-        let existing = this.files.get(firstHash);
-        if (!line.history(line.focus) || 
-            (existing && existing.history(existing.focus).length >
-                                          line.history(line.focus).length)) {
-            return;
-        }
-        this.files.set(firstHash, line);
-        for (let hash of line.history(line.focus)) {
-            this.twistIdx.set(hash, firstHash);
+        const twist = new Twist(atoms, atoms.focus);
+        const hs = twist.knownHistory();
+        const first = hs[hs.length - 1];
+        hs.forEach(h => this.twistIdx.set(h, first));
+        if (!this.files.has(first) || this.files.get(first).n < hs.length) {
+            this.files.set(first, {twist, n: hs.length});
         }
     }
 
@@ -119,7 +112,7 @@ class LocalInventoryClient extends InventoryClient {
         if (!this.twistIdx.has(hash)) {
             this.loadFromDisk(hash);
         }
-        return this.files.get(this.twistIdx.get(hash))?.getAtoms();
+        return this.files.get(this.twistIdx.get(hash))?.twist.getAtoms();
     } //TODO(acg): would like to see better testing of this.
 
     _getFromDisk(hash) {
@@ -149,7 +142,9 @@ class LocalInventoryClient extends InventoryClient {
 
     // Returns latest hashes of each file in inv
     listLatest() {
-        return Array.from(this.files, ([h, l]) => l.latestTwist());
+        // FIXME: Why doesn't `this.files.values()` return anything?
+        return Object.keys(this.files.hashes)
+                     .map(k => this.files.get(k).twist.getHash());
     }
 
     // FIXME(acg): Remove - currently only used by cli

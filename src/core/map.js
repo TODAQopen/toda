@@ -79,7 +79,6 @@ class HashMap extends Map {
         }
         return this.atoms;
     }
-
 }
 
 export { HashMap };
