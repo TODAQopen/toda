@@ -389,7 +389,7 @@ class PairTriePacket extends HashPairPacket {
      * @returns <Hash>
      */
     get(keyHash) {
-        return this.shapedVal.get(keyHash+'')
+        return this.shapedVal.get(keyHash.toString())
     }
 
     /**
