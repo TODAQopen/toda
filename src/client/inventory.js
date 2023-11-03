@@ -82,7 +82,16 @@ class LocalInventoryClient extends InventoryClient {
         const first = hs[hs.length - 1];
         hs.forEach(h => this.twistIdx.set(h, first));
         if (!this.files.has(first) || this.files.get(first).n < hs.length) {
+            const existing = this.files.get(first)?.hash;
+            if (existing) {
+                // the 'existing' file in the cache is old; archive it
+                this.archive(existing);
+            }
             this.files.set(first, {hash: atoms.focus, n: hs.length});
+        } else if (this.files.get(first).n > hs.length) {
+            // the 'existing' file in the cache is 
+            //  newer than this file; archive this
+            this.archive(atoms.focus);
         }
     }
 
@@ -152,7 +161,7 @@ class LocalInventoryClient extends InventoryClient {
     archive(hash) {
         const f = this.filePathForHash(hash);
         if (this.shouldArchive && fs.existsSync(f)) {
-            fs.moveSync(f, this.archivePathForHash(hash));
+            fs.moveSync(f, this.archivePathForHash(hash), {overwrite: true});
         }
     }
 
