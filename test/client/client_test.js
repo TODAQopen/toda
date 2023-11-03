@@ -107,8 +107,7 @@ describe("append", async () => {
 
     it("should hoist", async () => {
         let toda = new TodaClient(new LocalInventoryClient(`${__dirname}/files`, false));
-        //toda.defaultRelayPath = `${__dirname}/files/line.toda`;
-        let prev = toda.getExplicitPath(`${__dirname}/files/test.toda`);
+        let prev = toda.getExplicitPath(`${__dirname}/files/4151a40bde66fc10e07b1cef4668811f68c570658ead8bb192098cacb55171bd29.toda`);
         let next = await toda.append(prev);
 
         let {hoist: expectedHoist} = await (toda.getRelay(prev).getHoist(prev));
@@ -125,10 +124,8 @@ describe("append", async () => {
         assert.equal(tether.rig(), null);
 
         let prev = await toda.create();
-        //let prev = toda.getExplicitPath(`${__dirname}/files/test.toda`);
         let next = await toda.append(prev, tether.getHash());
         assert.equal(next.rig(), null);
-
     });
 
     it("should ERROR if the lead has no hoist hitch", async () => {

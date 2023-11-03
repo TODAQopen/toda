@@ -82,7 +82,7 @@ class LocalInventoryClient extends InventoryClient {
         const first = hs[hs.length - 1];
         hs.forEach(h => this.twistIdx.set(h, first));
         if (!this.files.has(first) || this.files.get(first).n < hs.length) {
-            this.files.set(first, {twist, n: hs.length});
+            this.files.set(first, {hash: atoms.focus, n: hs.length});
         }
     }
 
@@ -119,7 +119,9 @@ class LocalInventoryClient extends InventoryClient {
         if (!this.twistIdx.has(hash)) {
             this.loadFromDisk(hash);
         }
-        return this.files.get(this.twistIdx.get(hash))?.twist.getAtoms();
+        const first = this.twistIdx.get(hash);
+        const newest = this.files.get(first)?.hash;
+        return this._getFromDisk(newest);
     } //TODO(acg): would like to see better testing of this.
 
     _getFromDisk(hash) {
@@ -158,7 +160,7 @@ class LocalInventoryClient extends InventoryClient {
     listLatest() {
         // FIXME: Why doesn't `this.files.values()` return anything?
         return Object.keys(this.files.hashes)
-                     .map(k => this.files.get(k).twist.getHash());
+                     .map(k => this.files.get(k).hash);
     }
 
     // FIXME(acg): Remove - currently only used by cli
