@@ -106,7 +106,7 @@ describe("append", async () => {
     });
 
     it("should hoist", async () => {
-        let toda = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
+        let toda = new TodaClient(new LocalInventoryClient(`${__dirname}/files`, false));
         //toda.defaultRelayPath = `${__dirname}/files/line.toda`;
         let prev = toda.getExplicitPath(`${__dirname}/files/test.toda`);
         let next = await toda.append(prev);
@@ -117,7 +117,7 @@ describe("append", async () => {
 
     it("should 'do nothing' if the twist is not tethered or has no lead or meet", async () => {
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
+        let toda = new TodaClient(new LocalInventoryClient(`${__dirname}/files`, false));
         toda.addSatisfier(keyPair);
         toda.shieldSalt = path.resolve(__dirname, "./files/salt");
 
@@ -133,7 +133,7 @@ describe("append", async () => {
 
     it("should ERROR if the lead has no hoist hitch", async () => {
         let keyPair = await SECP256r1.generate();
-        let toda = new TodaClient(new LocalInventoryClient(`${__dirname}/files`));
+        let toda = new TodaClient(new LocalInventoryClient(`${__dirname}/files`, false));
         toda.addSatisfier(keyPair);
         toda.shieldSalt = path.resolve(__dirname, "./files/salt");
 

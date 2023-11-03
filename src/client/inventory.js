@@ -47,9 +47,12 @@ class RemoteInventoryClient extends InventoryClient {
 }
 
 class LocalInventoryClient extends InventoryClient {
-    constructor(path) {
+    constructor(path, shouldArchive = true) {
         super();
         this.invRoot = path;
+        // use 'no archive' mode in some tests to avoid 
+        //  pre-seeded files from being archived
+        this.shouldArchive = shouldArchive;
 
         if (!fs.existsSync(path)) {
             fs.mkdirSync(path, { recursive: true });
@@ -98,6 +101,10 @@ class LocalInventoryClient extends InventoryClient {
         return path.join(this.invRoot, `${hash}.toda`);
     }
 
+    archivePathForHash(hash) {
+        return path.join(this.invRoot, "archive", `${hash}.toda`);
+    }
+
     tmpFilePathForHash(hash) {
         let tmpDir = path.join(this.invRoot, 'tmp');
         fs.mkdirSync(tmpDir, {recursive:true});
@@ -138,6 +145,13 @@ class LocalInventoryClient extends InventoryClient {
         // for atomic mv
         fs.renameSync(tmpPath, destPath);
         this._addAtoms(atoms);
+    }
+
+    archive(hash) {
+        const f = this.filePathForHash(hash);
+        if (this.shouldArchive && fs.existsSync(f)) {
+            fs.moveSync(f, this.archivePathForHash(hash));
+        }
     }
 
     // Returns latest hashes of each file in inv
