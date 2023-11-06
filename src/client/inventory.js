@@ -81,9 +81,9 @@ class LocalInventoryClient extends InventoryClient {
         const hs = twist.knownHistory();
         const first = hs[hs.length - 1];
         hs.forEach(h => this.twistIdx.set(h, first));
-        if (!this.files.has(first) || this.files.get(first).n < hs.length) {
+        if (!this.files.has(first) || this.files.get(first).n <= hs.length) {
             const existing = this.files.get(first)?.twist.getHash();
-            if (existing) {
+            if (existing && this.files.get(first).n < hs.length) {
                 // the 'existing' file in the cache is old; archive it
                 this.archive(existing);
             }
