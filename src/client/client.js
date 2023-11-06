@@ -326,8 +326,9 @@ class TodaClient {
                 let nth = nextTwist.getHash();
                 await r.hoist(lastFast, nth, { noFast: noRemote });
                 ({relayTwist} = await this._waitForHoist(lastFast, r));
-                await this.pull(nextTwist, this.defaultTopLineHash ||
-                                           tether);
+                await this.pull(nextTwist, noRemote ? tether : 
+                                                      this.defaultTopLineHash ??
+                                                      tether);
             } catch (e) {
                 console.error("Hoist error:", e);
                 throw(e);
