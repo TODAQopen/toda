@@ -6,6 +6,8 @@ import { Line } from '../core/line.js';
 import { Interpreter } from '../core/interpret.js';
 import { Packet } from '../core/packet.js';
 import axios from 'axios';
+import http from 'http';
+import https from 'https';
 
 class RelayClient {
     constructor(tetherHash, backwardsStopPredicate) {
@@ -213,6 +215,12 @@ class RemoteRelayClient extends RelayClient {
         super(tetherHash, backwardsStopPredicate);
         this.fileServerUrl = fileServerUrl;
         this.relayUrl = relayUrl;
+
+        this.fileServerClient = axios.create({
+            baseURL: fileServerUrl,
+            httpAgent: new http.Agent({ keepAlive: true }),
+            httpsAgent: new https.Agent({keepAlive: true })
+        });
     }
 
     async _hoist(prevTwist, nextHash) {
@@ -237,12 +245,9 @@ class RemoteRelayClient extends RelayClient {
             return RemoteRelayClient.globalNextCache[twistHash];
         }
 
-        const resp = await axios({
-            method: "GET",
-            url: "/" + twistHash + ".next.toda",
-            baseURL: this.fileServerUrl,
-            responseType: "arraybuffer"
-        }).catch(() => null);
+        const resp = await this.fileServerClient.get(`/${twistHash}.next.toda`,
+        { responseType: "arraybuffer" }).catch(() => null);
+        
         if (resp) {
             const x = Twist.fromBytes(new ByteArray(resp.data));
             RemoteRelayClient.globalNextCache[twistHash] = x;
@@ -256,12 +261,9 @@ class RemoteRelayClient extends RelayClient {
             return RemoteRelayClient.globalShieldCache[twistHash];
         }
 
-        const resp = await axios({
-            method: "GET",
-            url: "/" + twistHash + ".shield",
-            baseURL: this.fileServerUrl,
-            responseType: "arraybuffer"
-        }).catch(() => null);
+        const resp = await this.fileServerClient.get(`/${twistHash}.shield`,
+        { responseType: "arraybuffer" }).catch(() => null);
+   
         if (resp) {
             const x = Packet.parse(new ByteArray(resp.data));
             RemoteRelayClient.globalShieldCache[twistHash] = x;
