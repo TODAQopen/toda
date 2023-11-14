@@ -5,6 +5,9 @@ import { Twist } from '../core/twist.js';
 import { Line } from '../core/line.js';
 import { Interpreter } from '../core/interpret.js';
 import { Packet } from '../core/packet.js';
+import { Abject } from '../abject/abject.js';
+import { Actionable, SimpleRigged } from '../abject/actionable.js';
+import { P1Date } from '../abject/primitive.js';
 import axios from 'axios';
 import http from 'http';
 import https from 'https';
@@ -110,7 +113,7 @@ class LocalRelayClient extends RelayClient {
     }
 
     /**
-     * Given a twist, returns an atoms object containing a 
+     * Given a twist, returns an atoms object containing a
      *  trimmed version of its graph, containing:
      *  the twist packet, the body packet, the req packet (and all contents),
      *  the sat packet (and all contents), and the rigging packet.
@@ -157,9 +160,17 @@ class LocalRelayClient extends RelayClient {
             tether = relay.lastFast()?.getTetherHash();
         }
 
-        const t = await this.client.append(relay, tether, 
-                req, undefined, undefined,
-            prevTwist.hoistPacket(nextHash));
+        let sr = new SimpleRigged();
+        let tsSym = Actionable.gensym("field/relay/ts");
+        sr.setFieldAbject(tsSym, new P1Date(new Date()));
+
+        // xxx(acg): Abjects currently prefer the prev is an abject, otherwise
+        // we do this dance:
+        let cargo = Abject.prototype.serialize.call(sr);
+
+        const t = await this.client.append(relay, tether,
+                                           req, cargo, undefined,
+                                           prevTwist.hoistPacket(nextHash));
         return t;
     }
 
