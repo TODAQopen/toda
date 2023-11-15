@@ -16,15 +16,18 @@ class RelayClient {
     }
 
     hoist(prevTwist, nextHash, opts) {
-        return this._hoist(prevTwist, nextHash, opts);
+        return this._hoist(prevTwist.getTetherHash(),
+                           prevTwist.hoistPacket(nextHash),
+                           opts);
     }
 
     hoistPacket(riggingPacket, opts) {
-        return this._hoist(Atoms.fromPairs(
-            [[Sha256.fromPacket(riggingPacket), riggingPacket]]), opts);
+        return this._hoist(undefined, //dunno which relay this goes to
+                           riggingPacket,
+                           opts);
     }
 
-    _hoist(prevTwist, nextHash) {
+    _hoist(relayHash, riggingPacket, opts) {
         throw new Error('Not implemented in abstract class');
     }
 
@@ -142,7 +145,7 @@ class LocalRelayClient extends RelayClient {
         return isolated;
     }
 
-    async _hoist(prevTwist, nextHash, { noFast } = {}) {
+    async _hoist(relayHash, riggingPacket, { noFast } = {}) {
         let relay = await this.client.get(this.tetherHash);
 
         // heuristic.  use current key if last update was keyed
@@ -157,9 +160,8 @@ class LocalRelayClient extends RelayClient {
             tether = relay.lastFast()?.getTetherHash();
         }
 
-        const t = await this.client.append(relay, tether, 
-                req, undefined, undefined,
-            prevTwist.hoistPacket(nextHash));
+        const t = await this.client.append(relay, tether,
+                req, undefined, undefined, riggingPacket);
         return t;
     }
 
@@ -223,9 +225,8 @@ class RemoteRelayClient extends RelayClient {
         });
     }
 
-    async _hoist(prevTwist, nextHash) {
-        const hoistPacket = prevTwist.hoistPacket(nextHash);
-        const data = {'relay-twist': prevTwist.getTetherHash().toString(),
+    async _hoist(relayHash, hoistPacket) {
+        const data = {'relay-twist': relayHash.toString(),
                       'hoist-request': {}};
         hoistPacket.getShapedValueFromContent().forEach((v, k) => {
             data['hoist-request'][k] = v.toString();
@@ -247,7 +248,7 @@ class RemoteRelayClient extends RelayClient {
 
         const resp = await this.fileServerClient.get(`/${twistHash}.next.toda`,
         { responseType: "arraybuffer" }).catch(() => null);
-        
+
         if (resp) {
             const x = Twist.fromBytes(new ByteArray(resp.data));
             RemoteRelayClient.globalNextCache[twistHash] = x;
