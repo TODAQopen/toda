@@ -31,8 +31,17 @@ class RelayClient {
     async get() {
         const backwardsPromise = this._backwards(this.tetherHash);
         const forwardsPromise = this._forwards(this.tetherHash);
-        const twists = [...(await backwardsPromise), 
-                        ...(await forwardsPromise)];
+        return this._getCoalesce(await backwardsPromise, await forwardsPromise);
+    }
+
+    async getForwardsOnly() {
+        const forwardsPromise = this._forwards(this.tetherHash);
+        return this._getCoalesce([], await forwardsPromise);
+    }
+
+    _getCoalesce(backwardsTwists, forwardsTwists) {
+        const twists = [...backwardsTwists, 
+                        ...forwardsTwists];
         if (twists.length == 0) {
             return null;
         }
@@ -49,7 +58,7 @@ class RelayClient {
      *  hoist if it exists, or null
      */
     async getHoist(lead) {
-        let relayTwist = await this.get();
+        let relayTwist = await this.getForwardsOnly();
         if (!relayTwist) return {};
         let i = new Interpreter(
             Line.fromTwist(relayTwist).addAtoms(lead.getAtoms())); //awkward

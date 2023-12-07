@@ -242,7 +242,7 @@ describe("LocalRelayClient", async () => {
         const f0 = await toda.create(t1.getHash());
         const f1 = await toda.append(f0, t1.getHash());
 
-        const relay = new LocalRelayClient(toda, t2.getHash());
+        const relay = new LocalRelayClient(toda, t1.getHash());
         const hoist = (await relay.getHoist(f0)).hoist;
 
         assert.ok(hoist);
