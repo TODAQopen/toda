@@ -10,9 +10,10 @@ import http from 'http';
 import https from 'https';
 
 class RelayClient {
-    constructor(tetherHash, backwardsStopPredicate) {
+    constructor(tetherHash, backwardsStopPredicate, poptop) {
         this.tetherHash = tetherHash;
         this.backwardsStopPredicate = backwardsStopPredicate;
+        this.poptop = poptop;
     }
 
     hoist(prevTwist, nextHash, opts) {
@@ -29,9 +30,13 @@ class RelayClient {
     }
 
     async get() {
-        const backwardsPromise = this._backwards(this.tetherHash);
-        const forwardsPromise = this._forwards(this.tetherHash);
-        return this._getCoalesce(await backwardsPromise, await forwardsPromise);
+        const forwards = await this._forwards(this.tetherHash);
+        const forwardsContainsPoptop = this.poptop &&
+            forwards.find(t => t.getHash().equals(this.poptop));
+        const backwards = forwardsContainsPoptop ? 
+                            [] : 
+                            await this._backwards(this.tetherHash);
+        return this._getCoalesce(backwards, forwards);
     }
 
     async getForwardsOnly() {
@@ -108,8 +113,8 @@ class RelayClient {
 
 class LocalRelayClient extends RelayClient {
 
-    constructor(todaClient, hash, backwardsStopPredicate) {
-        super(hash, backwardsStopPredicate);
+    constructor(todaClient, hash, backwardsStopPredicate, poptop) {
+        super(hash, backwardsStopPredicate, poptop);
 
         if (!hash) {
             throw Error('relay requires a line.');
@@ -219,8 +224,9 @@ class RemoteRelayClient extends RelayClient {
     static globalNextCache = {};
     static globalShieldCache = {};
 
-    constructor(relayUrl, fileServerUrl, tetherHash, backwardsStopPredicate) {
-        super(tetherHash, backwardsStopPredicate);
+    constructor(relayUrl, fileServerUrl, tetherHash, 
+                backwardsStopPredicate, poptop) {
+        super(tetherHash, backwardsStopPredicate, poptop);
         this.fileServerUrl = fileServerUrl;
         this.relayUrl = relayUrl;
 

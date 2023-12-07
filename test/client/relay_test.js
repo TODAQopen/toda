@@ -129,6 +129,27 @@ describe("RemoteRelayClient", async () => {
         nock.cleanAll();
     });
 
+    it("get() no backwards when find poptop forwards", async () => {
+        RemoteRelayClient.globalNextCache = {};
+        RemoteRelayClient.globalShieldCache = {};
+
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteRelay_files", 8080);
+        let relay = new RemoteRelayClient("http://wikipedia.com", "http://localhost:8080", twistHashes[4], null, twistHashes[7]);
+        let twist = await relay.get();
+        assert.ok(twist.getHash().equals(twistHashes[8]));
+        assert.ok(twist.get(twistHashes[4]));
+        assert.ifError(twist.get(twistHashes[3])); // Didn't go backwards at all
+
+        // Check that all shields have been populated
+        twist = new Twist(twist.getAtoms(), twistHashes[7]);
+        assert.ok(twist.shield());
+        twist = new Twist(twist.getAtoms(), twistHashes[5]);
+        assert.ok(twist.shield());
+
+        nock.cleanAll();
+    });
+
     it("get() returns nil if nothing available", async () => {
         nock.cleanAll();
         nockLocalFileServer("test/client/remoteRelay_files", 8080);

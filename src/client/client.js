@@ -106,9 +106,10 @@ class TodaClient {
     _defaultRelay(fastTwist) {
         if (this.defaultRelayUrl) {
             return new RemoteRelayClient(this.defaultRelayUrl, 
-                this.fileServerUrl, 
-                fastTwist.getTetherHash(), 
-                this._backwardsStopPredicate(fastTwist));
+                    this.fileServerUrl, 
+                    fastTwist.getTetherHash(), 
+                    this._backwardsStopPredicate(fastTwist),
+                    this.defaultTopLineHash);
         }
         console.error("No default relay found.");
         return null;
@@ -117,14 +118,16 @@ class TodaClient {
     _getRelay(fastTwist, tetherUrl) {
         if (tetherUrl) {
             return new RemoteRelayClient(tetherUrl, 
-                                         this.fileServerUrl, 
-                                         fastTwist.getTetherHash(), 
-                                         this._backwardsStopPredicate(fastTwist));
+                this.fileServerUrl, 
+                fastTwist.getTetherHash(), 
+                this._backwardsStopPredicate(fastTwist),
+                this.defaultTopLineHash);
         }
         if (this.get(fastTwist.getTetherHash())) {
             return new LocalRelayClient(this, 
-                                        fastTwist.getTetherHash(),
-                                        this._backwardsStopPredicate(fastTwist));
+                fastTwist.getTetherHash(),
+                this._backwardsStopPredicate(fastTwist),
+                this.defaultTopLineHash);
         }
         return this._defaultRelay(fastTwist);
     }
