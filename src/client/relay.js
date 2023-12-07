@@ -48,8 +48,7 @@ class RelayClient {
         const twist = twists[twists.length-1];
         // Significantly more performant than `forEach(twist.safeAdd...`
         const atoms = Atoms.fromAtoms(...twists.flatMap(t => t.atoms||[]));
-        twist.addAtoms(atoms);
-        return twist;
+        return new Twist(atoms, twist.getHash());
     }
 
     /** Retrieves the hoist hitch for the specified lead
