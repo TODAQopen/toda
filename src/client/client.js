@@ -54,6 +54,10 @@ class TodaClient {
     }
 
     _backwardsStopPredicate(fastTwist) {
+        //FIXME: a) this could be cleaned up
+        //       b) we need to be able to specify the poptopHash rather
+        //          than use the default; e.g. in pull(), we have a specified
+        //          poptop, which should be what we use here
         /* For the sake of performance, there are 3 conditions where we 
             want to stop moving backwards when pulling the relay:
             1) when we reach a fast twist
@@ -113,11 +117,14 @@ class TodaClient {
     _getRelay(fastTwist, tetherUrl) {
         if (tetherUrl) {
             return new RemoteRelayClient(tetherUrl, 
-                this.fileServerUrl, fastTwist.getTetherHash(), 
-                this._backwardsStopPredicate(fastTwist));
+                                         this.fileServerUrl, 
+                                         fastTwist.getTetherHash(), 
+                                         this._backwardsStopPredicate(fastTwist));
         }
         if (this.get(fastTwist.getTetherHash())) {
-            return new LocalRelayClient(this, fastTwist.getTetherHash());
+            return new LocalRelayClient(this, 
+                                        fastTwist.getTetherHash(),
+                                        this._backwardsStopPredicate(fastTwist));
         }
         return this._defaultRelay(fastTwist);
     }
@@ -416,7 +423,7 @@ class TodaClient {
 
             let upstream = await relay.get(startHash);
             twist.addAtoms(upstream.getAtoms());
-            let relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
+            let relayTwist = new Twist(twist.getAtoms(), relay.tetherHash);
             const relayLine = Line.fromTwist(relayTwist);
 
             try {
@@ -428,10 +435,9 @@ class TodaClient {
                     throw err;
                 }
             }
-            let line = Line.fromAtoms(twist.getAtoms(), relayTwist.getHash());
 
             // TODO(acg): prevent infinite looping if we mess up the poptop
-            relay = this.getRelay(line.twist(line.latestTwist()));
+            relay = this.getRelay(relayTwist);
         }
         // TODO: should this auto-save?
         // yes

@@ -109,8 +109,8 @@ class RelayClient {
 
 class LocalRelayClient extends RelayClient {
 
-    constructor(todaClient, hash) {
-        super(hash, null);
+    constructor(todaClient, hash, backwardsStopPredicate) {
+        super(hash, backwardsStopPredicate);
 
         if (!hash) {
             throw Error('relay requires a line.');
