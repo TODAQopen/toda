@@ -337,9 +337,8 @@ class TodaClient {
                 await r.hoist(lastFast, nth, { noFast: noRemote });
                 ({relayTwist} = await this._waitForHoist(lastFast, r));
 
-                const pullUntil = (noRemote && tether) ||
-                                  popTop ||
-                                  this.defaultTopLineHash ||
+                const pullUntil = popTop ??
+                                  this.defaultTopLineHash ??
                                   tether;
 
                 await this.pull(nextTwist, pullUntil);
@@ -613,14 +612,14 @@ class TodaClient {
         let dqDel = dq.delegate(quantity);
         let dqDelTwist = await this._append(null, dqDel.buildTwist(), dqTether,
                                             null, null, undefined, null, 
-                                            { noRemote: true});
+                                            { noRemote: true, popTop });
 
         // Append to delegator for CONFIRM
         let dqNext = dq.createSuccessor();
         dqNext.confirmDelegate(Abject.fromTwist(dqDelTwist));
         let dqNextTwist = await this._append(dqTwist, dqNext.buildTwist(), 
                                              dqTether, null, null, undefined, 
-                                             null, { noRemote: true});
+                                             null, { noRemote: true, popTop });
 
         // Append to delegate for COMPLETE
         let dqDelNext = Abject.fromTwist(dqDelTwist).createSuccessor();
