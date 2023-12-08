@@ -643,13 +643,11 @@ class TodaClient {
     async _transfer(typeHash, twists, destHash, popTop) {
         let newTwists = [];
         for (let [i,t] of twists.entries()) {
-            // XXX(acg): always fastens last twist for now
-            let noRemote = i < twists.length - 1; 
             const successorAbj = Abject.fromTwist(t).createSuccessor();
             const successor = await this._append(t, successorAbj.buildTwist(), 
                                                  destHash, null, null, 
                                                  undefined, null, 
-                                                 { noRemote, popTop });
+                                                 { popTop });
             newTwists.push(successor);
         }
 
