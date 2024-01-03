@@ -252,8 +252,14 @@ class RemoteRelayClient extends RelayClient {
         });
     }
 
+    static clearCache() {
+        RemoteRelayClient.globalNextCache = {};
+        RemoteRelayClient.globalShieldCache = {};
+    }
+
     async _hoist(relayHash, hoistPacket) {
         const data = {'relay-twist': relayHash.toString(),
+
                       'hoist-request': {}};
         hoistPacket.getShapedValueFromContent().forEach((v, k) => {
             data['hoist-request'][k] = v.toString();

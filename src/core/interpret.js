@@ -212,12 +212,11 @@ class Interpreter {
         return this.prevTetheredTwist(prev.hash);
     }
 
-    isHoist(lead, twist) {
-        let s = lead.getShieldedKey();
-        let ss = lead.getDoubleShieldedKey();
+    isHoist(lead, twist, s, ss) {
+        s ??= lead.getShieldedKey();
+        ss ??= lead.getDoubleShieldedKey();
         let v = twist.rig(s);
         let vv = twist.rig(ss);
-
         return v && vv && !v.equals(s) && lead.shieldFunction(v.toBytes()).equals(vv);
     }
 
@@ -225,7 +224,9 @@ class Interpreter {
         if (!twist) {
             return null;
         }
-        if (this.isHoist(lead, twist)) {
+        let s = lead.getShieldedKey();
+        let ss = lead.getDoubleShieldedKey();
+        if (this.isHoist(lead, twist, s, ss)) {
             return twist;
         }
         return this.hoistForwardSearch(lead, this.next(twist.hash));
