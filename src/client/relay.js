@@ -187,7 +187,7 @@ class LocalRelayClient extends RelayClient {
 
         const t = await this.client.append(relay, tether,
                                            req, cargo, undefined,
-                                           prevTwist.hoistPacket(nextHash));
+                                           riggingPacket);
         return t;
     }
 
