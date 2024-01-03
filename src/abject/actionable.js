@@ -122,16 +122,19 @@ class Actionable extends Abject {
         return PairTriePacket.createFromUnsorted(this.data);
     }
 
-    checkPoptop() {
-        let line = Line.fromAtoms(this.serialize(this.preferredHashImp));
-        let i = new Interpreter(line, this.popTop());
-        return i.verifyTopline();
+    _constructInterpreter() {
+        const line = Line.fromAtoms(this.serialize(this.preferredHashImp));
+        return new Interpreter(line, this.popTop());
     }
 
-    checkRig() {
-        let line = Line.fromAtoms(this.serialize(this.preferredHashImp));
-        let i = new Interpreter(line, this.popTop());
-        return i.verifyHitchLine(this.getHash());
+    checkPoptop(interpreter) {
+        interpreter ??= this._constructInterpreter();
+        return interpreter.verifyTopline();
+    }
+
+    checkRig(interpreter) {
+        interpreter ??= this._constructInterpreter();
+        return interpreter.verifyHitchLine(this.getHash());
     }
 
     getContext() {
@@ -260,10 +263,11 @@ class DelegableActionable extends Actionable {
     }
 
     async checkAllRigs() {
-        await this.checkPoptop();
+        const i = this._constructInterpreter();
+        await this.checkPoptop(i);
         let chain = this.delegationChain();
         for (let di of chain) {
-            await di.checkRig();
+            await di.checkRig(i);
         }
     }
 
