@@ -3,6 +3,9 @@ import { RemoteRelayClient, LocalRelayClient } from "../../src/client/relay.js";
 import { TodaClient } from "../../src/client/client.js";
 import { LocalInventoryClient, VirtualInventoryClient } 
     from "../../src/client/inventory.js";
+import { Abject } from "../../src/abject/abject.js";
+import { Actionable } from "../../src/abject/actionable.js";
+import { P1Date } from "../../src/abject/primitive.js";
 import { Twist } from "../../src/core/twist.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { nockLocalFileServer } from "./mocks.js";
@@ -244,6 +247,11 @@ describe("LocalRelayClient", async () => {
 
         const relay = new LocalRelayClient(toda, t2.getHash());
         const hoist = (await relay.getHoist(f0)).hoist;
+
+        // xxx(acg): Test to ensure a date is included
+        let abj = Abject.fromTwist(hoist);
+        let date = abj.getFieldAbject(Actionable.gensym("field/relay/ts")); // hardcode
+        assert.equal(date.toISOString().substr(0,10), new Date().toISOString().substr(0,10)); // this will fail if you run the test at exactly 23:59:59.9xx...
 
         assert.ok(hoist);
         assert.ok(hoist.getPrevHash().equals(t2.getHash()));

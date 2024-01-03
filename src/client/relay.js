@@ -117,7 +117,7 @@ class LocalRelayClient extends RelayClient {
      *  trimmed version of its graph, containing:
      *  the twist packet, the body packet, the req packet (and all contents),
      *  the sat packet (and all contents), and the rigging packet.
-     * Note that the cargo and the shield are omitted
+     * Note that the shield is omitted
      * @param {Twist} twist
      * @returns {Atoms}
      */
@@ -140,6 +140,7 @@ class LocalRelayClient extends RelayClient {
         // Completely expand reqs + sats
         expandHash(twist, twist.getBody().getReqsHash());
         expandHash(twist, twist.getPacket().getSatsHash());
+        expandHash(twist, twist.getBody().getCargoHash());
         isolated.set(twist.getHash(), twist.getPacket());
         isolated.focus = twist.getHash();
         return isolated;
