@@ -3,6 +3,9 @@ import { RemoteRelayClient, LocalRelayClient } from "../../src/client/relay.js";
 import { TodaClient } from "../../src/client/client.js";
 import { LocalInventoryClient, VirtualInventoryClient } 
     from "../../src/client/inventory.js";
+import { Abject } from "../../src/abject/abject.js";
+import { Actionable } from "../../src/abject/actionable.js";
+import { P1Date } from "../../src/abject/primitive.js";
 import { Twist } from "../../src/core/twist.js";
 import { ByteArray } from "../../src/core/byte-array.js";
 import { nockLocalFileServer } from "./mocks.js";
@@ -129,6 +132,27 @@ describe("RemoteRelayClient", async () => {
         nock.cleanAll();
     });
 
+    it("get() no backwards when find poptop forwards", async () => {
+        RemoteRelayClient.globalNextCache = {};
+        RemoteRelayClient.globalShieldCache = {};
+
+        nock.cleanAll();
+        nockLocalFileServer("test/client/remoteRelay_files", 8080);
+        let relay = new RemoteRelayClient("http://wikipedia.com", "http://localhost:8080", twistHashes[4], null, twistHashes[7]);
+        let twist = await relay.get();
+        assert.ok(twist.getHash().equals(twistHashes[8]));
+        assert.ok(twist.get(twistHashes[4]));
+        assert.ifError(twist.get(twistHashes[3])); // Didn't go backwards at all
+
+        // Check that all shields have been populated
+        twist = new Twist(twist.getAtoms(), twistHashes[7]);
+        assert.ok(twist.shield());
+        twist = new Twist(twist.getAtoms(), twistHashes[5]);
+        assert.ok(twist.shield());
+
+        nock.cleanAll();
+    });
+
     it("get() returns nil if nothing available", async () => {
         nock.cleanAll();
         nockLocalFileServer("test/client/remoteRelay_files", 8080);
@@ -242,8 +266,13 @@ describe("LocalRelayClient", async () => {
         const f0 = await toda.create(t1.getHash());
         const f1 = await toda.append(f0, t1.getHash());
 
-        const relay = new LocalRelayClient(toda, t2.getHash());
+        const relay = new LocalRelayClient(toda, t1.getHash());
         const hoist = (await relay.getHoist(f0)).hoist;
+
+        // xxx(acg): Test to ensure a date is included
+        let abj = Abject.fromTwist(hoist);
+        let date = abj.getFieldAbject(Actionable.gensym("field/relay/ts")); // hardcode
+        assert.equal(date.toISOString().substr(0,10), new Date().toISOString().substr(0,10)); // this will fail if you run the test at exactly 23:59:59.9xx...
 
         assert.ok(hoist);
         assert.ok(hoist.getPrevHash().equals(t2.getHash()));

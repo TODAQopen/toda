@@ -54,6 +54,10 @@ class TodaClient {
     }
 
     _backwardsStopPredicate(fastTwist) {
+        //FIXME: a) this could be cleaned up
+        //       b) we need to be able to specify the poptopHash rather
+        //          than use the default; e.g. in pull(), we have a specified
+        //          poptop, which should be what we use here
         /* For the sake of performance, there are 3 conditions where we 
             want to stop moving backwards when pulling the relay:
             1) when we reach a fast twist
@@ -102,9 +106,10 @@ class TodaClient {
     _defaultRelay(fastTwist) {
         if (this.defaultRelayUrl) {
             return new RemoteRelayClient(this.defaultRelayUrl, 
-                this.fileServerUrl, 
-                fastTwist.getTetherHash(), 
-                this._backwardsStopPredicate(fastTwist));
+                    this.fileServerUrl, 
+                    fastTwist.getTetherHash(), 
+                    this._backwardsStopPredicate(fastTwist),
+                    this.defaultTopLineHash);
         }
         console.error("No default relay found.");
         return null;
@@ -113,11 +118,16 @@ class TodaClient {
     _getRelay(fastTwist, tetherUrl) {
         if (tetherUrl) {
             return new RemoteRelayClient(tetherUrl, 
-                this.fileServerUrl, fastTwist.getTetherHash(), 
-                this._backwardsStopPredicate(fastTwist));
+                this.fileServerUrl, 
+                fastTwist.getTetherHash(), 
+                this._backwardsStopPredicate(fastTwist),
+                this.defaultTopLineHash);
         }
         if (this.get(fastTwist.getTetherHash())) {
-            return new LocalRelayClient(this, fastTwist.getTetherHash());
+            return new LocalRelayClient(this, 
+                fastTwist.getTetherHash(),
+                this._backwardsStopPredicate(fastTwist),
+                this.defaultTopLineHash);
         }
         return this._defaultRelay(fastTwist);
     }
@@ -274,7 +284,7 @@ class TodaClient {
      */
     async _append(prev, next, tether, req, cargo, 
                   preSignHook = () => {}, rigging, 
-                  { noHoist, noRemote } = {} ) {
+                  { noHoist, noRemote, popTop } = {} ) {
         if (req) {
             // TODO: _potentially_ re-introduce check to ensure we control 
             //  this key?
@@ -326,9 +336,12 @@ class TodaClient {
                 let nth = nextTwist.getHash();
                 await r.hoist(lastFast, nth, { noFast: noRemote });
                 ({relayTwist} = await this._waitForHoist(lastFast, r));
-                await this.pull(nextTwist, noRemote ? tether : 
-                                                      this.defaultTopLineHash ??
-                                                      tether);
+
+                const pullUntil = popTop ??
+                                  this.defaultTopLineHash ??
+                                  tether;
+
+                await this.pull(nextTwist, pullUntil);
             } catch (e) {
                 console.error("Hoist error:", e);
                 throw(e);
@@ -416,7 +429,7 @@ class TodaClient {
 
             let upstream = await relay.get(startHash);
             twist.addAtoms(upstream.getAtoms());
-            let relayTwist = new Twist(twist.getAtoms(), upstream.getHash());
+            let relayTwist = new Twist(twist.getAtoms(), relay.tetherHash);
             const relayLine = Line.fromTwist(relayTwist);
 
             try {
@@ -428,10 +441,9 @@ class TodaClient {
                     throw err;
                 }
             }
-            let line = Line.fromAtoms(twist.getAtoms(), relayTwist.getHash());
 
             // TODO(acg): prevent infinite looping if we mess up the poptop
-            relay = this.getRelay(line.twist(line.latestTwist()));
+            relay = this.getRelay(relayTwist);
         }
         // TODO: should this auto-save?
         // yes
@@ -586,6 +598,8 @@ class TodaClient {
         // Twist we need to sort out.
 
         let dqTwist = new Twist(dq.serialize());
+        const popTop = dq.popTop();
+
         if (!await this.isSatisfiable(dqTwist)) {
             throw new Error("Cannot delegate; cannot satisfy dqTwist");
         }
@@ -598,14 +612,14 @@ class TodaClient {
         let dqDel = dq.delegate(quantity);
         let dqDelTwist = await this._append(null, dqDel.buildTwist(), dqTether,
                                             null, null, undefined, null, 
-                                            { noRemote: true});
+                                            { noRemote: true, popTop });
 
         // Append to delegator for CONFIRM
         let dqNext = dq.createSuccessor();
         dqNext.confirmDelegate(Abject.fromTwist(dqDelTwist));
         let dqNextTwist = await this._append(dqTwist, dqNext.buildTwist(), 
                                              dqTether, null, null, undefined, 
-                                             null, { noRemote: true});
+                                             null, { noRemote: true, popTop });
 
         // Append to delegate for COMPLETE
         let dqDelNext = Abject.fromTwist(dqDelTwist).createSuccessor();
@@ -614,7 +628,8 @@ class TodaClient {
                                                 dqDelNext.buildTwist(), 
                                                 dqTether,
                                                 null, null, undefined, null, 
-                                                { noRemote: !lastFast });
+                                                { noRemote: !lastFast, 
+                                                  popTop });
 
         return [dqDelNextTwist, dqNextTwist];
     }
@@ -624,15 +639,14 @@ class TodaClient {
         return this.delegateQuantity(dq, qty);
     }
 
-    async _transfer(typeHash, twists, destHash) {
+    async _transfer(typeHash, twists, destHash, popTop) {
         let newTwists = [];
         for (let [i,t] of twists.entries()) {
-            // XXX(acg): always fastens last twist for now
-            let noRemote = i < twists.length - 1; 
             const successorAbj = Abject.fromTwist(t).createSuccessor();
             const successor = await this._append(t, successorAbj.buildTwist(), 
                                                  destHash, null, null, 
-                                                 undefined, null, { noRemote });
+                                                 undefined, null, 
+                                                 { popTop });
             newTwists.push(successor);
         }
 
@@ -646,16 +660,17 @@ class TodaClient {
         // XXX(acg): always fastens last twist for now
         let dqs = await this.getControlledByType(typeHash);
 
+        const popTop = dqs[0].popTop();
         const quantity = DQ.displayToQuantity(amount, dqs[0].displayPrecision);
 
         let exact = dqs.find(dq => this.getQuantity(dq) == quantity);
         if (exact) {
-            return this._transfer(typeHash, [exact], destHash);
+            return this._transfer(typeHash, [exact], destHash, popTop);
         }
         let excess = dqs.find(dq => this.getQuantity(dq) > quantity);
         if (excess) {
             let [delegated, _] = await this.delegateQuantity(excess, quantity);
-            return this._transfer(typeHash, [delegated], destHash);
+            return this._transfer(typeHash, [delegated], destHash, popTop);
         }
 
         let selected = [];
@@ -679,7 +694,7 @@ class TodaClient {
         }
 
         if (cv >= quantity) {
-            return this._transfer(typeHash, selected, destHash);
+            return this._transfer(typeHash, selected, destHash, popTop);
         }
 
         throw new Error("Insufficient funds");

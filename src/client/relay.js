@@ -5,14 +5,18 @@ import { Twist } from '../core/twist.js';
 import { Line } from '../core/line.js';
 import { Interpreter } from '../core/interpret.js';
 import { Packet } from '../core/packet.js';
+import { Abject } from '../abject/abject.js';
+import { Actionable, SimpleRigged } from '../abject/actionable.js';
+import { P1Date } from '../abject/primitive.js';
 import axios from 'axios';
 import http from 'http';
 import https from 'https';
 
 class RelayClient {
-    constructor(tetherHash, backwardsStopPredicate) {
+    constructor(tetherHash, backwardsStopPredicate, poptop) {
         this.tetherHash = tetherHash;
         this.backwardsStopPredicate = backwardsStopPredicate;
+        this.poptop = poptop;
     }
 
     hoist(prevTwist, nextHash, opts) {
@@ -32,18 +36,30 @@ class RelayClient {
     }
 
     async get() {
-        const backwardsPromise = this._backwards(this.tetherHash);
+        const forwards = await this._forwards(this.tetherHash);
+        const forwardsContainsPoptop = this.poptop &&
+            forwards.find(t => t.getHash().equals(this.poptop));
+        const backwards = forwardsContainsPoptop ? 
+                            [] : 
+                            await this._backwards(this.tetherHash);
+        return this._getCoalesce(backwards, forwards);
+    }
+
+    async getForwardsOnly() {
         const forwardsPromise = this._forwards(this.tetherHash);
-        const twists = [...(await backwardsPromise), 
-                        ...(await forwardsPromise)];
+        return this._getCoalesce([], await forwardsPromise);
+    }
+
+    _getCoalesce(backwardsTwists, forwardsTwists) {
+        const twists = [...backwardsTwists, 
+                        ...forwardsTwists];
         if (twists.length == 0) {
             return null;
         }
         const twist = twists[twists.length-1];
         // Significantly more performant than `forEach(twist.safeAdd...`
         const atoms = Atoms.fromAtoms(...twists.flatMap(t => t.atoms||[]));
-        twist.addAtoms(atoms);
-        return twist;
+        return new Twist(atoms, twist.getHash());
     }
 
     /** Retrieves the hoist hitch for the specified lead
@@ -52,7 +68,7 @@ class RelayClient {
      *  hoist if it exists, or null
      */
     async getHoist(lead) {
-        let relayTwist = await this.get();
+        let relayTwist = await this.getForwardsOnly();
         if (!relayTwist) return {};
         let i = new Interpreter(
             Line.fromTwist(relayTwist).addAtoms(lead.getAtoms())); //awkward
@@ -103,8 +119,8 @@ class RelayClient {
 
 class LocalRelayClient extends RelayClient {
 
-    constructor(todaClient, hash) {
-        super(hash, null);
+    constructor(todaClient, hash, backwardsStopPredicate, poptop) {
+        super(hash, backwardsStopPredicate, poptop);
 
         if (!hash) {
             throw Error('relay requires a line.');
@@ -113,11 +129,11 @@ class LocalRelayClient extends RelayClient {
     }
 
     /**
-     * Given a twist, returns an atoms object containing a 
+     * Given a twist, returns an atoms object containing a
      *  trimmed version of its graph, containing:
      *  the twist packet, the body packet, the req packet (and all contents),
      *  the sat packet (and all contents), and the rigging packet.
-     * Note that the cargo and the shield are omitted
+     * Note that the shield is omitted
      * @param {Twist} twist
      * @returns {Atoms}
      */
@@ -140,6 +156,7 @@ class LocalRelayClient extends RelayClient {
         // Completely expand reqs + sats
         expandHash(twist, twist.getBody().getReqsHash());
         expandHash(twist, twist.getPacket().getSatsHash());
+        expandHash(twist, twist.getBody().getCargoHash());
         isolated.set(twist.getHash(), twist.getPacket());
         isolated.focus = twist.getHash();
         return isolated;
@@ -160,8 +177,17 @@ class LocalRelayClient extends RelayClient {
             tether = relay.lastFast()?.getTetherHash();
         }
 
+        let sr = new SimpleRigged();
+        let tsSym = Actionable.gensym("field/relay/ts");
+        sr.setFieldAbject(tsSym, new P1Date(new Date()));
+
+        // xxx(acg): Abjects currently prefer the prev is an abject, otherwise
+        // we do this dance:
+        let cargo = Abject.prototype.serialize.call(sr);
+
         const t = await this.client.append(relay, tether,
-                req, undefined, undefined, riggingPacket);
+                                           req, cargo, undefined,
+                                           prevTwist.hoistPacket(nextHash));
         return t;
     }
 
@@ -213,8 +239,9 @@ class RemoteRelayClient extends RelayClient {
     static globalNextCache = {};
     static globalShieldCache = {};
 
-    constructor(relayUrl, fileServerUrl, tetherHash, backwardsStopPredicate) {
-        super(tetherHash, backwardsStopPredicate);
+    constructor(relayUrl, fileServerUrl, tetherHash, 
+                backwardsStopPredicate, poptop) {
+        super(tetherHash, backwardsStopPredicate, poptop);
         this.fileServerUrl = fileServerUrl;
         this.relayUrl = relayUrl;
 

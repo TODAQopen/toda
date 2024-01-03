@@ -541,8 +541,7 @@ describe("Transfer tests; comprehensive", async function() {
         assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
     });
 
-    //FIXME: Fails as expected
-    xit("Alice => Bob => Charlie, DQ has later poptop than all of them", async function() {
+    it("Alice => Bob => Charlie, DQ has later poptop than all of them", async function() {
         const { toda: alice, hash: aliceHash } = 
             await createLine(this.initRelayTwists[2].getHash());
         const { toda: bob, hash: bobHash } = 
@@ -552,8 +551,15 @@ describe("Transfer tests; comprehensive", async function() {
 
         const recentTop = 
             this.relayClient.get(this.initRelayTwists[0].getHash());
-        const newTop = 
-            await this.relayClient.append(recentTop, null, this.relayReq);
+        // create a more recent poptop
+        const newTop = await this.relayClient.append(recentTop, 
+            null, 
+            this.relayReq);
+        // make sure that new twist is available to the relay clients
+        //  by making one more twist
+        await this.relayClient.append(newTop, 
+            null, 
+            this.relayReq);
 
         const dq = (await mint(alice, 
                                143, 
@@ -701,10 +707,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
         assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
     });
 
-    //FIXME: Still failing. TodaClient.pull() does not 
-    //       understand where it needs to stop; it assumes 
-    //       it should stop at TodaClient.defaultTopLineHash
-    xit("Alice => Bob => Charlie, multi layered poptop, DQ has a higher poptop than addresses", async function() {
+    it("Alice => Bob => Charlie, multi layered poptop, DQ has a higher poptop than addresses", async function() {
         const { toda: alice, hash: aliceHash } = 
             await createLine(this.lowerRelay.twists[2].getHash());
         const { toda: bob, hash: bobHash } = 
@@ -777,8 +780,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
         assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
     });
 
-    //FIXME: Fails as expected
-    xit("Alice => Bob => Charlie, DQ has newer poptop, multi layered poptop", async function() {
+    it("Alice => Bob => Charlie, DQ has newer poptop, multi layered poptop", async function() {
         const { toda: alice, hash: aliceHash } = 
             await createLine(this.lowerRelay.twists[2].getHash(), 
                              this.upperRelay.twists[2].getHash());
@@ -792,10 +794,16 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
         const recentTop = this.upperRelay
                               .toda
                               .get(this.upperRelay.twists[0].getHash());
-        const newTop = 
-            await this.upperRelay.toda.append(recentTop, 
-                                              null, 
-                                              this.upperRelay.req);
+        // create a more recent poptop
+        const newTop = await this.upperRelay.toda.append(recentTop, 
+                                                         null, 
+                                                         this.upperRelay.req);
+        // make sure that new twist is available to the relay clients
+        //  by making one more twist
+        await this.upperRelay.toda.append(newTop, 
+                                          null, 
+                                          this.upperRelay.req);
+
         const dq = (await mint(alice, 
                                143, 
                                1, 

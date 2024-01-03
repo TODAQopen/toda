@@ -1,5 +1,6 @@
 import { P1String, P1Float, P1Date, P1Boolean } from "../../src/abject/primitive.js";
 import { Abject } from "../../src/abject/abject.js";
+import { ByteArray } from '../../src/core/byte-array.js';
 import { Sha256 } from "../../src/core/hash.js";
 import assert from 'node:assert/strict';
 
@@ -33,6 +34,25 @@ describe("P1String", () => {
         assert.equal(Abject.parse(atoms), "introduction to the calculus of variations");
 
     });
+
+    it("handles unicode", () => {
+        const str = "🈚️🍶♉️⛈🌐😢💋🔙🏯♨️☁️🤘📖🍮➕😌🏚🕯🔌🙃"
+        let p1s = new P1String(str);
+        let atoms = p1s.serialize(Sha256);
+        assert.equal(Abject.parse(atoms), str);
+    });
+
+    it("confirms ascii strings from old charCodeAt method are compatible with TextDecoder", ()=> {
+        const str = "Hello, I am a basic ascii string with all code points smaller than 127"
+
+        // encode string using old encoder
+        const enc = ByteArray.from(str.split("").map(x => x.charCodeAt()))
+
+        // decode using current decoder
+        const dec = new TextDecoder("utf-8").decode(enc)
+
+        assert.equal(str, dec)
+    })
 });
 
 describe("P1Float", () => {
