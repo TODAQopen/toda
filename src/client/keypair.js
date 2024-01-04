@@ -92,14 +92,16 @@ class LocalKeyPair extends KeyPair {
 
         let keyString = pem.slice(headerMatch.index + headerMatch[0].length,
             footerMatch.index).replace(/\s/g, "");
-        return ByteArray.fromUtf8(this.base64ToUtf8(keyString));
+        return this.str2ab(Buffer.from(keyString, 'base64').toString('binary'));
     }
 
-    static base64ToUtf8(str) {
-        if (atob instanceof Function) {
-            return atob(str);
+    static str2ab(str) {
+        const buf = new ArrayBuffer(str.length);
+        const bufView = new Uint8Array(buf);
+        for (let i = 0, strLen = str.length; i < strLen; i++) {
+            bufView[i] = str.charCodeAt(i);
         }
-        return Buffer.from(str, "base64").toString();
+        return buf;
     }
 
     static _derConstructLength(arr, len) {
