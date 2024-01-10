@@ -5,7 +5,13 @@
 * Apache License 2.0
 *************************************************************/
 
-class HashNotFoundError extends Error {
+class NamedError extends Error {
+    get name() {
+        return this.constructor.name;
+    }
+}
+
+class HashNotFoundError extends NamedError {
     constructor(hash, meta) {
         let msg = "Hash not found in store: " + hash;
         super(msg);
@@ -16,4 +22,7 @@ class HashNotFoundError extends Error {
     }
 }
 
-export { HashNotFoundError };
+export {
+    NamedError,
+    HashNotFoundError
+};

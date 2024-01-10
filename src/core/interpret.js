@@ -5,12 +5,13 @@
 * Apache License 2.0
 *************************************************************/
 
+import { NamedError } from './error.js';
 import { Twist } from './twist.js';
 
 import { Shield } from './shield.js';
 import { RequirementSatisfier, ReqSatError } from './reqsat.js';
 
-class InterpreterResult extends Error {
+class InterpreterResult extends NamedError {
 }
 
 class MissingError extends InterpreterResult {

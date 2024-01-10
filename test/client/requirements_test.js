@@ -69,6 +69,8 @@ describe("satisfyRequirements", () => {
             () => toda.append(prev),
             (err) => {
                 assert(err instanceof CannotSatisfyError);
+                // test error names are being set correctly
+                assert.equal(err.name, "CannotSatisfyError")
                 return true;
             });
     });

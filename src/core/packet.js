@@ -8,6 +8,7 @@
 import { ByteArray } from './byte-array.js';
 import { Hash } from './hash.js';
 import { HashMap } from './map.js';
+import { NamedError } from './error.js'
 
 /**
  * Describes a (data) packet.
@@ -564,7 +565,7 @@ Packet.registerShape(PairTriePacket);
 Packet.registerShape(BasicTwistPacket);
 Packet.registerShape(BasicBodyPacket);
 
-class ShapeException extends Error {
+class ShapeException extends NamedError {
     constructor(message, code) {
         super(message);
         this.code = code;

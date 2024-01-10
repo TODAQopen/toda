@@ -12,8 +12,9 @@ import { HashMap } from './map.js';
 import { Atoms } from './atoms.js';
 import { Shield } from './shield.js';
 import { SignatureRequirement } from './reqsat.js';
+import { NamedError } from './error.js';
 
-class MissingHashPacketError extends Error {
+class MissingHashPacketError extends NamedError {
     constructor(hash, message) {
         super();
         this.hash = hash?.toString();
@@ -25,7 +26,7 @@ class MissingPrevError extends MissingHashPacketError {
         super(hash, "Missing previous " + hash);
     }
 }
-class ShapeError extends Error {
+class ShapeError extends NamedError {
     constructor(hash, msg) {
         super();
         this.hash = hash;
@@ -447,7 +448,7 @@ class Twist {
 
         return prev.first();
     }
-    
+
     knownHistory() {
         const hs = [this.getHash()];
         let prev = this.safePrev();

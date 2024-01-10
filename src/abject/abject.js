@@ -6,11 +6,12 @@
 *************************************************************/
 
 import { NullHash, Sha256, Symbol } from '../core/hash.js';
-import { BasicTwistPacket, PairTriePacket, HashPacket } 
+import { BasicTwistPacket, PairTriePacket, HashPacket }
     from '../core/packet.js';
 import { HashMap } from '../core/map.js';
 import { Atoms } from '../core/atoms.js';
 import { ByteArray } from '../core/byte-array.js';
+import { NamedError } from '../core/error.js';
 
 const NULL = new NullHash();
 
@@ -31,7 +32,7 @@ class Abject {
     static interpreter = null;
 
     /** @type <Map.<NoFollow, Class<Abject>>> */
-    static interpreters = new HashMap(); 
+    static interpreters = new HashMap();
 
     constructor() {
 
@@ -59,7 +60,7 @@ class Abject {
      */
     setFieldHash(field, val) {
         if (!field || !val) {
-            throw new AbjectError(this.atoms, 
+            throw new AbjectError(this.atoms,
                 "both params required setting a field value");
         }
         this.data.set(field, val);
@@ -96,7 +97,7 @@ class Abject {
         this.atoms.merge(atoms);
         this.setFieldHash(field, atoms.focus);
         // dx: todo: change it to this
-        // this.setFieldHash(field, abject.focus); 
+        // this.setFieldHash(field, abject.focus);
     }
 
     /**
@@ -110,7 +111,7 @@ class Abject {
         let abjectAtoms = abjects.map(a => a.serialize(hashImp));
         let abjectHashes = abjectAtoms.map(a => a.focus);
         // dx: todo: change it to this
-        // let abjectHashes = abjects.map(a => a.focus); 
+        // let abjectHashes = abjects.map(a => a.focus);
         let packet = new HashPacket(abjectHashes);
 
         for (let atoms of abjectAtoms) {
@@ -176,9 +177,9 @@ class Abject {
         let [h,p] = this.dataAtom(hashImp);
         let atoms = Atoms.fromAtoms(this.atoms);
         atoms.set(h,p);
-        // dx: leaving this for now because it's used for 
+        // dx: leaving this for now because it's used for
         //  exporting bytes... need to figure out how to do it better
-        atoms.focus = h; 
+        atoms.focus = h;
         return atoms;
     }
 
@@ -284,7 +285,7 @@ class Abject {
             }
             cargoHash = body.getCargoHash();
             if (cargoHash.isNull()) {
-                throw new AbjectError(this.atoms, 
+                throw new AbjectError(this.atoms,
                     "Abject cargo hash cannot be null");
             }
             cargo = atoms.get(cargoHash);
@@ -335,7 +336,7 @@ class Abject {
     }
 }
 
-class AbjectError extends Error {
+class AbjectError extends NamedError {
     static verbose = false;
 
     constructor(abjectAtoms, msg) {
@@ -354,7 +355,7 @@ class AbjectError extends Error {
 class AbjectAtomMissingError extends AbjectError {
     /**
      * @param missingHash <Hash> the missing hash
-     * @param pathIfKnown <Array.<Hash>> path from root 
+     * @param pathIfKnown <Array.<Hash>> path from root
      *  cargo to the key referencing the hash we can't follow
      */
     constructor(atoms, missingHash, pathIfKnown) {
