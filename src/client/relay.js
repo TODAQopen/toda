@@ -39,8 +39,8 @@ class RelayClient {
         const forwards = await this._forwards(this.tetherHash);
         const forwardsContainsPoptop = this.poptop &&
             forwards.find(t => t.getHash().equals(this.poptop));
-        const backwards = forwardsContainsPoptop ? 
-                            [] : 
+        const backwards = forwardsContainsPoptop ?
+                            [] :
                             await this._backwards(this.tetherHash);
         return this._getCoalesce(backwards, forwards);
     }
@@ -51,7 +51,7 @@ class RelayClient {
     }
 
     _getCoalesce(backwardsTwists, forwardsTwists) {
-        const twists = [...backwardsTwists, 
+        const twists = [...backwardsTwists,
                         ...forwardsTwists];
         if (twists.length == 0) {
             return null;
@@ -64,7 +64,7 @@ class RelayClient {
 
     /** Retrieves the hoist hitch for the specified lead
      * @param lead <Twist> the lead whose hitch to verify
-     * @returns Promise<Twist|null> The hash of the hitch 
+     * @returns Promise<Twist|null> The hash of the hitch
      *  hoist if it exists, or null
      */
     async getHoist(lead) {
@@ -118,6 +118,8 @@ class RelayClient {
 }
 
 class LocalRelayClient extends RelayClient {
+
+    static tsSym = Actionable.gensym("field/relay/ts");
 
     constructor(todaClient, hash, backwardsStopPredicate, poptop) {
         super(hash, backwardsStopPredicate, poptop);
@@ -178,8 +180,7 @@ class LocalRelayClient extends RelayClient {
         }
 
         let sr = new SimpleRigged();
-        let tsSym = Actionable.gensym("field/relay/ts");
-        sr.setFieldAbject(tsSym, new P1Date(new Date()));
+        sr.setFieldAbject(LocalRelayClient.tsSym, new P1Date(new Date()));
 
         // xxx(acg): Abjects currently prefer the prev is an abject, otherwise
         // we do this dance:
@@ -230,8 +231,8 @@ class LocalRelayClient extends RelayClient {
 }
 
 /**
- * @param backwardsStopPredicate <fn(twist) => bool>: if specified, 
- *   get() will stop walking backwards when it sees a twist that 
+ * @param backwardsStopPredicate <fn(twist) => bool>: if specified,
+ *   get() will stop walking backwards when it sees a twist that
  *   matches the predicate
  */
 class RemoteRelayClient extends RelayClient {
@@ -239,7 +240,7 @@ class RemoteRelayClient extends RelayClient {
     static globalNextCache = {};
     static globalShieldCache = {};
 
-    constructor(relayUrl, fileServerUrl, tetherHash, 
+    constructor(relayUrl, fileServerUrl, tetherHash,
                 backwardsStopPredicate, poptop) {
         super(tetherHash, backwardsStopPredicate, poptop);
         this.fileServerUrl = fileServerUrl;
@@ -297,7 +298,7 @@ class RemoteRelayClient extends RelayClient {
 
         const resp = await this.fileServerClient.get(`/${twistHash}.shield`,
         { responseType: "arraybuffer" }).catch(() => null);
-   
+
         if (resp) {
             const x = Packet.parse(new ByteArray(resp.data));
             RemoteRelayClient.globalShieldCache[twistHash] = x;

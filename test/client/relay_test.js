@@ -1,7 +1,7 @@
 import { Hash } from "../../src/core/hash.js";
 import { RemoteRelayClient, LocalRelayClient } from "../../src/client/relay.js";
 import { TodaClient } from "../../src/client/client.js";
-import { LocalInventoryClient, VirtualInventoryClient } 
+import { LocalInventoryClient, VirtualInventoryClient }
     from "../../src/client/inventory.js";
 import { Abject } from "../../src/abject/abject.js";
 import { Actionable } from "../../src/abject/actionable.js";
@@ -250,7 +250,7 @@ describe("LocalRelayClient", async () => {
 
         // xxx(acg): Test to ensure a date is included
         let abj = Abject.fromTwist(hoist);
-        let date = abj.getFieldAbject(Actionable.gensym("field/relay/ts")); // hardcode
+        let date = abj.getFieldAbject(LocalRelayClient.tsSym);
         assert.equal(date.toISOString().substr(0,10), new Date().toISOString().substr(0,10)); // this will fail if you run the test at exactly 23:59:59.9xx...
 
         assert.ok(hoist);
