@@ -104,6 +104,18 @@ class TestRelayServer {
             }
         });
 
+        app.get("/ticket/:hex", async function (req, res, next) {
+            const hash = Hash.fromHex(req.params.hex);
+            res.json({
+                itinerary: [
+                    {
+                        twist: toda.get(hash).prev().getHash(),
+                        url: "TODO",
+                    },
+                ],
+            });
+        });
+
         app.post("/hoist", async function (req, res, next) {
             const hex = req.body["relay-twist"];
             try {
