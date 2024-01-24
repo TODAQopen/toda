@@ -23,6 +23,9 @@ class InventoryClient {
         throw new Error("not implemented");
     }
 
+    unown() {
+
+    }
 }
 
 class RemoteInventoryClient extends InventoryClient {
@@ -114,6 +117,10 @@ class LocalInventoryClient extends InventoryClient {
         return path.join(this.invRoot, "archive", `${hash}.toda`);
     }
 
+    unownedPathForHash(hash) {
+        return path.join(this.invRoot, "unowned", `${hash}.toda`);
+    }
+
     tmpFilePathForHash(hash) {
         let tmpDir = path.join(this.invRoot, 'tmp');
         fs.mkdirSync(tmpDir, {recursive:true});
@@ -129,8 +136,17 @@ class LocalInventoryClient extends InventoryClient {
             this.loadFromDisk(hash);
         }
         const first = this.twistIdx.get(hash);
-        return this.files.get(first)?.twist.getAtoms();
+        return this.files.get(first)?.twist.getAtoms() ??
+               this._getUnowned(hash);
     } //TODO(acg): would like to see better testing of this.
+
+    _getUnowned(hash) {
+        let path = this.unownedPathForHash(hash);
+        if (fs.existsSync(path)) {
+            return this.getExplicitPath(path);
+        }
+        return null;
+    }
 
     _getFromDisk(hash) {
         let path = this.filePathForHash(hash);
@@ -160,8 +176,40 @@ class LocalInventoryClient extends InventoryClient {
     archive(hash) {
         const f = this.filePathForHash(hash);
         if (this.shouldArchive && fs.existsSync(f)) {
-            fs.moveSync(f, this.archivePathForHash(hash), {overwrite: true});
+            fs.moveSync(f, this.archivePathForHash(hash), { overwrite: true });
         }
+    }
+
+    unown(hash) {
+        const firstHash = this.twistIdx.get(hash);
+        // If the hash is not in the inventory or if the most recent twist
+        //  does not match `hash` return immediately (noop)
+        if(!firstHash || 
+           !this.files.get(firstHash).twist.getHash().equals(hash)) {
+            return;
+        }
+        // Move the file itself
+        const f = this.filePathForHash(hash);
+        if (fs.existsSync(f)) {
+            fs.moveSync(f, this.unownedPathForHash(hash), { overwrite: true });
+        }
+        // Remove any references to this file
+        this.files.delete(firstHash);
+        this.twistIdx.forEach((v, k) => {
+            if (v.equals(firstHash)) {
+                this.twistIdx.delete(k);
+            }
+        });
+    }
+
+    isArchived(hash) {
+        const f = this.archivePathForHash(hash);
+        return fs.existsSync(f);
+    }
+
+    isUnowned(hash) {
+        const f = this.unownedPathForHash(hash);
+        return fs.existsSync(f);
     }
 
     // Returns latest hashes of each file in inv
@@ -183,6 +231,8 @@ class LocalInventoryClient extends InventoryClient {
     }
 }
 
+// TODO: Either kill this class or update it s.t. it implements the full
+//       interface of LocalInventoryClient
 // doens't write to disk
 class VirtualInventoryClient extends InventoryClient {
     constructor() {
@@ -199,7 +249,6 @@ class VirtualInventoryClient extends InventoryClient {
     getExplicitPath(p) {
         return Atoms.fromBytes(new ByteArray(fs.readFileSync(p)));
     }
-
 }
 
 export { LocalInventoryClient };

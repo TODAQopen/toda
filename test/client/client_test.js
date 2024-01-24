@@ -771,3 +771,102 @@ describe("Multi-remote pull test", () => {
         }
     });
 });
+
+describe("Unowned archiving works as expected", async function() {
+    it("Appending will not unown the file when it is still owned", async () => {
+        const client = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
+        client._getSalt = () => ByteArray.fromUtf8("some salty");
+
+        const kp = await SECP256r1.generate();
+        client.addSatisfier(kp);
+
+        const t0 = await client.create(null, kp, uuidCargo());
+        const t1 = await client.append(t0, null, kp);
+
+        assert.ok(!client.inv.isUnowned(t1.getHash()));
+    });
+
+    it("Appending will unown the file when it is no longer owned", async () => {
+        const client = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
+        client._getSalt = () => ByteArray.fromUtf8("some salty");
+
+        const kp = await SECP256r1.generate();
+        client.addSatisfier(kp);
+        const kpOther = await SECP256r1.generate();
+
+        const t0 = await client.create(null, kp, uuidCargo());
+        const t1 = await client.append(t0, null, kpOther);
+
+        assert.ok(client.inv.isUnowned(t1.getHash()));
+    });
+
+    it("archiveUnownedFiles will unown all unowned files", async () => {
+        // NOTE: To properly mock this behaviour, we'll use two keypairs
+        //       as we're generating files (to avoid having them being 
+        //       marked unowned as we're generating the files)
+        //       Then we will reinstantiate the client with only one of them
+
+        const dir = "./files/" + uuid();
+        let client = new TodaClient(new LocalInventoryClient(dir));
+        client._getSalt = () => ByteArray.fromUtf8("some salty");
+
+        const kp0 = await SECP256r1.generate();
+        client.addSatisfier(kp0);
+        const kp1 = await SECP256r1.generate();
+        client.addSatisfier(kp1);
+
+        client.shouldArchiveUnownedFiles = false;
+
+        // Always kp0
+        const a0 = await client.create(null, kp0, uuidCargo());
+        const a1 = await client.append(a0, null, kp0);
+        const a2 = await client.append(a1, null, kp0);
+
+        // Switches to kp1 then back
+        const b0 = await client.create(null, kp0, uuidCargo());
+        const b1 = await client.append(b0, null, kp1);
+        const b2 = await client.append(b1, null, kp0);
+
+        // Switches to kp1
+        const c0 = await client.create(null, kp0, uuidCargo());
+        const c1 = await client.append(c0, null, kp1);
+        const c2 = await client.append(c1, null, kp1);
+
+        // Always kp1
+        const d0 = await client.create(null, kp1, uuidCargo());
+        const d1 = await client.append(d0, null, kp1);
+        const d2 = await client.append(d1, null, kp1);
+
+        // Switches to kp0 then back
+        const e0 = await client.create(null, kp1, uuidCargo());
+        const e1 = await client.append(e0, null, kp0);
+        const e2 = await client.append(e1, null, kp1);
+
+        // Switches to kp0
+        const f0 = await client.create(null, kp1, uuidCargo());
+        const f1 = await client.append(f0, null, kp0);
+        const f2 = await client.append(f1, null, kp0);
+
+        // Sanity; all files should be owned
+        assert.ok(!client.inv.isUnowned(a2.getHash()));
+        assert.ok(!client.inv.isUnowned(b2.getHash()));
+        assert.ok(!client.inv.isUnowned(c2.getHash()));
+        assert.ok(!client.inv.isUnowned(d2.getHash()));
+        assert.ok(!client.inv.isUnowned(e2.getHash()));
+        assert.ok(!client.inv.isUnowned(f2.getHash()));
+
+        // Reinstantiate client with only kp0
+        client = new TodaClient(new LocalInventoryClient(dir));
+        client._getSalt = () => ByteArray.fromUtf8("some salty");
+        client.addSatisfier(kp0);
+
+        await client.archiveUnownedFiles();
+
+        assert.ok(!client.inv.isUnowned(a2.getHash())); // still owned
+        assert.ok(!client.inv.isUnowned(b2.getHash())); // still owned
+        assert.ok(client.inv.isUnowned(c2.getHash())); // no longer owned
+        assert.ok(client.inv.isUnowned(d2.getHash())); // never owned
+        assert.ok(client.inv.isUnowned(e2.getHash())); // no longer owned
+        assert.ok(!client.inv.isUnowned(f2.getHash())); // now owned
+    });
+});

@@ -48,10 +48,22 @@ class TodaClient {
         this.fileServerUrl = fileServerUrl;
         this.retryTimes = 5;
         this.retryInterval = 1000;
+
+        this.shouldArchiveUnownedFiles = true;
     }
 
     addSatisfier(rs) {
         this.requirementSatisfiers.push(rs);
+    }
+
+    async archiveUnownedFiles() {
+        const hs = this.inv.listLatest();
+        for(const h of hs) {
+            const twist = new Twist(this.inv.get(h));
+            if(!await this.isSatisfiable(twist)) {
+                this.inv.unown(twist.getHash());
+            }
+        }
     }
 
     _backwardsStopPredicate(fastTwist) {
@@ -318,13 +330,11 @@ class TodaClient {
         // Setter fn to perform any field
         // modifications before signing and hoisting
         preSignHook(next);
-
         await this.satisfyRequirements(next);
-        await this.inv.put(next.serialize());
-
         const nextTwist = next.twist();
+        await this.put(nextTwist);
+        
         const lastFast = nextTwist.lastFast();
-
         if (tether && !tether.isNull() && lastFast && !noHoist) {
             // TODO(acg): ensure this is FIRMLY written before hoisting.
             try {
@@ -448,7 +458,15 @@ class TodaClient {
         }
         // TODO: should this auto-save?
         // yes
+        await this.put(twist);
+    }
+
+    async put(twist) {
         await this.inv.put(twist.getAtoms());
+        if (this.shouldArchiveUnownedFiles && 
+            !await this.isSatisfiable(twist)) {
+            this.inv.unown(twist.getHash());
+        }
     }
 
     async isCanonical(twist, popTopHash) {
@@ -740,7 +758,7 @@ class TodaClient {
                                                 () => true);
             let prevToplineAtoms = (await relay.get()).getAtoms();
             dqTwist.addAtoms(prevToplineAtoms);
-            this.inv.put(dqTwist.getAtoms());
+            this.put(dqTwist);
         }
 
         const dqNextTB = Abject.fromTwist(dqTwist)

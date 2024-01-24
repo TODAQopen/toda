@@ -19,7 +19,9 @@ function uuidCargo() {
     hs.set(randH(), randH());
     const packet = PairTriePacket.createFromUnsorted(hs);
     const atoms = new Atoms();
-    atoms.set(Sha256.fromPacket(packet), packet);
+    const h = Sha256.fromPacket(packet);
+    atoms.set(h, packet);
+    atoms.focus = h;
     return atoms;
 }
 

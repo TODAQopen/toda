@@ -5,6 +5,7 @@ import { TwistBuilder } from "../../src/core/twist.js";
 import assert from "assert";
 import { v4 as uuid } from "uuid";
 import fs from 'fs-extra';
+import { uuidCargo } from "../util.js";
 
 describe("Archive", async () => {
     it("Should properly archive file", async () => {
@@ -90,5 +91,91 @@ describe("Archives files", async () => {
 
         // inv still behaves as expected when asking for an archived file
         assert.ok(inv.get(t0.getHash()).focus.equals(t2.getHash()));
+    });
+});
+
+describe("Unowned file mechanism", async function() {
+    it("Unown removes all references in this.files + this.twistIdx and move file", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const t0 = (new TwistBuilder()).twist();
+        const t1 = t0.createSuccessor().twist();
+
+        inv.put(t1.getAtoms());
+
+        // sanity
+        assert.ok(inv.files.has(t0.getHash()));
+        assert.ok(inv.twistIdx.has(t0.getHash()));
+        assert.ok(inv.twistIdx.has(t1.getHash()));
+        assert.ok(fs.existsSync(inv.filePathForHash(t1.getHash())));
+
+        inv.unown(t1.getHash());
+
+        assert.ok(!inv.files.has(t0.getHash()));
+        assert.ok(!inv.twistIdx.has(t0.getHash()));
+        assert.ok(!inv.twistIdx.has(t1.getHash()));
+        assert.ok(!fs.existsSync(inv.filePathForHash(t1.getHash())));
+        assert.ok(fs.existsSync(inv.unownedPathForHash(t1.getHash())));
+    });
+
+    it("Unown noop if passed an older hash than known", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const t0 = (new TwistBuilder()).twist();
+        const t1 = t0.createSuccessor().twist();
+
+        inv.put(t1.getAtoms());
+
+        // sanity
+        assert.ok(inv.files.has(t0.getHash()));
+        assert.ok(inv.twistIdx.has(t0.getHash()));
+        assert.ok(inv.twistIdx.has(t1.getHash()));
+        assert.ok(fs.existsSync(inv.filePathForHash(t1.getHash())));
+
+        inv.unown(t0.getHash());
+
+        assert.ok(inv.files.has(t0.getHash()));
+        assert.ok(inv.twistIdx.has(t0.getHash()));
+        assert.ok(inv.twistIdx.has(t1.getHash()));
+        assert.ok(fs.existsSync(inv.filePathForHash(t1.getHash())));
+    });
+
+    it("Unown doesn't fail if an unknown hash is provided", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const t0 = (new TwistBuilder()).twist();
+        const t1 = t0.createSuccessor().twist();
+        inv.put(t1.getAtoms());
+        inv.unown(Hash.fromHex("41574c7372f3f95e459caaf4267f670328e674d0becd4aca5354e7516fe43688c4"));
+    });
+
+    it("Can still get an unowned file", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const t0 = (new TwistBuilder()).twist();
+        const t1 = t0.createSuccessor().twist();
+
+        inv.put(t1.getAtoms());
+        inv.unown(t0.getHash());
+
+        const atoms = inv.get(t1.getHash());
+        assert.ok(atoms);
+        assert.ok(atoms.focus.equals(t1.getHash()));
+    });
+
+    it("Can still get an unowned file (extra sanity: reinstantiate inv to rm all state)", async function() {
+        const path = "./files/" + uuid();
+        let inv = new LocalInventoryClient(path);
+        const t0 = (new TwistBuilder()).twist();
+        const t1 = t0.createSuccessor().twist();
+
+        inv.put(t1.getAtoms());
+        inv.unown(t0.getHash());
+
+        inv = new LocalInventoryClient(path);
+
+        const atoms = inv.get(t1.getHash());
+        assert.ok(atoms);
+        assert.ok(atoms.focus.equals(t1.getHash()));
     });
 });
