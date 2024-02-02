@@ -500,14 +500,18 @@ class TodaClient {
         if (twist.reqs()) {
             for (let [reqTypeHash, reqPacketHash] of
                  Array.from(twist.reqs().getShapedValue().entries())) { //eew
+                let satisfied = false;
                 for (let satisfier of this.requirementSatisfiers) {
                     let reqPacket = twist.get(reqPacketHash);
-                    if (!(await satisfier.isSatisfiable(
-                            reqTypeHash, reqPacket))) {
-                        return false;
+                    if (await satisfier.isSatisfiable(
+                            reqTypeHash, reqPacket)) {
+                        satisfied = true;
+                        break;
                     }
                 }
+                if (!satisfied) return false;
             }
+            return true;
         } else {
             if (twist.isTethered()) {
                 let tether = this.getFromAtomsOrInventory(
@@ -620,7 +624,7 @@ class TodaClient {
         const popTop = dq.popTop();
 
         if (!await this.isSatisfiable(dqTwist)) {
-            throw new Error("Cannot delegate; cannot satisfy dqTwist");
+            throw new CannotSatisfyError("Cannot delegate; cannot satisfy dqTwist");
         }
 
         let dqTether = dqTwist.isTethered() ?

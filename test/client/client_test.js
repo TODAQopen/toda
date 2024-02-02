@@ -870,3 +870,106 @@ describe("Unowned archiving works as expected", async function() {
         assert.ok(!client.inv.isUnowned(f2.getHash())); // now owned
     });
 });
+
+describe("isSatisfiable tests", async function () {
+    // TODO: When multi reqs are implemented, we need extensive
+    //       testing for those
+
+    it("Success: no requirements on twist", async function () {
+        const dir = "./files/" + uuid();
+        let client = new TodaClient(new LocalInventoryClient(dir));
+        const twist = new TwistBuilder().twist();
+        assert.ok(await client.isSatisfiable(twist));
+    });
+
+    it("Success: multi-leveled no requirements", async function () {
+        const dir = "./files/" + uuid();
+        let client = new TodaClient(new LocalInventoryClient(dir));
+        const top = new TwistBuilder().twist();
+        const bot = new TwistBuilder(null, null, null, top).twist();
+        assert.ok(await client.isSatisfiable(bot));
+    });
+
+    it("Success: requirement on twist, client has exactly that satisfier", async function () {
+        const dir = "./files/" + uuid();
+        let client = new TodaClient(new LocalInventoryClient(dir));
+        const req = await SECP256r1.generate();
+        const tb = new TwistBuilder();
+        tb.setKeyRequirement(req.constructor.requirementTypeHash,
+                             await req.exportPublicKey());
+        const twist = tb.twist();
+        client.addSatisfier(req);
+        assert.ok(await client.isSatisfiable(twist));
+    });
+
+    it("Success: multi-level, requirement on twist, client has exactly that satisfier", async function () {
+        const dir = "./files/" + uuid();
+        let client = new TodaClient(new LocalInventoryClient(dir));
+        const req = await SECP256r1.generate();
+        const tb = new TwistBuilder();
+        tb.setKeyRequirement(req.constructor.requirementTypeHash,
+                             await req.exportPublicKey());
+        const top = tb.twist();
+        const bot = new TwistBuilder(null, null, null, top).twist();
+        client.addSatisfier(req);
+        assert.ok(await client.isSatisfiable(bot));
+    });
+
+    it("Success: requirement on twist, client has that satisfiers + others", async function () {
+        const dir = "./files/" + uuid();
+        let client = new TodaClient(new LocalInventoryClient(dir));
+        const reqA = await SECP256r1.generate();
+        const reqB = await SECP256r1.generate();
+        const reqC = await SECP256r1.generate();
+        const tb = new TwistBuilder();
+        tb.setKeyRequirement(reqB.constructor.requirementTypeHash,
+                             await reqB.exportPublicKey());
+        const twist = tb.twist();
+        client.addSatisfier(reqA);
+        client.addSatisfier(reqB);
+        client.addSatisfier(reqC);
+        assert.ok(await client.isSatisfiable(twist));
+    });
+
+    it("Failure: requirement on twist, client has no satisfiers", async function () {
+        const dir = "./files/" + uuid();
+        let client = new TodaClient(new LocalInventoryClient(dir));
+        const req = await SECP256r1.generate();
+        const tb = new TwistBuilder();
+        tb.setKeyRequirement(req.constructor.requirementTypeHash,
+                             await req.exportPublicKey());
+        const twist = tb.twist();
+        assert.ok(!await client.isSatisfiable(twist));
+    });
+
+    it("Failure: requirement on twist, client has multiple satisfiers but not the right one", async function () {
+        const dir = "./files/" + uuid();
+        let client = new TodaClient(new LocalInventoryClient(dir));
+        const reqA = await SECP256r1.generate();
+        const reqB = await SECP256r1.generate();
+        const reqC = await SECP256r1.generate();
+        const tb = new TwistBuilder();
+        tb.setKeyRequirement(reqB.constructor.requirementTypeHash,
+                             await reqB.exportPublicKey());
+        const twist = tb.twist();
+        client.addSatisfier(reqA);
+        client.addSatisfier(reqC);
+        assert.ok(!await client.isSatisfiable(twist));
+    });
+
+    it("Failure: multi-level requirement on twist, client has multiple satisfiers but not the right one", async function () {
+        const dir = "./files/" + uuid();
+        let client = new TodaClient(new LocalInventoryClient(dir));
+        const reqA = await SECP256r1.generate();
+        const reqB = await SECP256r1.generate();
+        const reqC = await SECP256r1.generate();
+        const tb = new TwistBuilder();
+        tb.setKeyRequirement(reqB.constructor.requirementTypeHash,
+                             await reqB.exportPublicKey());
+        const twist = tb.twist();
+        const bot = new TwistBuilder(null, null, null, twist).twist();
+        client.addSatisfier(reqA);
+        client.addSatisfier(reqC);
+        assert.ok(!await client.isSatisfiable(bot));
+    });
+});

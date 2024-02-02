@@ -145,7 +145,7 @@ describe("delegateValue", async () => {
         toda.addSatisfier(req);
         toda._getSalt = () => new ByteArray(new TextEncoder().encode("I am salty!"));
         let localLine = await toda.create(null, req);
-        await toda.append(localLine);
+        await toda.append(localLine, null, req);
 
         let {twist} = await mint(toda, 43, 1, localLine.getHash());
         let dq = Abject.fromTwist(twist);
@@ -153,7 +153,10 @@ describe("delegateValue", async () => {
         // New client does not have satisfier
         inv = new LocalInventoryClient("./files/" + uuid());
         toda = new TodaClient(inv, "http://localhost:8000");
-        await assert.rejects(toda.delegateValue(dq, 2.2));
+        await assert.rejects(toda.delegateValue(dq, 2.2),
+                             {
+                                name: "CannotSatisfyError"
+                             });
     });
 
 
