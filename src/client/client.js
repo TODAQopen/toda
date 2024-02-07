@@ -239,20 +239,28 @@ class TodaClient {
          }
     }
 
-    async _getHoistFromRelay(lead) {
+    async _getHoistFromRelay(lead, meetHash) {
         const relay = this.getRelay(lead);
         if (!relay) {
             console.error("NO RELAY FOUND FOR:", lead.getHash().toString());
             throw new WaitForHitchError(); //TODO: specialize this error
         }
+        // Rehoist; in case we missed hoisting earlier
+        const hoist = (await relay.getHoist(lead)).hoist;
+        if (hoist) {
+            return hoist;
+        }
+        console.warn("Expected to find a hoist but couldn't; rehoisting");
+        await relay.hoist(lead, meetHash);
         return (await this._waitForHoist(lead, relay)).hoist;
     }
 
     async _setPost(tb) {
-        const lead = tb.twist().lastFast()?.lastFast();
+        const meet = tb.twist().lastFast();
+        const lead = meet?.lastFast();
         if (lead) {
             const hoist = (await this._getHoistFromLocal(lead)) ??
-                          (await this._getHoistFromRelay(lead));
+                          (await this._getHoistFromRelay(lead, meet.getHash()));
             tb.addRigging(lead.getHash(), hoist.getHash());
         }
     }
@@ -310,7 +318,6 @@ class TodaClient {
         if (cargo) {
             next.setCargo(cargo);
         }
-        let relayTwist;
         if (tether) {
             // Attempts to bump the tether to the latest in
             //  its line using local data
@@ -346,16 +353,14 @@ class TodaClient {
                 }
                 let nth = nextTwist.getHash();
                 await r.hoist(lastFast, nth, { noFast: noRemote });
-                ({relayTwist} = await this._waitForHoist(lastFast, r));
-
+                await this._waitForHoist(lastFast, r);
                 const pullUntil = popTop ??
-                                  this.defaultTopLineHash ??
-                                  tether;
-
+                              this.defaultTopLineHash ??
+                              tether;
                 await this.pull(nextTwist, pullUntil);
             } catch (e) {
-                console.error("Hoist error:", e);
-                throw(e);
+                console.warn("Hoist error:", e);
+                //We don't need to throw here; it can be rehoisted later
             }
         }
         return nextTwist;

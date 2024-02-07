@@ -17,9 +17,10 @@ class TestRelayServer {
         };
 
         this.toda = toda;
+        this.shims = {};
         this.config = config;
         this.requestLogs = [];
-        this._configureApp(toda, config, this.requestLogs);
+        this._configureApp(toda, config, this.requestLogs, this.shims);
     }
 
     async _start(app, port) {
@@ -43,7 +44,7 @@ class TestRelayServer {
         await this.server.close();
     }
 
-    _configureApp(toda, config, requestLogs) {
+    _configureApp(toda, config, requestLogs, shims) {
         const app = express();
         app.use(express.json());
 
@@ -117,6 +118,11 @@ class TestRelayServer {
         });
 
         app.post("/hoist", async function (req, res, next) {
+            if (shims.hoist) {
+                const r = await shims.hoist();
+                return res.status(r).send();
+            }
+
             const hex = req.body["relay-twist"];
             try {
                 const hash = Hash.fromHex(hex);

@@ -221,6 +221,38 @@ describe("append", async () => {
         }
     });
 
+    it("append with remote test: no hoist saved; rehoist mechanism rehoists", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const top = new TodaClient(inv, "http://localhost:1234");
+        top._getSalt = () => ByteArray.fromUtf8("some salty");
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
+        try {
+            const t0 = await top.create(null, null, uuidCargo());
+            const foot = new TodaClient(
+                new LocalInventoryClient("./files/" + uuid()),
+                "http://localhost:8090/files");
+            foot._getSalt = () => ByteArray.fromUtf8("some salty2");
+            foot.defaultRelayHash = t0.getHash();
+            foot.defaultRelayUrl = "http://localhost:8090/hoist";
+            foot.defaultTopLineHash = t0.getHash();
+
+            const f0 = await foot.create(t0.getHash());
+            const f1 = await foot.append(f0, t0.getHash());
+            const f2 = await foot.append(f1, t0.getHash());
+            // Prevent the next twist from hoisting
+            topRelay.shims.hoist = () => 204;
+            const f3 = await foot.append(f2, t0.getHash());
+            // Reenable hoisting; should be able to rehoist and continue
+            topRelay.shims.hoist = null;
+            const f4 = await foot.append(f3, t0.getHash());
+
+            const i = new Interpreter(Line.fromTwist(f4), t0.getHash());
+            await i.verifyHitchLine(f4.getHash());
+        } finally {
+            topRelay.stop();
+        }
+    });
+
     it("append stacked remote test", async () => {
         const top = new TodaClient(new LocalInventoryClient("./files/" + uuid()), "http://localhost:1234");
         top._getSalt = () => ByteArray.fromUtf8("some salty");
