@@ -18,15 +18,18 @@ class Hash {
      *  Length depends on selected algorithm.
      */
     constructor(bytes, offset) {
-        this.bytes = bytes;
-        this.offset = offset || 0;
+        offset ||= 0;
         this.length = Hash.ALGO_CODE_LENGTH + 
             this.constructor.getHashValueLength();
 
         // just guard against bad coding
-        if (bytes.length < this.offset + this.length) {
+        if (bytes.length < offset + this.length) {
             throw new Error("cannot set hash value of wrong length: ", bytes);
         }
+
+        this.bytes = new ByteArray(
+            bytes.subarray(offset, offset + this.length));
+        this.offset = 0;
     }
 
     /**
