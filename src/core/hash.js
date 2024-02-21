@@ -27,7 +27,7 @@ class Hash {
             throw new Error("cannot set hash value of wrong length: ", bytes);
         }
 
-        this.bytes = new ByteArray(
+        this.bytes = new Uint8Array(
             bytes.subarray(offset, offset + this.length));
         this.offset = 0;
     }

@@ -51,11 +51,20 @@ class Packet {
             throw new Error("Byte are too short", bytes);
         }
 
-        // these are all wrt the packet content,
-        //  not including its five byte header
-        this.content = bytes;
-        this.offset = offset;
+        const newBytes = new Uint8Array(Packet.PACKET_CONTENT_OFFSET + length);
+        const lenBytes = fourByteInt(length);
+        newBytes.set(lenBytes, Packet.PACKET_LENGTH_OFFSET);
+        newBytes.set(bytes.subarray(offset, offset + length), 
+                     Packet.PACKET_CONTENT_OFFSET);
+        this.bytes = newBytes;
+        // note: subarray creates a 'view' of the array, not a new array
+        this.content = newBytes.subarray(Packet.PACKET_CONTENT_OFFSET);
+        this.offset = 0;
         this.length = length;
+    }
+
+    _setShape(shape) {
+        this.bytes[0] = shape;
     }
 
     // lazy packet expansion
@@ -75,22 +84,7 @@ class Packet {
      * @returns <Uint8Array> The serialized value of the packet
      */
     toBytes() {
-        if (!this.bytesValue) {
-            if (this.offset > 5) {
-                this.bytesValue = this.content.subarray(this.offset - 5,
-                    this.offset + this.length);
-            } else {
-                this.len = fourByteInt(this.length);
-                this.bytesValue = new Uint8Array(this.getLength());
-                this.bytesValue[0] = this.constructor.shapeCode;
-                this.bytesValue.set(this.len, 1);
-                this.bytesValue.set(this.content.subarray(
-                    this.offset, this.offset + this.length),
-                    Packet.PACKET_CONTENT_OFFSET);
-            }
-        }
-
-        return this.bytesValue;
+        return this.bytes;
     }
 
     /**
@@ -182,6 +176,7 @@ class Packet {
 
         // xxx(acg): tell me you don't love js
         o.__proto__ = imp.prototype;
+        o._setShape(shapeCode);
         return o;
     }
 
@@ -208,6 +203,11 @@ class Packet {
 class ArbitraryPacket extends Packet {
     static shapeCode = 0x60;
     static moniker = "Arbitrary Packet";
+
+    constructor(content, offset, length) {
+        super(content, offset, length);
+        this._setShape(ArbitraryPacket.shapeCode);
+    }
 
     getShapedValueFromContent() {
         return this.content.subarray(this.offset, this.offset + this.length);
@@ -244,6 +244,7 @@ class HashPacket extends Packet {
         super(hashes.map((hash) => hash.toBytes())
             .reduce((buffer, bytes) => byteConcat(buffer, bytes),
                 new Uint8Array()));
+        this._setShape(HashPacket.shapeCode);
     }
 
     getShapedValueFromContent() {
@@ -337,6 +338,7 @@ class PairTriePacket extends HashPairPacket {
             throw new ShapeException("SHAPE_ORDER", "Map not sorted");
         }
         super([...hashMap]);
+        this._setShape(PairTriePacket.shapeCode);
     }
 
     /**
@@ -469,6 +471,7 @@ class BasicTwistPacket extends HashPacket {
      */
     constructor(body, sats) {
         super([body, sats]);
+        this._setShape(BasicTwistPacket.shapeCode);
     }
 
     getShapedValueFromContent() {
@@ -516,6 +519,7 @@ class BasicBodyPacket extends HashPacket {
      */
     constructor(prev, tether, reqs, cargo, rigging, shield) {
         super([prev, tether, shield, reqs, rigging, cargo]);
+        this._setShape(BasicBodyPacket.shapeCode);
     }
 
     getShapedValueFromContent() {
