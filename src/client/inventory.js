@@ -84,12 +84,12 @@ class LocalInventoryClient extends InventoryClient {
         const first = hs[hs.length - 1];
         hs.forEach(h => this.twistIdx.set(h, first));
         if (!this.files.has(first) || this.files.get(first).n <= hs.length) {
-            const existing = this.files.get(first)?.twist.getHash();
+            const existing = this.files.get(first)?.hash;
             if (existing && this.files.get(first).n < hs.length) {
                 // the 'existing' file in the cache is old; archive it
                 this.archive(existing);
             }
-            this.files.set(first, {twist, n: hs.length});
+            this.files.set(first, {hash: twist.getHash(), n: hs.length});
         } else if (this.files.get(first).n > hs.length) {
             // the 'existing' file in the cache is 
             //  newer than this file; archive this
@@ -131,12 +131,21 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     get(hash) {
+        //TODO: is this needed?
         if (!this.twistIdx.has(hash)) {
             this.loadFromDisk(hash);
         }
         const first = this.twistIdx.get(hash);
-        return this.files.get(first)?.twist.getAtoms() ??
-               this._getUnowned(hash);
+        const newest = this.files.get(first)?.hash;
+        if (newest) {
+            const atoms = this.loadFromDisk(newest);
+            if (!atoms) {
+                throw new Error(`Expected to find file ${newest} but` + 
+                                " the file is not on disk");
+            }
+            return atoms;
+        }
+        return this._getUnowned(hash);
     } //TODO(acg): would like to see better testing of this.
 
     _getUnowned(hash) {
@@ -160,6 +169,7 @@ class LocalInventoryClient extends InventoryClient {
         if (atoms) {
             this._addAtoms(atoms);
         }
+        return atoms;
     }
 
     put(atoms, explicitPath) {
@@ -184,7 +194,7 @@ class LocalInventoryClient extends InventoryClient {
         // If the hash is not in the inventory or if the most recent twist
         //  does not match `hash` return immediately (noop)
         if(!firstHash || 
-           !this.files.get(firstHash).twist.getHash().equals(hash)) {
+           !this.files.get(firstHash).hash.equals(hash)) {
             return;
         }
         // Move the file itself
@@ -215,7 +225,7 @@ class LocalInventoryClient extends InventoryClient {
     listLatest() {
         // FIXME: Why doesn't `this.files.values()` return anything?
         return Object.keys(this.files.hashes)
-                     .map(k => this.files.get(k).twist.getHash());
+                     .map(k => this.files.get(k).hash);
     }
 
     // FIXME(acg): Remove - currently only used by cli
