@@ -1,5 +1,4 @@
 import { Abject } from "../../src/abject/abject.js";
-import { ByteArray } from "../../src/core/byte-array.js";
 import { TodaClient } from "../../src/client/client.js";
 import { SimpleHistoric } from "../../src/abject/simple-historic.js";
 import { SECP256r1 } from "../../src/client/secp256r1.js";
@@ -106,7 +105,7 @@ class MockSimpleHistoricRelay {
                 url: this.tetherUrl + "/latest",
                 responseType: "arraybuffer"
             })
-                .then(res => new ByteArray(res.data))
+                .then(res => new Uint8Array(res.data))
                 .then(res => Hash.parse(res));
         }
 

@@ -5,10 +5,11 @@
 * Apache License 2.0
 *************************************************************/
 
-import { ByteArray } from './byte-array.js';
+import { fourByteInt, bytesToHex, 
+         byteConcat, bytesToInt } from './byteUtil.js';
 import { Hash } from './hash.js';
 import { HashMap } from './map.js';
-import { NamedError } from './error.js'
+import { NamedError } from './error.js';
 
 /**
  * Describes a (data) packet.
@@ -29,7 +30,7 @@ class Packet {
      * Raw constructor of packets. Users are recommended to use the
      * shape-specific constructors in subclasses.
      *
-     * @param bytes <ByteArray> the bytes to be used as content
+     * @param bytes <Uint8Array> the bytes to be used as content
      * @param offset <int> beginning of the content
      *  in bytes (not the whole packet)
      * @param length <int> length of the content
@@ -71,7 +72,7 @@ class Packet {
      *  - 4 bytes: <content length, unsigned int32>
      *  - n bytes: <content>
      *
-     * @returns <ByteArray> The serialized value of the packet
+     * @returns <Uint8Array> The serialized value of the packet
      */
     toBytes() {
         if (!this.bytesValue) {
@@ -79,8 +80,8 @@ class Packet {
                 this.bytesValue = this.content.subarray(this.offset - 5,
                     this.offset + this.length);
             } else {
-                this.len = ByteArray.fourByteInt(this.length);
-                this.bytesValue = new ByteArray(this.getLength());
+                this.len = fourByteInt(this.length);
+                this.bytesValue = new Uint8Array(this.getLength());
                 this.bytesValue[0] = this.constructor.shapeCode;
                 this.bytesValue.set(this.len, 1);
                 this.bytesValue.set(this.content.subarray(
@@ -105,7 +106,9 @@ class Packet {
      */
     toString() {
         if (!this.strValue) {
-            this.strValue = this.content.toHex(this.offset, this.length);
+            this.strValue = bytesToHex(this.content, 
+                                                    this.offset, 
+                                                    this.length);
         }
 
         return this.strValue;
@@ -140,12 +143,12 @@ class Packet {
 
 
     /**
-     * @param bytes  <ByteArray> bytes for the whole packet (not just content)
+     * @param bytes  <Uint8Array> bytes for the whole packet (not just content)
      * @param packetStart <int> offset of the whole packet (not just content)
      * @returns <Packet>
      */
     static parse(bytes, packetStart=0) {
-        let packetLength = ByteArray.toInt(bytes, packetStart +
+        let packetLength = bytesToInt(bytes, packetStart +
             Packet.PACKET_LENGTH_OFFSET, Packet.PACKET_LENGTH_LENGTH);
 
         if (bytes.length -
@@ -162,7 +165,7 @@ class Packet {
 
     /**
      * @param shapeCode <int> a shape code as a decimal value (a JS number)
-     * @param bytes <ByteArray> bytes for the whole packet (not just content)
+     * @param bytes <Uint8Array> bytes for the whole packet (not just content)
      * @param packetStart <int> beginning of the whole packet (not just content)
      * @param length <int> length of the content, not the whole packet
      * @returns <Boolean>
@@ -236,11 +239,11 @@ class HashPacket extends Packet {
      * @param hashes <Array.<Hash>> the list of hashes to create a packet from.
      */
     constructor(hashes) {
-        // dx: perf: if we're reading from disk
-        //  then this ByteArray already exists...
+        // PERF: should instantiate the correct length of bytes in the first
+        //       place to avoid calling "concat" each time
         super(hashes.map((hash) => hash.toBytes())
-            .reduce((buffer, bytes) => buffer.concat(bytes),
-                new ByteArray()));
+            .reduce((buffer, bytes) => byteConcat(buffer, bytes),
+                new Uint8Array()));
     }
 
     getShapedValueFromContent() {
@@ -390,7 +393,7 @@ class PairTriePacket extends HashPairPacket {
      * @returns <Hash>
      */
     get(keyHash) {
-        return this.shapedVal.get(keyHash.toString())
+        return this.shapedVal.get(keyHash.toString());
     }
 
     /**

@@ -10,7 +10,6 @@ const simpleHistoric = require("../src/abject/simple-historic.js");
 const primitive = require("../src/abject/primitive.js");
 const di = require("../src/abject/di.js");
 const quantity = require("../src/abject/quantity.js");
-const { ByteArray } = require("../src/core/byte-array.js");
 
 exports.packet = packet;
 exports.hash = hash;
@@ -24,6 +23,5 @@ exports.simpleHistoric = simpleHistoric;
 exports.primitive = primitive;
 exports.di = di;
 exports.quantity = quantity;
-exports.ByteArray = ByteArray;
 
 export default {};

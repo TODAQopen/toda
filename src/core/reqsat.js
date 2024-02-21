@@ -5,8 +5,6 @@
 * Apache License 2.0
 *************************************************************/
 
-import { ByteArray } from './byte-array.js';
-
 import { Sha256, Symbol } from './hash.js';
 import { MemorySyncPacketStore } from './store.js';
 import { PairTriePacket, ArbitraryPacket, HashPacket } from './packet.js';
@@ -41,8 +39,8 @@ class RequirementList extends Requirement {
     // dx: this isn't used anywhere,
     //  so I don't know if this conversion is correct
     weightToBytes(weight) {
-        return new ByteArray([weight]);
-        // return new ByteArray(Buffer.from([weight]));
+        return new Uint8Array([weight]);
+        // return new Uint8Array(Buffer.from([weight]));
     }
 
     bytesToWeight(bytes) {
@@ -91,7 +89,7 @@ class SignatureRequirement extends Requirement {
 
     /**
    * @param hashImp <Class> the hash imp to use
-   * @param publicKey <ByteArray> the public key to require
+   * @param publicKey <Uint8Array> the public key to require
    */
     constructor(hashImp, keyType, publicKey) {
         let keyPacket = new ArbitraryPacket(publicKey);
@@ -107,7 +105,7 @@ class DefaultSignatureRequirement extends Requirement {
     static DEFAULT_SIG = SignatureRequirement.REQ_SECP256r1;
 
     /**
-   * @param publicKey <ByteArray> the public key to require
+   * @param publicKey <Uint8Array> the public key to require
    */
     constructor(publicKey) {
         super(DefaultSignatureRequirement.DEFAULT_HASH_IMP,
@@ -132,7 +130,7 @@ class Satisfaction extends MemorySyncPacketStore {
 class SignatureSatisfaction extends Satisfaction {
     /**
    * @param hashImp <Class> the hash imp to use
-   * @param signature <ByteArray> the signature bytes
+   * @param signature <Uint8Array> the signature bytes
    */
     constructor(hashImp, keyType, signature) {
         let sigPacket = new ArbitraryPacket(signature);
@@ -146,7 +144,7 @@ class SignatureSatisfaction extends Satisfaction {
 class DefaultSignatureSatisfaction extends SignatureSatisfaction {
     /**
    * @param hashImp <Class> the hash imp to use
-   * @param signature <ByteArray> the signature bytes
+   * @param signature <Uint8Array> the signature bytes
    */
     constructor(signature) {
         super(DefaultSignatureSatisfaction.DEFAULT_HASH_IMP,

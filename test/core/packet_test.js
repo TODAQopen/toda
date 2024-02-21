@@ -1,4 +1,4 @@
-import { ByteArray } from "../../src/core/byte-array.js";
+import { bytesToHex, utf8ToBytes } from "../../src/core/byteUtil.js";
 import { Sha256 } from "../../src/core/hash.js";
 import { Packet, ArbitraryPacket, HashPacket, PairTriePacket } 
     from "../../src/core/packet.js";
@@ -6,15 +6,16 @@ import assert from "assert";
 
 describe("ArbitraryPacket", () => {
     it("can be created, serialized, parsed", () => {
-        let p = Packet.parse(new ArbitraryPacket(ByteArray.fromUtf8("bbq")).toBytes());
+        let p = Packet.parse(new ArbitraryPacket(utf8ToBytes("bbq")).toBytes());
         assert.equal(p.constructor.shapeCode, 0x60);
-        ByteArray.fromUtf8("bbq").toString() === p.getShapedValue().toString();
+        bytesToHex(utf8ToBytes("bbq")) ===
+         bytesToHex(p.getShapedValue());
     });
 });
 
 describe("HashPacket", () => {
     it("can be created, serialized, parsed", () => {
-        let hashes = ["b","b","q"].map((x) => Sha256.fromPacket(new ArbitraryPacket(ByteArray.fromUtf8(x))));
+        let hashes = ["b","b","q"].map((x) => Sha256.fromPacket(new ArbitraryPacket(utf8ToBytes(x))));
         let p = Packet.parse(new HashPacket(hashes).toBytes());
         assert.equal(p.constructor.shapeCode, 0x61);
         let s = p.getShapedValue();
@@ -26,7 +27,7 @@ describe("HashPacket", () => {
 
 describe("PairTriePacket", () => {
     it("can be created, serialized, parsed", () => {
-        let hashes = ["a","b","c","d"].map((x) => Sha256.fromBytes(ByteArray.fromUtf8(x)));
+        let hashes = ["a","b","c","d"].map((x) => Sha256.fromBytes(utf8ToBytes(x)));
         let pairs = [[hashes[1], hashes[0]],
             [hashes[0], hashes[1]]];
         let p = Packet.parse(new PairTriePacket(new Map(pairs)).toBytes());
@@ -38,7 +39,7 @@ describe("PairTriePacket", () => {
     });
 
     it("throws on incorrect order", () => {
-        let hashes = ["a","b","c","d"].map((x) => Sha256.fromBytes(ByteArray.fromUtf8(x)));
+        let hashes = ["a","b","c","d"].map((x) => Sha256.fromBytes(utf8ToBytes(x)));
         let pairs = [[hashes[0], hashes[1]],
             [hashes[1], hashes[0]]];
         assert.throws(() => new PairTriePacket(new Map(pairs)),

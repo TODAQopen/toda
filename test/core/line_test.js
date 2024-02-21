@@ -2,13 +2,13 @@ import { Hash, NullHash, Sha256 } from "../../src/core/hash.js";
 import { Atoms } from "../../src/core/atoms.js";
 import { Twist, TwistBuilder } from "../../src/core/twist.js";
 import { Line } from "../../src/core/line.js";
+import { utf8ToBytes } from "../../src/core/byteUtil.js";
 import { ArbitraryPacket, BasicBodyPacket, BasicTwistPacket } from "../../src/core/packet.js";
 import { sbh } from "../util.js";
-import { ByteArray } from "../../src/core/byte-array.js";
 import assert from "assert";
 
 function hpp(str) { // hash-packet-pair
-    let p = new ArbitraryPacket(ByteArray.fromUtf8(str));
+    let p = new ArbitraryPacket(utf8ToBytes(str));
     return [Sha256.fromPacket(p), p];
 }
 

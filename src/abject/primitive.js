@@ -5,9 +5,9 @@
 * Apache License 2.0
 *************************************************************/
 
+import { utf8ToBytes, bytesToUtf8 } from '../core/byteUtil.js';
 import { ArbitraryPacket } from '../core/packet.js';
 
-import { ByteArray } from '../core/byte-array.js';
 import { Abject, AbjectError, AbjectAtomMissingError } from './abject.js';
 import { Hash } from '../core/hash.js';
 
@@ -71,7 +71,7 @@ class P1String extends Primitive {
      */
     constructor(str) {
         super();
-        this.setPrimitiveValue(new ArbitraryPacket(ByteArray.fromUtf8(str)));
+        this.setPrimitiveValue(new ArbitraryPacket(utf8ToBytes(str)));
     }
 
     /**
@@ -79,7 +79,7 @@ class P1String extends Primitive {
      * @return <String>
      */
     static parsePrimitive(value) {
-        return value.getShapedValue().toUTF8String();
+        return bytesToUtf8(value.getShapedValue());
     }
 }
 
@@ -96,7 +96,7 @@ class P1Float extends Primitive {
         super();
         let dv = new DataView(new ArrayBuffer(8));
         dv.setFloat64(0, num);
-        this.setPrimitiveValue(new ArbitraryPacket(new ByteArray(dv.buffer)));
+        this.setPrimitiveValue(new ArbitraryPacket(new Uint8Array(dv.buffer)));
         // TODO: ensure this is not NaN or Infinity or -Infinity
     }
 
@@ -123,7 +123,7 @@ class P1Date extends Primitive {
     constructor(date) {
         super();
         this.setPrimitiveValue(new ArbitraryPacket(
-            ByteArray.fromUtf8(date.toISOString())));
+            utf8ToBytes(date.toISOString())));
     }
 
     /**
@@ -147,7 +147,7 @@ class P1Boolean extends Primitive {
     constructor(truthVal) {
         super();
         this.setPrimitiveValue(new ArbitraryPacket(
-            new ByteArray([truthVal? 1 : 0])));
+            new Uint8Array([truthVal? 1 : 0])));
     }
 
     /**

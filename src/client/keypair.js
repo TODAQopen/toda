@@ -1,5 +1,5 @@
 import { RequirementSatisfier, SignatureSatisfaction } from '../core/reqsat.js';
-import { ByteArray } from '../core/byte-array.js';
+import { bytesToHex, byteConcat } from '../core/byteUtil.js';
 
 if(typeof window === 'undefined') {
     const { Crypto } = await import('@peculiar/webcrypto');
@@ -33,8 +33,8 @@ class KeyPair extends RequirementSatisfier {
             return false;
         }
         let pubkey = await this.exportPublicKey();
-        return requirementPacket.getShapedValue().toString() ===
-            pubkey.toString();
+        return bytesToHex(requirementPacket.getShapedValue()) ===
+               bytesToHex(pubkey);
     }
 
     async satisfy(prevTwist, newBodyHash) {
@@ -55,7 +55,7 @@ class LocalKeyPair extends KeyPair {
     }
 
     async exportPublicKey() {
-        return new ByteArray(await this.exportRawPublicKey());
+        return new Uint8Array(await this.exportRawPublicKey());
     }
 
     /** Converts a Buffer representing a key into a PEM string
@@ -105,7 +105,7 @@ class LocalKeyPair extends KeyPair {
     }
 
     static _derConstructLength(arr, len) {
-        return arr.concat(new ByteArray([len]));
+        return byteConcat(arr, new Uint8Array([len]));
     }
 
     static _toDER(signedString) {
@@ -113,7 +113,7 @@ class LocalKeyPair extends KeyPair {
         // compatibility with pretty much every other crypto library out
         // there.
 
-        let signature = new ByteArray(signedString);
+        const signature = new Uint8Array(signedString);
 
         // get r and s
         let r = signature.slice(0, 32);
@@ -121,11 +121,13 @@ class LocalKeyPair extends KeyPair {
 
         // Pad values
         if (r[0] & 0x80) {
-            r = new ByteArray([ 0 ]).concat(r);
+            r = byteConcat(new Uint8Array([0]),
+                                         r);
         }
         // Pad values
         if (s[0] & 0x80) {
-            s = new ByteArray([ 0 ]).concat(s);
+            s = byteConcat(new Uint8Array([0]),
+                                         s);
         }
 
         // Remove the padded zeros at the beginning of r and s
@@ -140,24 +142,24 @@ class LocalKeyPair extends KeyPair {
         }
 
         // Create the array.  Start with r
-        let arr = new ByteArray([ 0x02 ]);
+        let arr = new Uint8Array([ 0x02 ]);
         arr = this._derConstructLength(arr, r.length);
-        arr = arr.concat(r);
+        arr = byteConcat(arr, r);
 
         // Now add on s
-        arr = arr.concat(new ByteArray([0x02]));
+        arr = byteConcat(arr, new Uint8Array([0x02]));
         arr = this._derConstructLength(arr, s.length);
-        arr = arr.concat(s);
+        arr = byteConcat(arr, s);
 
         // Create the final signed array. It starts with 0x30 and
         //  then the full length of the new (r + s)
-        let res = new ByteArray([ 0x30 ]);
+        let res = new Uint8Array([ 0x30 ]);
         res = this._derConstructLength(res, arr.length);
 
         // After that concat on the new r and s
-        res = res.concat(arr);
+        res = byteConcat(res, arr);
 
-        // And return the ByteArray
+        // And return the Uint8Array
         return res;
     }
 
@@ -166,7 +168,7 @@ class LocalKeyPair extends KeyPair {
         // well, pretty much anywhere
 
         var bytes = new ArrayBuffer(64);
-        var view = new ByteArray(bytes);
+        var view = new Uint8Array(bytes);
 
         // Strip(/check?) the DER header for the whole signature
         // sig[0] should yield 0x30 and there should probably

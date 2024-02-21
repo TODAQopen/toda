@@ -6,7 +6,6 @@ import { Line } from "../../src/core/line.js";
 import { SerialStore } from "../../src/core/store.js";
 import { TodaClient, CannotSatisfyError } from "../../src/client/client.js";
 import { SECP256r1 } from "../../src/client/secp256r1.js";
-import { ByteArray } from "../../src/core/byte-array.js";
 import { VirtualInventoryClient } from "../../src/client/inventory.js";
 import { Twist } from "../../src/core/twist.js";
 import assert from "assert";
@@ -78,7 +77,7 @@ describe("satisfyRequirements", () => {
 
 describe("Runs pickled secp256r1 tests (v1)", () => {
     let runPassTest = async (todaFile) => {
-        const data = new ByteArray(fs.readFileSync(todaFile));
+        const data = new Uint8Array(fs.readFileSync(todaFile));
         let s = new SerialStore(data);
         let line = new Line();
         await s.copyInto(line);
@@ -91,7 +90,7 @@ describe("Runs pickled secp256r1 tests (v1)", () => {
     };
 
     let runThrowTest = async (todaFile, expectedErrorType) => {
-        const data = new ByteArray(fs.readFileSync(todaFile));
+        const data = new Uint8Array(fs.readFileSync(todaFile));
         let s = new SerialStore(data);
         let line = new Line();
         await s.copyInto(line);

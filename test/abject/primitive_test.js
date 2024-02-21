@@ -1,6 +1,5 @@
 import { P1String, P1Float, P1Date, P1Boolean } from "../../src/abject/primitive.js";
 import { Abject } from "../../src/abject/abject.js";
-import { ByteArray } from '../../src/core/byte-array.js';
 import { Sha256 } from "../../src/core/hash.js";
 import assert from 'node:assert/strict';
 
@@ -46,13 +45,13 @@ describe("P1String", () => {
         const str = "Hello, I am a basic ascii string with all code points smaller than 127"
 
         // encode string using old encoder
-        const enc = ByteArray.from(str.split("").map(x => x.charCodeAt()))
+        const enc = new Uint8Array(str.split("").map(x => x.charCodeAt()));
 
         // decode using current decoder
-        const dec = new TextDecoder("utf-8").decode(enc)
+        const dec = new TextDecoder("utf-8").decode(enc);
 
-        assert.equal(str, dec)
-    })
+        assert.equal(str, dec);
+    });
 });
 
 describe("P1Float", () => {

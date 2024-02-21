@@ -13,6 +13,7 @@ import { Atoms } from './atoms.js';
 import { Shield } from './shield.js';
 import { SignatureRequirement } from './reqsat.js';
 import { NamedError } from './error.js';
+import { byteConcat } from './byteUtil.js';
 
 class MissingHashPacketError extends NamedError {
     constructor(hash, message) {
@@ -519,14 +520,16 @@ class Twist {
 
     /**
      * Applies the shield function for this twist to the bytes
-     * @param bytes <ByteArray> Bytes to shield
+     * @param bytes <Uint8Array> Bytes to shield
      * @returns <Hash>
      */
     shieldFunction(bytes) {
         let hashfun = this.hash.constructor;
         let shieldPacket = this.shield(); // can be null
         let shieldBytes = shieldPacket ? shieldPacket.getShapedValue() : null;
-        let bytesToShield = shieldBytes ? shieldBytes.concat(bytes) : bytes;
+        let bytesToShield = shieldBytes ? 
+                            byteConcat(shieldBytes, bytes) : 
+                            bytes;
         return hashfun.fromBytes(bytesToShield);
     }
 

@@ -10,7 +10,7 @@ import { BasicTwistPacket, BasicBodyPacket } from '../core/packet.js';
 import { Atoms } from './atoms.js';
 import { HashMap } from './map.js';
 import { HashNotFoundError } from './error.js';
-import { ByteArray } from '../core/byte-array.js';
+import { byteConcat } from './byteUtil.js';
 
 class PacketStore {
 
@@ -133,7 +133,7 @@ class InMemoryPacketStore extends PacketStore {
 class SerialStore extends InMemoryPacketStore {
     constructor(initialBytes) {
         super();
-        this.byteBuffer = initialBytes || new ByteArray();
+        this.byteBuffer = initialBytes || new Uint8Array();
         this.primaryHash = null;
 
         if (initialBytes) {
@@ -151,7 +151,7 @@ class SerialStore extends InMemoryPacketStore {
 
     /**
    * Getter for the byteBuffer
-   * @returns {ByteArray} the byte buffer
+   * @returns {Uint8Array} the byte buffer
    */
     getBytes() {
         return this.byteBuffer;
@@ -168,8 +168,10 @@ class SerialStore extends InMemoryPacketStore {
     put(hash, packet) {
         let existingPacket = this.pairs.get(hash) || this.masterMap[hash];
         if (!existingPacket) {
-            this.byteBuffer = this.byteBuffer.concat(
-                hash.toBytes().concat(packet.toBytes()));
+            const pairBytes = byteConcat(hash.toBytes(),
+                                                       packet.toBytes());
+            this.byteBuffer = byteConcat(this.byteBuffer, 
+                                                       pairBytes);
             super.put(hash, packet);
         }
     }
@@ -185,8 +187,10 @@ class SerialStore extends InMemoryPacketStore {
     }
 
     forcePut(hash, packet) {
-        this.byteBuffer = this.byteBuffer.concat(
-            hash.toBytes().concat(packet.toBytes()));
+        const pairBytes = byteConcat(hash.toBytes(),
+                                                       packet.toBytes());
+        this.byteBuffer = byteConcat(this.byteBuffer, 
+                                                   pairBytes);
         super.put(hash, packet);
         this.setPrimaryHash(hash);
     }
@@ -205,7 +209,7 @@ class SerialStore extends InMemoryPacketStore {
     /**
      * Reads and parses a serialized packet store
      *  and returns the "primary hash".
-     * @param {ByteArray} bytes
+     * @param {Uint8Array} bytes
      * @returns {Hash}
      */
     parseAndAddBytes(bytes) {

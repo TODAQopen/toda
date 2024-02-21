@@ -12,7 +12,7 @@ import {P1String, P1Date} from "../../src/abject/primitive.js";
 import {Abject} from "../../src/abject/abject.js";
 
 import {TwistBuilder} from "../../src/core/twist.js";
-import {ByteArray} from "../../src/core/byte-array.js";
+import { utf8ToBytes } from "../../src/core/byteUtil.js";
 import {Shield} from "../../src/core/shield.js";
 import {ArbitraryPacket} from "../../src/core/packet.js";
 import { sbh } from "../util.js";
@@ -59,7 +59,7 @@ describe("Cap creation", () => {
 
         masterCap.setFieldHash(Actionable.fieldSyms.popTop, top.getHash());
 
-        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
+        let shield = new ArbitraryPacket(utf8ToBytes("shield"));
 
         let masterCapTwist = masterCap.buildTwist();
         masterCapTwist.tetherHash = top.getHash();
@@ -86,7 +86,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
+        let shield = new ArbitraryPacket(utf8ToBytes("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.de", ["GET","POST","INCINERATE"], new Date(42));
@@ -111,7 +111,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
+        let shield = new ArbitraryPacket(utf8ToBytes("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.lt", ["GET","POST","INCINERATE"], new Date(42));
@@ -154,7 +154,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
+        let shield = new ArbitraryPacket(utf8ToBytes("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.de", ["GET","POST","INCINERATE"], new Date(42));
@@ -186,7 +186,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
+        let shield = new ArbitraryPacket(utf8ToBytes("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.de", ["GET","POST","INCINERATE"], new Date(42));
@@ -218,7 +218,7 @@ describe("Cap creation", () => {
         let top = new TwistBuilder();
         top.setFieldHash(sbh("blah"), sbh("fiiiirst"));
 
-        let shield = new ArbitraryPacket(ByteArray.fromUtf8("shield"));
+        let shield = new ArbitraryPacket(utf8ToBytes("shield"));
 
         let master = new Capability();
         master.restrict("https://1hourbbqrepair.de", ["GET","POST","INCINERATE"], new Date(42));

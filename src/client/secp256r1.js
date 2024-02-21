@@ -8,6 +8,7 @@
 
 import { LocalKeyPair } from './keypair.js';
 import { SignatureRequirement, RequirementSatisfier } from '../core/reqsat.js';
+import { bytesToUtf8 } from '../core/byteUtil.js';
 
 if(typeof window === 'undefined') {
     const { Crypto } = await import('@peculiar/webcrypto');
@@ -48,7 +49,7 @@ class SECP256r1 extends LocalKeyPair {
     }
 
     static importKey(keyFormat, buffer) {
-        let b = this._fromPEM(buffer.toString());
+        let b = this._fromPEM(bytesToUtf8(buffer));
         return crypto.subtle.importKey(
             keyFormat,
             b,

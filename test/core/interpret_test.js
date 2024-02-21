@@ -12,7 +12,6 @@ import { SerialStore } from "../../src/core/store.js";
 import { Twist, MissingHashPacketError } from "../../src/core/twist.js";
 import { Hash } from "../../src/core/hash.js";
 import { ReqSatError } from "../../src/core/reqsat.js";
-import { ByteArray } from "../../src/core/byte-array.js";
 import assert from "assert";
 import fs from "fs";
 
@@ -37,7 +36,7 @@ describe("Runs pickled rig tests (v1)", () => {
     let runPassTest = async (todaFile) => {
         try {
             const data = fs.readFileSync(todaFile);
-            let s = new SerialStore(new ByteArray(data));
+            let s = new SerialStore(new Uint8Array(data));
 
             let line = new Line();
             await s.copyInto(line);
@@ -52,7 +51,7 @@ describe("Runs pickled rig tests (v1)", () => {
 
     let runThrowsTest = async (todaFile, expectedErrorType) => {
         const data = fs.readFileSync(todaFile);
-        let s = new SerialStore(new ByteArray(data));
+        let s = new SerialStore(new Uint8Array(data));
 
         let line = new Line();
         await s.copyInto(line);
@@ -168,7 +167,7 @@ describe("Runs pickled rig tests (v1)", () => {
 });
 
 describe("`verifyHitchLine` can handle partial proofs when provided `startHash`", () => {
-    let b = new ByteArray(Buffer.from("41516b5c8485d48de7eddd425f9b9b6984d5b6de" +
+    let b = new Uint8Array(Buffer.from("41516b5c8485d48de7eddd425f9b9b6984d5b6de" +
                                       "e71577144d1a4c0a0912e2d1e163000000844123" +
                                       "a59e384692f5ed9bf0677ea2f921d5cae71f1cff" +
                                       "aa4641a424c27165fe50524111f8d5d453f97cad" +
@@ -279,7 +278,7 @@ describe("`verifyHitchLine` can handle partial proofs when provided `startHash`"
 describe("Runs pickled reqsattrie tests (v1)", () => {
     let runPassTest = async (todaFile) => {
         try {
-            const data = new ByteArray(fs.readFileSync(todaFile));
+            const data = new Uint8Array(fs.readFileSync(todaFile));
             let s = new SerialStore(data);
             let line = new Line();
             await s.copyInto(line);
@@ -296,7 +295,7 @@ describe("Runs pickled reqsattrie tests (v1)", () => {
     };
 
     let runThrowsTest = async (todaFile, expectedErrorType) => {
-        const data = new ByteArray(fs.readFileSync(todaFile));
+        const data = new Uint8Array(fs.readFileSync(todaFile));
         let s = new SerialStore(data);
         let line = new Line();
         await s.copyInto(line);

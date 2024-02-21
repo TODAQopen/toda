@@ -5,8 +5,6 @@
 * Apache License 2.0
 *************************************************************/
 
-import { ByteArray } from './byte-array.js';
-
 import { Hash } from './hash.js';
 import { Packet } from './packet.js';
 
@@ -129,7 +127,7 @@ class Atoms {
 
         let len = a.reduce((acc, [h,p]) => 
             acc + h.numBytes() + p.getLength(), 0);
-        let ret = new ByteArray(len);
+        let ret = new Uint8Array(len);
         let off = 0;
         a.forEach(([h, p]) => {
             ret.set(h.toBytes(), off);
@@ -141,13 +139,11 @@ class Atoms {
     }
 
     /**
-     * @param {Buffer|ByteArray} bytes
+     * @param {Buffer|Uint8Array} bytes
      * @returns {Atoms}
      **/
     static fromBytes(bytes) {
-         // dx: todo: skip if already ByteArray? or 
-         //  make this cheap in that case?
-        bytes = new ByteArray(bytes);
+        bytes = new Uint8Array(bytes);
         let atoms = new Atoms();
         let lasthash;
         let i = 0, bl = bytes.length;

@@ -32,7 +32,6 @@ See the [command line tools documentation](docs/cli.md)
 
 ### core:
 Defines Hash and Packet, the only two core data structures.
-Relies on a util class called ByteArray, which extends UIntArray.
 Includes a rig (structure) checker, which assesses asset integrity.
 
 - Atoms: an ordered hashmap of <Hash>:<respective Packet> pairs

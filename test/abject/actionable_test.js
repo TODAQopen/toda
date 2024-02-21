@@ -3,8 +3,8 @@ import { Abject } from '../../src/abject/abject.js';
 import { DQ } from '../../src/abject/quantity.js';
 import { Sha256 } from '../../src/core/hash.js';
 import { Shield } from '../../src/core/shield.js';
+import { hexToBytes } from '../../src/core/byteUtil.js';
 import { ArbitraryPacket } from '../../src/core/packet.js';
-import { ByteArray } from '../../src/core/byte-array.js';
 import { Atoms } from '../../src/core/atoms.js';
 import assert from 'node:assert/strict';
 
@@ -16,12 +16,12 @@ async function buildMockDelegate() {
 
     let root0 = DQ.mint(12, 1);
     root0.setPopTop(relay.first().getHash());
-    let root0_shield = new ArbitraryPacket(ByteArray.fromHex("001122"));
+    let root0_shield = new ArbitraryPacket(hexToBytes("001122"));
     root0.buildTwist().setShield(root0_shield);
     root0.buildTwist().setTether(relay.latest());
 
     let delegate0 = root0.delegate(7);
-    let delegate0_shield = new ArbitraryPacket(ByteArray.fromHex("334455"));
+    let delegate0_shield = new ArbitraryPacket(hexToBytes("334455"));
     delegate0.buildTwist().setShield(delegate0_shield);
     delegate0.buildTwist().setTether(relay.latest());
 

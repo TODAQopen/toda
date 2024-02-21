@@ -5,7 +5,7 @@
 * Apache License 2.0
 *************************************************************/
 
-import { ByteArray } from './byte-array.js';
+import { bytesToHex, hexToBytes, utf8ToBytes } from './byteUtil.js';
 
 class Hash {
     /**
@@ -13,7 +13,7 @@ class Hash {
      * parsing method if reading off the wire, so you can 
      *  take advantage of the subclasses.
      *
-     * @param hashValue <ByteArray> representing the result of applying the 
+     * @param hashValue <Uint8Array> representing the result of applying the 
      *  hashing algorithm specified by algoCode. 
      *  Length depends on selected algorithm.
      */
@@ -34,14 +34,14 @@ class Hash {
      * - 1 byte: <algoCode>
      * - n bytes: <hashValue>
      *
-     * @returns <ByteArray> The serialized value of the Hash
+     * @returns <Uint8Array> The serialized value of the Hash
      */
     toBytes() {
         if (!this.bytesValue) {
             if (!this.offset && this.length === this.bytes.length) {
                 this.bytesValue = this.bytes;
             } else {
-                this.bytesValue = new ByteArray(this.bytes.subarray(
+                this.bytesValue = new Uint8Array(this.bytes.subarray(
                     this.offset, this.offset + this.length));
             }
         }
@@ -54,10 +54,9 @@ class Hash {
      */
     toString() {
         if (!this.stringValue) {
-            if (!this.bytes.toHex) {
-                this.bytes = new ByteArray(this.bytes);
-            }
-            this.stringValue = this.bytes.toHex(this.offset, this.length);
+            this.stringValue = bytesToHex(this.bytes, 
+                                                       this.offset, 
+                                                       this.length);
         }
 
         return this.stringValue;
@@ -119,8 +118,8 @@ class Hash {
     static registeredAlgoByCode = {};
 
     /**
-     * @param <ByteArray> raw bytes which hopefully start with an algoCode
-     * @param <int> (optional) offset in the bytearray
+     * @param <Uint8Array> raw bytes which hopefully start with an algoCode
+     * @param <int> (optional) offset in the Uint8Array
      */
     static parse(bytes, offset=0) {
         let imp = this.implementationForAlgoCode(bytes[offset]);
@@ -132,7 +131,7 @@ class Hash {
     }
 
     /**
-     * @param <ByteArray> data the data to hash with this 
+     * @param <Uint8Array> data the data to hash with this 
      *  alg and represent as a Hash
      * @returns <Hash> a newly created instance of a subclass of Hash
      */
@@ -141,9 +140,9 @@ class Hash {
 
         // dx: todo: add a helper function for this and Symbol.fromStr... 
         //   or move it into SHA256 directly?
-        // dx: perf: this.hash returns a bytearray, and then we turn 
+        // dx: perf: this.hash returns a Uint8Array, and then we turn 
         //  around and make a new one... can we do better?
-        let bytes = new ByteArray(hashBytes.byteLength + 1);
+        let bytes = new Uint8Array(hashBytes.byteLength + 1);
         bytes[0] = this.algoCode;
         bytes.set(hashBytes, 1);
 
@@ -162,7 +161,7 @@ class Hash {
      * @param <string> a hexadecimal string, beginning with an algoCode
      */
     static fromHex(str) {
-        return Hash.parse(ByteArray.fromHex(str));
+        return Hash.parse(hexToBytes(str));
     }
 
     static registerType(subclass) {
@@ -195,18 +194,18 @@ class Sha256 extends Hash {
     static MONIKER = "SHA256";
 
     /**
-     * @param <ByteArray> data The data to be hashed
-     * @returns <ByteArray> the raw hash value according to this algorithm
+     * @param <Uint8Array> data The data to be hashed
+     * @returns <Uint8Array> the raw hash value according to this algorithm
      */
     static hash(data) {
         var sha = new sjcl.hash.sha256();
         sha.update(sjcl.codec.bytes.toBits(data));
-        return new ByteArray(sjcl.codec.arrayBuffer.fromBits(sha.finalize()));
+        return new Uint8Array(sjcl.codec.arrayBuffer.fromBits(sha.finalize()));
     }
 
     /**
-     * @param <ByteArray> raw bytes hopefully starting with this algoCode
-     * @param <int> (optional) offset in the bytearray
+     * @param <Uint8Array> raw bytes hopefully starting with this algoCode
+     * @param <int> (optional) offset in the Uint8Array
      * @returns <Sha256> parsed implementation of this class
      */
     static parse(bytes, offset=0) {
@@ -247,8 +246,8 @@ class Symbol extends Hash {
             return sym;
         }
 
-        let hashBytes = Sha256.hash(ByteArray.fromUtf8(str));
-        let bytes = new ByteArray(Sha256.getHashValueLength() + 1);
+        let hashBytes = Sha256.hash(utf8ToBytes(str));
+        let bytes = new Uint8Array(Sha256.getHashValueLength() + 1);
         bytes[0] = Symbol.algoCode;
         bytes.set(hashBytes, 1);
 
@@ -265,7 +264,7 @@ class Symbol extends Hash {
 class NullHash extends Hash {
     static algoCode = 0x00;
     static MONIKER = "Null Hash";
-    static bytes = new ByteArray([0]);
+    static bytes = new Uint8Array([0]);
     static singleton;
 
     static getHashValueLength() {
@@ -305,7 +304,7 @@ class NullHash extends Hash {
 class UnitHash extends Hash {
     static algoCode = 0xff;
     static MONIKER = "Unit Hash";
-    static bytes = new ByteArray([255]);
+    static bytes = new Uint8Array([255]);
     static singleton;
 
     static getHashValueLength() {

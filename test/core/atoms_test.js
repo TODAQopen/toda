@@ -1,11 +1,11 @@
 import { Atoms } from "../../src/core/atoms.js";
 import { Sha256 } from "../../src/core/hash.js";
 import { ArbitraryPacket } from "../../src/core/packet.js";
-import { ByteArray } from "../../src/core/byte-array.js";
+import { utf8ToBytes } from "../../src/core/byteUtil.js";
 import assert from "assert";
 
 function pairFromStr(str) {
-    let p = new ArbitraryPacket(ByteArray.fromUtf8(str));
+    let p = new ArbitraryPacket(utf8ToBytes(str));
     return [Sha256.fromPacket(p), p];
 }
 

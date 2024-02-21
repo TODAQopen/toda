@@ -1,6 +1,4 @@
 import { Atoms } from '../core/atoms.js';
-import { ByteArray } from '../core/byte-array.js';
-import { Sha256 } from '../core/hash.js';
 import { Twist } from '../core/twist.js';
 import { Line } from '../core/line.js';
 import { Interpreter } from '../core/interpret.js';
@@ -284,7 +282,7 @@ class RemoteRelayClient extends RelayClient {
         { responseType: "arraybuffer" }).catch(() => null);
 
         if (resp) {
-            const x = Twist.fromBytes(new ByteArray(resp.data));
+            const x = Twist.fromBytes(new Uint8Array(resp.data));
             RemoteRelayClient.globalNextCache[twistHash] = x;
             return x;
         }
@@ -300,7 +298,7 @@ class RemoteRelayClient extends RelayClient {
         { responseType: "arraybuffer" }).catch(() => null);
 
         if (resp) {
-            const x = Packet.parse(new ByteArray(resp.data));
+            const x = Packet.parse(new Uint8Array(resp.data));
             RemoteRelayClient.globalShieldCache[twistHash] = x;
             return x;
         }

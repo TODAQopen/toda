@@ -1,4 +1,4 @@
-import { ByteArray } from "../src/core/byte-array.js";
+import { utf8ToBytes } from "../src/core/byteUtil.js";
 import { Sha256 } from "../src/core/hash.js";
 import { Atoms } from "../src/core/atoms.js";
 import { HashMap } from "../src/core/map.js";
@@ -7,11 +7,11 @@ import { v4 as uuid } from "uuid";
 
 // string-bytes-hash
 function sbh (s) {
-    return Sha256.fromBytes(ByteArray.fromUtf8(s));
+    return Sha256.fromBytes(utf8ToBytes(s));
 }
 
 function randH() {
-    return Sha256.fromBytes(ByteArray.fromUtf8(uuid()));
+    return Sha256.fromBytes(utf8ToBytes(uuid()));
 }
 
 function uuidCargo() {

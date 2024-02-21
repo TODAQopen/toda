@@ -14,7 +14,7 @@ import { ArbitraryPacket } from '../core/packet.js';
 /**
  * Creates a todaized file
  *
- * @param byteArray <ByteArray> representing the data 
+ * @param byteArray <Uint8Array> representing the data 
  *  that will be included in the payload
  * @param popTopHash <Hash> the pop top that this abject will be tethered to
  * @param opts <Map> Containing the following params:

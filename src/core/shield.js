@@ -6,6 +6,7 @@
 *************************************************************/
 
 import { PairTriePacket } from './packet.js';
+import { byteConcat } from './byteUtil.js';
 
 // doesn't really need a class
 class Shield {
@@ -15,7 +16,8 @@ class Shield {
      */
     static _shield(twistHash, bytesToShield, shieldBytes) {
         return twistHash.constructor.fromBytes(shieldBytes ? 
-               shieldBytes.concat(bytesToShield) : bytesToShield);
+            byteConcat(shieldBytes, bytesToShield) : 
+            bytesToShield);
     }
 
     /**

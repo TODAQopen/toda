@@ -3,7 +3,6 @@ import axios from 'axios';
 import fs from 'fs-extra';
 import path from 'path';
 import { Atoms } from '../core/atoms.js';
-import { ByteArray } from '../core/byte-array.js';
 import { HashMap } from '../core/map.js';
 import { Twist } from '../core/twist.js';
 
@@ -106,7 +105,7 @@ class LocalInventoryClient extends InventoryClient {
     //XXX(acg): I don't like this and would prefer just to be able to use hash
     //(even for local tethers)
     getExplicitPath(p) {
-        return Atoms.fromBytes(new ByteArray(fs.readFileSync(p)));
+        return Atoms.fromBytes(new Uint8Array(fs.readFileSync(p)));
     }
 
     filePathForHash(hash) {
@@ -247,7 +246,7 @@ class VirtualInventoryClient extends InventoryClient {
     }
 
     getExplicitPath(p) {
-        return Atoms.fromBytes(new ByteArray(fs.readFileSync(p)));
+        return Atoms.fromBytes(new Uint8Array(fs.readFileSync(p)));
     }
 }
 

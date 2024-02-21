@@ -6,12 +6,12 @@
  *************************************************************/
 
 //const { keysPaired, SignatureRequirement } = require("../core/reqsat");
-import { ByteArray } from '../core/byte-array.js';
 import { LocalRelayClient, RemoteRelayClient } from './relay.js';
 import { Sha256, NullHash } from '../core/hash.js';
 import { ArbitraryPacket } from '../core/packet.js';
 import { TwistBuilder, Twist, MissingPrevError, MissingHashPacketError }
     from '../core/twist.js';
+import { byteConcat } from '../core/byteUtil.js';
 import { Interpreter } from '../core/interpret.js';
 import { Line } from '../core/line.js';
 import { NamedError } from '../core/error.js';
@@ -196,12 +196,13 @@ class TodaClient {
     }
 
     _getSalt() {
-        return new ByteArray(fs.readFileSync(this.shieldSalt));
+        return new Uint8Array(fs.readFileSync(this.shieldSalt));
     }
 
     _generateShield(hash) {
         hash = hash || new NullHash();
-        return Sha256.hash(this._getSalt().concat(hash.toBytes()));
+        return Sha256.hash(byteConcat(this._getSalt(), 
+                                                    hash.toBytes()));
     }
 
     // TODO: support explicit shields later.  only salted ones for now.

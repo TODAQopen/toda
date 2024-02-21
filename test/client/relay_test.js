@@ -4,12 +4,10 @@ import { TodaClient } from "../../src/client/client.js";
 import { LocalInventoryClient, VirtualInventoryClient }
     from "../../src/client/inventory.js";
 import { Abject } from "../../src/abject/abject.js";
-import { Actionable } from "../../src/abject/actionable.js";
-import { P1Date } from "../../src/abject/primitive.js";
 import { Twist } from "../../src/core/twist.js";
-import { ByteArray } from "../../src/core/byte-array.js";
 import { nockLocalFileServer } from "./mocks.js";
 import { randH, uuidCargo } from "../util.js";
+import { hexToBytes, utf8ToBytes } from "../../src/core/byteUtil.js"; 
 import nock from "nock";
 import assert from "assert";
 import fs from "fs-extra";
@@ -59,7 +57,7 @@ describe("RemoteRelayClient", async () => {
         let shield = await relay._getShield(twistHashes[2]);
         assert.ok(shield);
         let p = path.join("test/client/remoteRelay_files/", `${twistHexes[2]}.toda`);
-        let twist2 = Twist.fromBytes(new ByteArray(fs.readFileSync(p)));
+        let twist2 = Twist.fromBytes(new Uint8Array(fs.readFileSync(p)));
         let loadedContent = shield.getShapedValueFromContent();
         let expectedContent = twist2.shield().getShapedValueFromContent();
         assert.equal(loadedContent.toString(), expectedContent.toString());
@@ -149,7 +147,7 @@ describe("RemoteRelayClient", async () => {
             .reply(200, (_, requestBody) => requestBody);
 
         let toda = new TodaClient(new VirtualInventoryClient());
-        toda._getSalt = () => ByteArray.fromHex("012345");
+        toda._getSalt = () => hexToBytes("012345");
         let tether = Hash.fromHex("41e6e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4cb829ed640be4");
         let a = await toda.create(tether);
         let b = await toda.append(a);
@@ -173,7 +171,7 @@ describe("LocalRelayClient", async () => {
     it("Simple next", async () => {
         const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClient(inv, "http://localhost:8009");
-        toda._getSalt = () => ByteArray.fromUtf8("some salty");
+        toda._getSalt = () => utf8ToBytes("some salty");
 
         const t0 = await toda.create(null, null, uuidCargo());
         const t1 = await toda.append(t0);
@@ -200,7 +198,7 @@ describe("LocalRelayClient", async () => {
     it("Simple .shield, last fast", async() => {
         const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClient(inv, "http://localhost:8009");
-        toda._getSalt = () => ByteArray.fromUtf8("some salty");
+        toda._getSalt = () => utf8ToBytes("some salty");
         const t0 = await toda.create(null, null, uuidCargo());
         const t1 = await toda.append(t0, randH(), null, null, () => {}, null, { noHoist: true });
         const t2 = await toda.append(t1);
@@ -217,7 +215,7 @@ describe("LocalRelayClient", async () => {
     it("Simple .shield, last loose", async() => {
         const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClient(inv, "http://localhost:8009");
-        toda._getSalt = () => ByteArray.fromUtf8("some salty");
+        toda._getSalt = () => utf8ToBytes("some salty");
         const t0 = await toda.create(null, null, uuidCargo());
         const t1 = await toda.append(t0, randH(), null, null, () => {}, null, { noHoist: true });
         const t2 = await toda.append(t1);
@@ -236,7 +234,7 @@ describe("LocalRelayClient", async () => {
     it("Hoist + getHoist", async () => {
         const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClient(inv, "http://localhost:8009");
-        toda._getSalt = () => ByteArray.fromUtf8("some salty");
+        toda._getSalt = () => utf8ToBytes("some salty");
 
         const t0 = await toda.create(null, null, uuidCargo());
         const t1 = await toda.append(t0);
