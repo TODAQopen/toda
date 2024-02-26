@@ -49,15 +49,15 @@ class RemoteInventoryClient extends InventoryClient {
 }
 
 class LocalInventoryClient extends InventoryClient {
-    constructor(path, shouldArchive = true) {
+    constructor(invRoot, shouldArchive = true) {
         super();
-        this.invRoot = path;
+        this.invRoot = invRoot;
         // use 'no archive' mode in some tests to avoid 
         //  pre-seeded files from being archived
         this.shouldArchive = shouldArchive;
 
-        if (!fs.existsSync(path)) {
-            fs.mkdirSync(path, { recursive: true });
+        if (!fs.existsSync(invRoot)) {
+            fs.mkdirSync(invRoot, { recursive: true });
         }
 
         this.files = new HashMap();
@@ -105,6 +105,9 @@ class LocalInventoryClient extends InventoryClient {
     //XXX(acg): I don't like this and would prefer just to be able to use hash
     //(even for local tethers)
     getExplicitPath(p) {
+        if (!path.resolve(p).startsWith(path.resolve(this.invRoot))) {
+            throw new Error("Security: attempted to access a file outside of this inventory");
+        }
         return Atoms.fromBytes(new Uint8Array(fs.readFileSync(p)));
     }
 
@@ -149,9 +152,9 @@ class LocalInventoryClient extends InventoryClient {
     } //TODO(acg): would like to see better testing of this.
 
     _getUnowned(hash) {
-        let path = this.unownedPathForHash(hash);
-        if (fs.existsSync(path)) {
-            return this.getExplicitPath(path);
+        let filePath = this.unownedPathForHash(hash);
+        if (fs.existsSync(filePath)) {
+            return this.getExplicitPath(filePath);
         }
         return null;
     }
@@ -165,9 +168,9 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     _getFromDisk(hash) {
-        let path = this.filePathForHash(hash);
-        if (fs.existsSync(path)) {
-            return this.getExplicitPath(path);
+        let filePath = this.filePathForHash(hash);
+        if (fs.existsSync(filePath)) {
+            return this.getExplicitPath(filePath);
         }
         return null;
     }

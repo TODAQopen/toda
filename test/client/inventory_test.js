@@ -178,7 +178,7 @@ describe("Unowned file mechanism", async function() {
         assert.ok(atoms);
         assert.ok(atoms.focus.equals(t1.getHash()));
     });
-
+  
     it("Can still get an archived file (extra sanity: reinstantiate inv to rm all state)", async function() {
         const path = "./files/" + uuid();
         let inv = new LocalInventoryClient(path);
@@ -194,5 +194,19 @@ describe("Unowned file mechanism", async function() {
         const atoms = inv.get(t0.getHash());
         assert.ok(atoms);
         assert.ok(atoms.focus.equals(t0.getHash()));
+    });
+});
+
+describe("Security test for `getExplicitPath`", async function() {
+    it("Explodes if you attempt to get something in a parent directory", async function() {
+        const uuidA = uuid();
+        const pathA = "./files/" + uuidA;
+        const pathB = "./files/" + uuid();
+        const invA = new LocalInventoryClient(pathA);
+        const invB = new LocalInventoryClient(pathB);
+        const t0 = (new TwistBuilder()).twist();
+        invA.put(t0.getAtoms());
+
+        assert.throws(() => invB._getUnowned(`../../${uuidA}/${t0.getHash()}`));
     });
 });
