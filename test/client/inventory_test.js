@@ -170,12 +170,29 @@ describe("Unowned file mechanism", async function() {
         const t1 = t0.createSuccessor().twist();
 
         inv.put(t1.getAtoms());
-        inv.unown(t0.getHash());
+        inv.unown(t1.getHash());
 
         inv = new LocalInventoryClient(path);
 
         const atoms = inv.get(t1.getHash());
         assert.ok(atoms);
         assert.ok(atoms.focus.equals(t1.getHash()));
+    });
+
+    it("Can still get an archived file (extra sanity: reinstantiate inv to rm all state)", async function() {
+        const path = "./files/" + uuid();
+        let inv = new LocalInventoryClient(path);
+        const t0 = (new TwistBuilder()).twist();
+        const t1 = t0.createSuccessor().twist();
+
+        inv.put(t0.getAtoms());
+        inv.put(t1.getAtoms());
+        inv.unown(t1.getHash());
+
+        inv = new LocalInventoryClient(path);
+
+        const atoms = inv.get(t0.getHash());
+        assert.ok(atoms);
+        assert.ok(atoms.focus.equals(t0.getHash()));
     });
 });

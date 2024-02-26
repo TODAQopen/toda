@@ -145,11 +145,19 @@ class LocalInventoryClient extends InventoryClient {
             }
             return atoms;
         }
-        return this._getUnowned(hash);
+        return this._getUnowned(hash) ?? this._getArchived(hash);
     } //TODO(acg): would like to see better testing of this.
 
     _getUnowned(hash) {
         let path = this.unownedPathForHash(hash);
+        if (fs.existsSync(path)) {
+            return this.getExplicitPath(path);
+        }
+        return null;
+    }
+
+    _getArchived(hash) {
+        let path = this.archivePathForHash(hash);
         if (fs.existsSync(path)) {
             return this.getExplicitPath(path);
         }
