@@ -20,7 +20,6 @@ describe("getQuantity", async () => {
         assert.equal(43, toda.getQuantity(dq));
 
         // properly cached
-        assert.ok(toda.dq.quantities[twist.getHash()]);
         assert.equal(43, toda.getQuantity(dq));
     });
 
@@ -45,13 +44,17 @@ describe("getBalance", async () => {
     it("Unknown type hash", async () => {
         let inv = new LocalInventoryClient("./files/" + uuid());
         let toda = new TodaClient(inv, "http://localhost:8000");
-        let result = await toda.getBalance(Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5"));
+        const root = Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5");
+        let result = toda.getBalance(root);
         assert.deepEqual({balance: 0,
                           quantity: 0,
-                          type: "41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5",
+                          type: root.toString(),
                           files: [],
-                          recalculating: false},
-                          result);
+                          recalculating: false,
+                          poptop: null,
+                          displayPrecision: null,
+                          fileQuantities: {}},
+                         result);
     });
 
     it("Simple", async () => {
@@ -63,15 +66,21 @@ describe("getBalance", async () => {
         let dq = Abject.fromTwist(twist);
         let [delegate, delegator] = await toda.delegateValue(dq, 3.4);
 
-        let result = await toda.getBalance(root);
+        let result = toda.getBalance(root);
 
+        const expectedQuantities = {};
+        expectedQuantities[delegator.getHash()] = 9;
+        expectedQuantities[delegate.getHash()] = 34;
         assert.deepEqual({balance: 4.3,
                           quantity: 43,
                           type: root.toString(),
                           files: [delegator.getHash().toString(),
                                   delegate.getHash().toString()],
-                          recalculating: false},
-                          result);
+                          recalculating: false,
+                          poptop: null,
+                          displayPrecision: 1,
+                          fileQuantities: expectedQuantities},
+                         result);
     });
 
     it("Uncontrolled", async () => {
@@ -87,14 +96,19 @@ describe("getBalance", async () => {
         await toda.append(delegator,
                           Hash.fromHex("41896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5"));
 
-        let result = await toda.getBalance(root);
+        let result = toda.getBalance(root);
+        const expectedQuantities = {};
+        expectedQuantities[delegate.getHash()] = 34;
 
         assert.deepEqual({balance: 3.4,
                           quantity: 34,
                           type: root.toString(),
                           files: [delegate.getHash().toString()],
+                          fileQuantities: expectedQuantities,
+                          poptop: null,
+                          displayPrecision: 1,
                           recalculating: false},
-                          result);
+                         result);
     });
 });
 
@@ -214,7 +228,7 @@ describe("Transfer tests; simple", async () => {
         assert.equal(newTwists.length, 1);
         let newTwist = newTwists[0];
         assert.ok(newTwist.getTetherHash().equals(destHash));
-        assert.equal((await toda.getBalance(root)).balance, 0);
+        assert.equal(toda.getBalance(root).balance, 0);
         assert.deepEqual(newTwists.map(t => Abject.fromTwist(t).quantity),
                          [43]);
     });
@@ -588,6 +602,33 @@ describe("Transfer tests; comprehensive", async function() {
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
         assert.equal((await bob.getBalance(dq, true)).balance, 3);
         assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
+    });
+
+    it("Alice => Bob, DQ cache contradiction", async function() {
+        const { toda: alice } = 
+            await createLine(this.initRelayTwists[2].getHash());
+        const { toda: bob, hash: bobHash } = 
+            await createLine(this.initRelayTwists[2].getHash());
+        const dq = (await mint(alice, 143, 1)).root;
+
+        alice.inv.dqCache.clear();
+        //HACK: Would prefer not to have to reach into the DQ cache like this...
+        alice.inv.dqCache.cache["4141896f0dcf6ac269b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd5"]
+            = {quantity: 400,
+               displayPrecision: 1,
+               poptop: null,
+               rootId: dq};
+
+        let transferedTwists = await alice.transfer({amount: 9.2, 
+                                                     destHash: bobHash, 
+                                                     typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
+        assert.equal((await bob.getBalance(dq, true)).balance, 9.2);
     });
 });
 

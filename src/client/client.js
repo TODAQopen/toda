@@ -19,10 +19,14 @@ import { Abject } from "../../src/abject/abject.js";
 import { DQ } from "../../src/abject/quantity.js";
 import fs from 'fs-extra';
 import { P1String } from '../abject/primitive.js';
+import { LocalInventoryClient } from './inventory.js';
 
 class TodaClient {
     constructor(inventory, fileServerUrl) {
 
+        /**
+         * @type {LocalInventoryClient}
+         */
         this.inv = inventory;
 
         /** Use this default for evaluating non-abjects
@@ -39,11 +43,6 @@ class TodaClient {
         this.requirementSatisfiers = [];
 
         this.appendLocks = {};
-
-        this.dq = {balances: {},
-                   balanceForceRecalc: {},
-                   balanceCalculating: {},
-                   quantities: {}};
 
         this.fileServerUrl = fileServerUrl;
         this.retryTimes = 5;
@@ -535,48 +534,46 @@ class TodaClient {
         return this.inv.listLatest();
     }
 
+    //TODO: remove!
     getQuantity(dq) {
-        let h = dq.getHash();
-        if (!this.dq.quantities[h]) {
-            this.dq.quantities[h] = dq.quantity;
-        }
-        return this.dq.quantities[h];
+        return this.inv.dqCache.getQuantity(dq.getHash());
     }
 
+    //TODO: remove!
     getCombinedQuantity(dqs) {
         return dqs.reduce((v, dq) => v + this.getQuantity(dq), 0);
     }
 
-    async getBalance(typeHash, forceRecalculate) {
-
-        if (!forceRecalculate && this.dq.balances[typeHash]) {
-            return {...this.dq.balances[typeHash],
-                    recalculating: this.isCalculating(typeHash)};
+    getBalance(typeHash) {
+        let balance = this.inv.dqCache.getBalance(typeHash);
+        if (!balance) {
+            balance = { totalDisplay: 0,
+                        totalQuantity: 0,
+                        displayPrecision: null,
+                        poptop: null,
+                        fileQuantities: {}};
         }
-        if (forceRecalculate && this.isCalculating(typeHash)) {
-            //"queue" it:
-            this.dq.balanceForceRecalc[typeHash] = true;
-            return undefined;
-        }
-
-        this.dq.balanceCalculating[typeHash] = true;
-        this.dq.balanceForceRecalc[typeHash] = false;
-
-        this.dq.balances[typeHash] = await this._calculateBalance(typeHash);
-
-        this.dq.balanceCalculating[typeHash] = false;
-        if (this.dq.balanceForceRecalc[typeHash]) {
-            // check if there was an import/spend while we were busy.
-            this.getBalance(typeHash, true);
-        }
-        return {...this.dq.balances[typeHash],
-                recalculating: this.isCalculating(typeHash)};
+        const { totalDisplay,
+                totalQuantity,
+                displayPrecision,
+                poptop,
+                fileQuantities } = balance;
+        return { balance: totalDisplay,
+                 quantity: totalQuantity,
+                 type: typeHash.toString(),
+                 displayPrecision,
+                 poptop, 
+                 files: Object.keys(fileQuantities).map(h => h.toString()),
+                 fileQuantities,
+                 recalculating: false };
+        // this formatting seems more like something server.js should deal with
     }
 
-    isCalculating(typeHash) {
-        return this.dq.balanceCalculating[typeHash];
+    isCalculating() {
+        return false;
     }
 
+    //XXX: EXPENSIVE!!!! Remove!!!
     async listLatestControlledAbjects() {
         let abjs = [];
         for (let hash of this.listLatest()) {
@@ -588,6 +585,7 @@ class TodaClient {
         return abjs;
     }
 
+    //XXX: EXPENSIVE!!!! Remove!!!
     getControlledByType(typeHash) {
         let pred = function(abj) {
             if (abj && abj.rootId) {
@@ -601,18 +599,6 @@ class TodaClient {
             return false;
         };
         return this.listLatestControlledAbjects().then(lca => lca.filter(pred));
-    }
-
-    async _calculateBalance(typeHash) {
-        const files = await this.getControlledByType(typeHash);
-        const qty = this.getCombinedQuantity(files);
-        const value = files.length == 0 ? 0 :
-            DQ.quantityToDisplay(qty, files[0].displayPrecision);
-        return { balance: value,
-                 quantity: qty,
-                 type: typeHash.toString(),
-                 files: files.map(f => f.getHash().toString()) };
-        // this formatting seems more like something server.js should deal with
     }
 
     /**
@@ -678,52 +664,92 @@ class TodaClient {
                                                  { popTop });
             newTwists.push(successor);
         }
-
-        //TODO(acg): potentially wait for the balance
-        // to actually be recalculated.
-        this.getBalance(typeHash, true);
         return newTwists;
+    }
+
+    _getOwned(hash) {
+        const atoms = this.inv.getOwned(hash);
+        return atoms ? new Twist(atoms) : null;
     }
 
     async transfer({ amount, typeHash, destHash }) {
         // XXX(acg): always fastens last twist for now
-        let dqs = await this.getControlledByType(typeHash);
+        const balance = this.getBalance(typeHash);
 
-        const popTop = dqs[0].popTop();
-        const quantity = DQ.displayToQuantity(amount, dqs[0].displayPrecision);
-
-        let exact = dqs.find(dq => this.getQuantity(dq) == quantity);
-        if (exact) {
-            return this._transfer(typeHash, [exact], destHash, popTop);
+        if (!balance) {
+            throw new Error("Insufficient funds");
         }
-        let excess = dqs.find(dq => this.getQuantity(dq) > quantity);
+
+        const quantity = DQ.displayToQuantity(amount, balance.displayPrecision);
+
+        if (quantity < balance.totalQuantity) {
+            throw new Error("Insufficient funds");
+        }
+
+        const exact = Object.keys(balance.fileQuantities)
+                            .find(h => balance.fileQuantities[h].quantity 
+                                         == quantity);
+        
+        if (exact) {
+            const twist = this._getOwned(exact);
+            if (!twist) {
+                console.warn("DQ Cache contradicted inv; rebuilding cache");
+                this.inv.rebuildDQCache();
+                return await this.transfer({amount, typeHash, destHash});
+            }
+            return this._transfer(typeHash, 
+                                  [twist], 
+                                  destHash, 
+                                  balance.poptop);
+        }
+        const excess = Object.keys(balance.fileQuantities)
+                             .find(h => balance.fileQuantities[h].quantity 
+                                         > quantity);
         if (excess) {
-            let [delegated, _] = await this.delegateQuantity(excess, quantity);
-            return this._transfer(typeHash, [delegated], destHash, popTop);
+            const twist = this._getOwned(excess);
+            if (!twist) {
+                console.warn("DQ Cache contradicted inv; rebuilding cache");
+                this.inv.rebuildDQCache();
+                return await this.transfer({amount, typeHash, destHash});
+            }
+            const dq = Abject.fromTwist(twist);
+            let [delegated, _] = await this.delegateQuantity(dq, 
+                                                             quantity);
+            return this._transfer(typeHash, 
+                                  [delegated], 
+                                  destHash, 
+                                  balance.poptop);
         }
 
         let selected = [];
         let cv = 0;
         // select bills until we collect just what we need or a bit more
-        for (let dq of dqs) {
+        for (const h of Object.keys(balance.fileQuantities)) {
             if (cv >= quantity) {
                 break;
             }
-            selected.push(dq);
-            cv = this.getCombinedQuantity(selected);
+            const twist = this._getOwned(h);
+            if (!twist) {
+                console.warn("DQ Cache contradicted inv; rebuilding cache");
+                this.inv.rebuildDQCache();
+                return await this.transfer({amount, typeHash, destHash});
+            }
+            selected.push(twist);
+            cv += balance.fileQuantities[h];
         }
 
         // if more than what we need, frac the last one
         // XXX(acg): we could be smarter about which to frac
         if (cv > quantity) {
             let lastBill = selected.pop();
+            const dq = Abject.fromTwist(lastBill);
             let [_, delegator] =
-                await this.delegateQuantity(lastBill, cv - quantity);
+                await this.delegateQuantity(dq, cv - quantity);
             selected.push(delegator);
         }
 
         if (cv >= quantity) {
-            return this._transfer(typeHash, selected, destHash, popTop);
+            return this._transfer(typeHash, selected, destHash, balance.poptop);
         }
 
         throw new Error("Insufficient funds");
