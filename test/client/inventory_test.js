@@ -5,7 +5,7 @@ import { TwistBuilder } from "../../src/core/twist.js";
 import assert from "assert";
 import { v4 as uuid } from "uuid";
 import fs from 'fs-extra';
-import { uuidCargo } from "../util.js";
+import { DQ } from "../../src/abject/quantity.js";
 
 describe("Archive", async () => {
     it("Should properly archive file", async () => {
@@ -178,7 +178,7 @@ describe("Unowned file mechanism", async function() {
         assert.ok(atoms);
         assert.ok(atoms.focus.equals(t1.getHash()));
     });
-  
+
     it("Can still get an archived file (extra sanity: reinstantiate inv to rm all state)", async function() {
         const path = "./files/" + uuid();
         let inv = new LocalInventoryClient(path);
@@ -208,5 +208,128 @@ describe("Security test for `getExplicitPath`", async function() {
         invA.put(t0.getAtoms());
 
         assert.throws(() => invB._getUnowned(`../../${uuidA}/${t0.getHash()}`));
+    });
+});
+
+describe("DQ Cache", async function() {
+    it("put() adds to dqCache", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const dq = DQ.mint(14, 1);
+        // build the DQ
+        const twist = dq.buildTwist().twist();
+        inv.put(twist.getAtoms());
+        assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
+                     14);
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+                         [twist.getHash().toString()]);
+    });
+
+    it("put() automatically archives", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const dq0 = DQ.mint(14, 1);
+        const twist0 = dq0.buildTwist().twist();
+        const dq1 = dq0.createSuccessor();
+        const twist1 = dq1.buildTwist().twist();
+
+        inv.put(twist0.getAtoms());
+        assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
+                     14);
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+                         [twist0.getHash().toString()]);
+        inv.put(twist1.getAtoms());
+        assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
+                    14);
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+                         [twist1.getHash().toString()]);
+    });
+
+    it("put() does not add to dqCache if file is old", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const dq0 = DQ.mint(14, 1);
+        const twist0 = dq0.buildTwist().twist();
+        const dq1 = dq0.createSuccessor();
+        const twist1 = dq1.buildTwist().twist();
+
+        inv.put(twist1.getAtoms());
+        assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
+                     14);
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+                         [twist1.getHash().toString()]);
+        inv.put(twist0.getAtoms());
+        assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
+                    14);
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+                         [twist1.getHash().toString()]);
+    });
+
+    it("archive() removes files from dqCache", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const dq = DQ.mint(14, 1);
+        const twist = dq.buildTwist().twist();
+        inv.put(twist.getAtoms());
+        // sanity
+        assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
+                     14);
+        inv.archive(twist.getHash());
+        assert.equal(inv.dqCache.getBalance(twist.getHash()),
+                     null);
+    });
+
+    it("unown() removes files from dqCache", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const dq = DQ.mint(14, 1);
+        const twist = dq.buildTwist().twist();
+        inv.put(twist.getAtoms());
+        // sanity
+        assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
+                     14);
+        inv.unown(twist.getHash());
+        assert.equal(inv.dqCache.getBalance(twist.getHash()),
+                     null);
+    });
+
+    it("rebuildDQCache() correctly rebuilds cache", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path);
+        const dq = DQ.mint(14, 1);
+        const twist = dq.buildTwist().twist();
+        inv.put(twist.getAtoms());
+        assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
+                     14);
+        // murder the cache
+        inv.dqCache.clear();
+        inv.rebuildDQCache();
+        assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
+                     14);
+    });
+
+    it("loading inv from disk successfully loads dqCache", async function() {
+        const path = "./files/" + uuid();
+        let inv = new LocalInventoryClient(path);
+        const dq = DQ.mint(14, 1);
+        const twist = dq.buildTwist().twist();
+        inv.put(twist.getAtoms());
+
+        inv = new LocalInventoryClient(path);
+        assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
+                     14);
+    });
+
+    it("loading inv from disk successfully rebuilds cache if cache is missing", async function() {
+        const path = "./files/" + uuid();
+        let inv = new LocalInventoryClient(path);
+        const dq = DQ.mint(14, 1);
+        const twist = dq.buildTwist().twist();
+        inv.put(twist.getAtoms());
+        inv.dqCache.clear();
+
+        inv = new LocalInventoryClient(path);
+        assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
+                     14);
     });
 });

@@ -5,7 +5,9 @@ import path from 'path';
 import { Atoms } from '../core/atoms.js';
 import { HashMap } from '../core/map.js';
 import { Twist } from '../core/twist.js';
-
+import { DQCache } from './dq_cache.js';
+import { Abject } from '../abject/abject.js';
+import { DQ } from '../abject/quantity.js';
 
 // Inventories get and put serialized lists of atoms.
 
@@ -63,11 +65,32 @@ class LocalInventoryClient extends InventoryClient {
         this.files = new HashMap();
         this.twistIdx = new HashMap();
 
+        /**
+         * @type {DQCache}
+         */
+        this.dqCache = new DQCache(this.invRoot + "/dqCache.json");
+
         // xxx(acg): heavyweight operation; we could defer some of this
         // potentially.
         this._listPaths().forEach(fname => {
             this.loadFromDisk(fname.substr(0,fname.length-5)); //hack?
         });
+
+        if (this.dqCache.isEmpty()) {
+            this.rebuildDQCache();
+        }
+    }
+
+    rebuildDQCache() {
+        this.dqCache.clear();
+        for (const f of this.listLatest()) {
+            const atoms = this.getOwned(f);
+            const twist = new Twist(atoms, atoms.focus);
+            const abject = Abject.fromTwist(twist);
+            if (abject && abject instanceof DQ) {
+                this.dqCache.add(abject);
+            }
+        }
     }
 
     // extremely dangerous; use only for tests.
@@ -133,7 +156,7 @@ class LocalInventoryClient extends InventoryClient {
         return f.split(".")[0];
     }
 
-    get(hash) {
+    getOwned(hash) {
         //TODO: is this needed?
         if (!this.twistIdx.has(hash)) {
             this.loadFromDisk(hash);
@@ -148,7 +171,13 @@ class LocalInventoryClient extends InventoryClient {
             }
             return atoms;
         }
-        return this._getUnowned(hash) ?? this._getArchived(hash);
+        return null;
+    }
+
+    get(hash) {
+        return this.getOwned(hash) ??
+               this._getUnowned(hash) ?? 
+               this._getArchived(hash);
     } //TODO(acg): would like to see better testing of this.
 
     _getUnowned(hash) {
@@ -191,6 +220,13 @@ class LocalInventoryClient extends InventoryClient {
         // for atomic mv
         fs.renameSync(tmpPath, destPath);
         this._addAtoms(atoms);
+        const abject = Abject.fromTwist(new Twist(atoms, atoms.focus));
+        if (abject &&
+            abject instanceof DQ &&
+            !this.isArchived(atoms.focus) &&
+            !this.isUnowned(atoms.focus)) {
+            this.dqCache.add(abject);
+        }
     }
 
     archive(hash) {
@@ -198,10 +234,12 @@ class LocalInventoryClient extends InventoryClient {
         if (this.shouldArchive && fs.existsSync(f)) {
             fs.moveSync(f, this.archivePathForHash(hash), { overwrite: true });
         }
+        this.dqCache.remove(hash);
     }
 
     unown(hash) {
         const firstHash = this.twistIdx.get(hash);
+        this.dqCache.remove(hash);
         // If the hash is not in the inventory or if the most recent twist
         //  does not match `hash` return immediately (noop)
         if(!firstHash || 
