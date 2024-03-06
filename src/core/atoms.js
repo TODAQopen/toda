@@ -13,7 +13,7 @@ import { Packet } from './packet.js';
  */
 class Atoms {
 
-    static packets = {};
+    static _packets = {};
 
     hashes = {};
     _focus = null; // dx: think: hash or string? what about list? 
@@ -43,12 +43,12 @@ class Atoms {
 
         for (var h in this.hashes) {
             if (h !== fh) {
-                pairs.push([this.hashes[h], Atoms.packets[h]]);
+                pairs.push([this.hashes[h], Atoms._getFromCache(h)]);
             }
         }
 
         if (this.hashes[fh]) {
-            pairs.push([this.hashes[fh], Atoms.packets[fh]]);
+            pairs.push([this.hashes[fh], Atoms._getFromCache(fh)]);
         }
 
         return pairs;
@@ -86,15 +86,23 @@ class Atoms {
             throw new Error("Cannot set an undefined hash");
         }
 
-        if (!Object.prototype.hasOwnProperty.call(Atoms.packets, h)) {
-            // dx: think: could throw if packet != p already... 
-            //  but then we'd have to do an expensive equality check every time
-            hash.assertVerifiesPacket(packet); // throws
-            Atoms.packets[h] = packet;
-        }
+        Atoms._addToCache(hash, h, packet);
 
         this.hashes[h] = hash;
         return this;
+    }
+
+    static _addToCache(hash, hashHex, packet) {
+        if (!Object.prototype.hasOwnProperty.call(Atoms._packets, hashHex)) {
+            // dx: think: could throw if packet != p already... 
+            //  but then we'd have to do an expensive equality check every time
+            hash.assertVerifiesPacket(packet); // throws
+            Atoms._packets[hashHex] = packet;
+        }
+    }
+
+    static _getFromCache(hashHex) {
+        return Atoms._packets[hashHex];
     }
 
     get(hash) {
@@ -103,7 +111,7 @@ class Atoms {
         }
         let h = hash.toString();
         if (this.hashes[h]) {
-            return Atoms.packets[h];
+            return Atoms._getFromCache(h);
         }
         return null;
     }
@@ -118,7 +126,6 @@ class Atoms {
         Object.assign(this.hashes, atoms.hashes);
         this._focus = atoms._focus;
     }
-
 
     toBytes(focus) {
         // dx: todo: remove the || once we lose focus
@@ -152,12 +159,11 @@ class Atoms {
             let hash = Hash.parse(bytes, i);
             i += hash.numBytes();
             let h = hash.toString();
-            let packet = Atoms.packets[h];
+            let packet = Atoms._getFromCache(h);
 
             if (!packet) {
                 packet = Packet.parse(bytes, i);
-                hash.assertVerifiesPacket(packet); // throws
-                Atoms.packets[h] = packet;
+                Atoms._addToCache(hash, h, packet);
             } else {  
                 //todo(dx): make sure the bytes match... how is this not tested?
             }
