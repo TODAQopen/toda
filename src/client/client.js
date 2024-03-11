@@ -135,7 +135,7 @@ class TodaClient {
                 this._backwardsStopPredicate(fastTwist),
                 this.defaultTopLineHash);
         }
-        if (this.get(fastTwist.getTetherHash())) {
+        if (this.inv.contains(fastTwist.getTetherHash())) {
             return new LocalRelayClient(this,
                 fastTwist.getTetherHash(),
                 this._backwardsStopPredicate(fastTwist),
@@ -195,7 +195,7 @@ class TodaClient {
     _shouldShield(tb) {
         // Heuristic.
         // If the tether does not appear to be local, we add a shield.
-        return !this.get(tb.getTetherHash());
+        return !this.inv.contains(tb.getTetherHash());
     }
 
     _getSalt() {

@@ -173,6 +173,12 @@ class LocalInventoryClient extends InventoryClient {
         return null;
     }
 
+    contains(hash) {
+        return this.twistIdx.get(hash) ??
+               fs.existsSync(this.unownedPathForHash(hash)) ??
+               fs.existsSync(this.archivePathForHash(hash));
+    }
+
     findLatest(hash) {
         const first = this.twistIdx.get(hash);
         return this.files.get(first)?.hash;
@@ -310,6 +316,10 @@ class VirtualInventoryClient extends InventoryClient {
 
     getExplicitPath(p) {
         return Atoms.fromBytes(new Uint8Array(fs.readFileSync(p)));
+    }
+
+    contains(hash) {
+        return this.get(hash);
     }
 }
 
