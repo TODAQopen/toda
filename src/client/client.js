@@ -175,6 +175,10 @@ class TodaClient {
         return this.get(hash);
     }
 
+    latestHash(hash) {
+        return this.inv.findLatest(hash);
+    }
+
     get(hash) {
         let atoms = this.inv.get(hash);
         if (atoms) {

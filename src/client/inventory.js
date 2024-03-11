@@ -161,8 +161,7 @@ class LocalInventoryClient extends InventoryClient {
         if (!this.twistIdx.has(hash)) {
             this.loadFromDisk(hash);
         }
-        const first = this.twistIdx.get(hash);
-        const newest = this.files.get(first)?.hash;
+        const newest = this.findLatest(hash);
         if (newest) {
             const atoms = this.loadFromDisk(newest);
             if (!atoms) {
@@ -172,6 +171,11 @@ class LocalInventoryClient extends InventoryClient {
             return atoms;
         }
         return null;
+    }
+
+    findLatest(hash) {
+        const first = this.twistIdx.get(hash);
+        return this.files.get(first)?.hash;
     }
 
     get(hash) {
