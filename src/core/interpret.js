@@ -7,7 +7,7 @@
 
 import { NamedError } from './error.js';
 import { Twist } from './twist.js';
-
+import { Line } from './line.js';
 import { Shield } from './shield.js';
 import { RequirementSatisfier, ReqSatError } from './reqsat.js';
 
@@ -43,8 +43,14 @@ class MissingSuccessor extends MissingError {}
 class MissingPostEntry extends MissingEntryError {}
 
 class Interpreter {
-    constructor(line, topHash) {
-        this.line = line;
+    constructor(lineOrTwist, topHash, isTopline) {
+
+        if (lineOrTwist instanceof Twist) {
+            this.line = Line.fromTwist(lineOrTwist);
+        } else {
+            this.line = lineOrTwist;
+        }
+
         this.topHash = topHash;
 
         // TODO(acg): we could de-dupe these at some point.
