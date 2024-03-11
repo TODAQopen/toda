@@ -178,6 +178,8 @@ describe("LocalRelayClient", async () => {
         const t2 = await toda.append(t1);
 
         const relay = new LocalRelayClient(toda, t2.getHash());
+        // HACK: Force the population of the relay's cachedLine
+        relay._populateLine();
         let twist = relay._getNext(t0.getHash());
         assert.ok(twist);
         assert.ok(twist.getHash().equals(t1.getHash()));

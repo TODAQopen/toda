@@ -128,6 +128,29 @@ class LocalRelayClient extends RelayClient {
         this.client = todaClient;
     }
 
+    _populateLine() {
+        const twist = this.client.get(this.tetherHash);
+        if (twist) {
+            this.cachedLine = Line.fromTwist(twist);
+        }
+    }
+
+    get() {
+        this._populateLine();
+        if (!this.cachedLine) {
+            return null;
+        }
+        return super.get();
+    }
+
+    getForwardsOnly() {
+        this._populateLine();
+        if (!this.cachedLine) {
+            return null;
+        }
+        return super.getForwardsOnly();
+    }
+
     /**
      * Given a twist, returns an atoms object containing a
      *  trimmed version of its graph, containing:
@@ -191,8 +214,11 @@ class LocalRelayClient extends RelayClient {
     }
 
     _getNext(twistHash) {
-        const twist = this.client.get(this.tetherHash);
-        const next = twist?.findLast(t => t.getPrevHash().equals(twistHash));
+        const nextHash = this.cachedLine.successor(twistHash);
+        if (!nextHash) {
+            return null;
+        }
+        const next = this.cachedLine.twist(nextHash);
         const prev = next?.prev();
         if (!prev) {
             return null;

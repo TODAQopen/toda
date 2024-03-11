@@ -83,6 +83,13 @@ class TestRelayServer {
                 return Buffer.from(shield.toBytes());
             }
             if (ext == ".next.toda") {
+                // HACK: Force the population of the relay's cachedLine
+                //       If this is used in a production environment
+                //       it will be very expensive
+                relay._populateLine();
+                if (!relay.cachedLine) {
+                    return null;
+                }
                 const twist = relay._getNext(hash);
                 if (!twist) {
                     return null;
