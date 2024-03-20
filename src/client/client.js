@@ -578,6 +578,17 @@ class TodaClient {
         // this formatting seems more like something server.js should deal with
     }
 
+    getBalanceAll() {
+        const r = {};
+        for (const h of this.inv.dqCache.listAll()) {
+            const root = this.inv.dqCache.getRootId(h);
+            if (!r[root]) {
+                r[root] = this.getBalance(root);
+            }
+        }
+        return r;
+    }
+
     isCalculating() {
         return false;
     }
