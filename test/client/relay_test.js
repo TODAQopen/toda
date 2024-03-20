@@ -138,7 +138,7 @@ describe("RemoteRelayClient", async () => {
         nockLocalFileServer("test/client/remoteRelay_files", 8080);
         let randomH = Hash.fromHex("41ecb829ed640be46e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4");
         let relay = new RemoteRelayClient("http://wikipedia.com", "http://localhost:8080", randomH);
-        assert.ifError((await relay.get()));
+        assert.ifError(await relay.get());
             });
 
     it("should make a hoist request with the correct data", async () => {
@@ -147,6 +147,7 @@ describe("RemoteRelayClient", async () => {
             .reply(200, (_, requestBody) => requestBody);
 
         let toda = new TodaClient(new VirtualInventoryClient());
+        await toda.populateInventory();
         toda._getSalt = () => hexToBytes("012345");
         let tether = Hash.fromHex("41e6e7a44fe6fb1a6b7038548a59f8069e24df55f3ae719d7beb4cb829ed640be4");
         let a = await toda.create(tether);
@@ -171,6 +172,7 @@ describe("LocalRelayClient", async () => {
     it("Simple next", async () => {
         const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClient(inv, "http://localhost:8009");
+        await toda.populateInventory();
         toda._getSalt = () => utf8ToBytes("some salty");
 
         const t0 = await toda.create(null, null, uuidCargo());
@@ -179,7 +181,7 @@ describe("LocalRelayClient", async () => {
 
         const relay = new LocalRelayClient(toda, t2.getHash());
         // HACK: Force the population of the relay's cachedLine
-        relay._populateLine();
+        await relay._populateLine();
         let twist = relay._getNext(t0.getHash());
         assert.ok(twist);
         assert.ok(twist.getHash().equals(t1.getHash()));
@@ -200,6 +202,7 @@ describe("LocalRelayClient", async () => {
     it("Simple .shield, last fast", async() => {
         const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClient(inv, "http://localhost:8009");
+        await toda.populateInventory();
         toda._getSalt = () => utf8ToBytes("some salty");
         const t0 = await toda.create(null, null, uuidCargo());
         const t1 = await toda.append(t0, randH(), null, null, () => {}, null, { noHoist: true });
@@ -207,16 +210,17 @@ describe("LocalRelayClient", async () => {
         const t3 = await toda.append(t2, randH(), null, null, () => {}, null, { noHoist: true });
 
         const relay = new LocalRelayClient(toda, t3.getHash());
-        assert.ifError(relay._getShield(t0.getHash())); // dne: loose
-        assert.ok(relay._getShield(t1.getHash())); // Public!
-        assert.equal((relay._getShield(t1.getHash())).toString(), t1.shield().toString());
-        assert.ifError(relay._getShield(t2.getHash())); // dne: loose
-        assert.ifError(relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
+        assert.ifError(await relay._getShield(t0.getHash())); // dne: loose
+        assert.ok(await relay._getShield(t1.getHash())); // Public!
+        assert.equal((await relay._getShield(t1.getHash())).toString(), t1.shield().toString());
+        assert.ifError(await relay._getShield(t2.getHash())); // dne: loose
+        assert.ifError(await relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
     });
 
     it("Simple .shield, last loose", async() => {
         const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClient(inv, "http://localhost:8009");
+        await toda.populateInventory();
         toda._getSalt = () => utf8ToBytes("some salty");
         const t0 = await toda.create(null, null, uuidCargo());
         const t1 = await toda.append(t0, randH(), null, null, () => {}, null, { noHoist: true });
@@ -225,17 +229,18 @@ describe("LocalRelayClient", async () => {
         const t4 = await toda.append(t3);
 
         const relay = new LocalRelayClient(toda, t3.getHash());
-        assert.ifError(relay._getShield(t0.getHash())); // dne: loose
-        assert.ok(relay._getShield(t1.getHash())); // Public!
-        assert.equal((relay._getShield(t1.getHash())).toString(), t1.shield().toString());
-        assert.ifError(relay._getShield(t2.getHash())); // dne: loose
-        assert.ifError(relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
-        assert.ifError(relay._getShield(t4.getHash())); // dne: loose
+        assert.ifError(await relay._getShield(t0.getHash())); // dne: loose
+        assert.ok(await relay._getShield(t1.getHash())); // Public!
+        assert.equal((await relay._getShield(t1.getHash())).toString(), t1.shield().toString());
+        assert.ifError(await relay._getShield(t2.getHash())); // dne: loose
+        assert.ifError(await relay._getShield(t3.getHash())); // dne: not public since it's the most recent fast
+        assert.ifError(await relay._getShield(t4.getHash())); // dne: loose
     });
 
     it("Hoist + getHoist", async () => {
         const inv = new LocalInventoryClient("./files/" + uuid());
         const toda = new TodaClient(inv, "http://localhost:8009");
+        await toda.populateInventory();
         toda._getSalt = () => utf8ToBytes("some salty");
 
         const t0 = await toda.create(null, null, uuidCargo());

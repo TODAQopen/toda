@@ -143,6 +143,7 @@ describe("Add", async function() {
         try {
             let inv = new LocalInventoryClient("./files/" + uuid());
             let toda = new TodaClient(inv, "http://localhost:8000");
+            await toda.populateInventory();
             toda._getSalt = () => new Uint8Array(new TextEncoder()
                                                     .encode("I am salty!"));
             let {twist, root} = await toda.mint(43, 1);

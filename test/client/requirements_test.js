@@ -20,7 +20,7 @@ describe("setRequirements", () => {
     it("should set the requirements trie on the twistbuilder", async () => {
         let keyPair = await SECP256r1.generate();
         let toda = new TodaClient(new VirtualInventoryClient());
-
+        await toda.populateInventory();
         let x = await toda.create(null, keyPair);
         assert(SECP256r1.requirementTypeHash.equals(Array.from(x.reqs().getShapedValue().keys())[0]));
 
@@ -51,6 +51,7 @@ describe("satisfyRequirements", () => {
     it("should set the satisfactions trie on the twistbuilder", async () => {
         let keyPair = await SECP256r1.generate();
         let toda = new TodaClient(new VirtualInventoryClient());
+        await toda.populateInventory();
         toda.addSatisfier(keyPair);
 
         let prev = await toda.create(null, keyPair);
@@ -61,7 +62,7 @@ describe("satisfyRequirements", () => {
     it("should throw an exception if a requirement cannot be met", async () => {
         let keyPair = await SECP256r1.generate();
         let toda = new TodaClient(new VirtualInventoryClient());
-
+        await toda.populateInventory();
         let prev = await toda.create(null, keyPair);
 
         await assert.rejects(

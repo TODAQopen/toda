@@ -10,6 +10,7 @@ import { DQ } from "../../src/abject/quantity.js";
 describe("Archive", async () => {
     it("Should properly archive file", async () => {
         const inv = new LocalInventoryClient("./files/" + uuid());
+        await inv.populate();
         const t = (new TwistBuilder()).twist();
         inv.put(t.getAtoms());
         const h = t.getHash();
@@ -29,6 +30,7 @@ describe("Archives files", async () => {
     it("Archives old files during constructor()", async () => {
         const path = "./files/" + uuid();
         const inv_init = new LocalInventoryClient(path);
+        await inv_init.populate();
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
         const t2 = t1.createSuccessor().twist();
@@ -48,6 +50,7 @@ describe("Archives files", async () => {
 
         // Trigger construct()
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
 
         // t0 + t1 now archived
         assert.ok(!fs.existsSync(inv_init.filePathForHash(t0.getHash())));
@@ -60,12 +63,13 @@ describe("Archives files", async () => {
         assert.ok(!fs.existsSync(inv_init.archivePathForHash(t2.getHash())));
 
         // inv still behaves as expected when asking for an archived file
-        assert.ok(inv.get(t0.getHash()).focus.equals(t2.getHash()));
+        assert.ok((await inv.get(t0.getHash())).focus.equals(t2.getHash()));
     });
 
     it("Archives old files during put()", async () => {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
         const t2 = t1.createSuccessor().twist();
@@ -90,7 +94,7 @@ describe("Archives files", async () => {
         assert.ok(!fs.existsSync(inv.archivePathForHash(t2.getHash())));
 
         // inv still behaves as expected when asking for an archived file
-        assert.ok(inv.get(t0.getHash()).focus.equals(t2.getHash()));
+        assert.ok((await inv.get(t0.getHash())).focus.equals(t2.getHash()));
     });
 });
 
@@ -98,6 +102,7 @@ describe("Unowned file mechanism", async function() {
     it("Unown removes all references in this.files + this.twistIdx and move file", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
 
@@ -121,6 +126,7 @@ describe("Unowned file mechanism", async function() {
     it("Unown noop if passed an older hash than known", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
 
@@ -143,6 +149,7 @@ describe("Unowned file mechanism", async function() {
     it("Unown doesn't fail if an unknown hash is provided", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
         inv.put(t1.getAtoms());
@@ -152,13 +159,14 @@ describe("Unowned file mechanism", async function() {
     it("Can still get an unowned file", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
 
         inv.put(t1.getAtoms());
         inv.unown(t0.getHash());
 
-        const atoms = inv.get(t1.getHash());
+        const atoms = await inv.get(t1.getHash());
         assert.ok(atoms);
         assert.ok(atoms.focus.equals(t1.getHash()));
     });
@@ -166,6 +174,7 @@ describe("Unowned file mechanism", async function() {
     it("Can still get an unowned file (extra sanity: reinstantiate inv to rm all state)", async function() {
         const path = "./files/" + uuid();
         let inv = new LocalInventoryClient(path);
+        await inv.populate();
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
 
@@ -174,7 +183,7 @@ describe("Unowned file mechanism", async function() {
 
         inv = new LocalInventoryClient(path);
 
-        const atoms = inv.get(t1.getHash());
+        const atoms = await inv.get(t1.getHash());
         assert.ok(atoms);
         assert.ok(atoms.focus.equals(t1.getHash()));
     });
@@ -182,6 +191,7 @@ describe("Unowned file mechanism", async function() {
     it("Can still get an archived file (extra sanity: reinstantiate inv to rm all state)", async function() {
         const path = "./files/" + uuid();
         let inv = new LocalInventoryClient(path);
+		await inv.populate();
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
 
@@ -191,7 +201,7 @@ describe("Unowned file mechanism", async function() {
 
         inv = new LocalInventoryClient(path);
 
-        const atoms = inv.get(t0.getHash());
+        const atoms = await inv.get(t0.getHash());
         assert.ok(atoms);
         assert.ok(atoms.focus.equals(t0.getHash()));
     });
@@ -203,11 +213,13 @@ describe("Security test for `getExplicitPath`", async function() {
         const pathA = "./files/" + uuidA;
         const pathB = "./files/" + uuid();
         const invA = new LocalInventoryClient(pathA);
+        await invA.populate();
         const invB = new LocalInventoryClient(pathB);
+        await invB.populate();
         const t0 = (new TwistBuilder()).twist();
         invA.put(t0.getAtoms());
 
-        assert.throws(() => invB._getUnowned(`../../${uuidA}/${t0.getHash()}`));
+        assert.rejects(() => invB._getUnowned(`../../${uuidA}/${t0.getHash()}`));
     });
 });
 
@@ -215,6 +227,7 @@ describe("DQ Cache", async function() {
     it("put() adds to dqCache", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const dq = DQ.mint(14, 1);
         // build the DQ
         const twist = dq.buildTwist().twist();
@@ -228,6 +241,7 @@ describe("DQ Cache", async function() {
     it("put() automatically archives", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const dq0 = DQ.mint(14, 1);
         const twist0 = dq0.buildTwist().twist();
         const dq1 = dq0.createSuccessor();
@@ -248,6 +262,7 @@ describe("DQ Cache", async function() {
     it("put() does not add to dqCache if file is old", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const dq0 = DQ.mint(14, 1);
         const twist0 = dq0.buildTwist().twist();
         const dq1 = dq0.createSuccessor();
@@ -268,6 +283,7 @@ describe("DQ Cache", async function() {
     it("archive() removes files from dqCache", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
@@ -282,6 +298,7 @@ describe("DQ Cache", async function() {
     it("unown() removes files from dqCache", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
@@ -296,6 +313,7 @@ describe("DQ Cache", async function() {
     it("rebuildDQCache() correctly rebuilds cache", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
+        await inv.populate();
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
@@ -303,7 +321,7 @@ describe("DQ Cache", async function() {
                      14);
         // murder the cache
         inv.dqCache.clear();
-        inv.rebuildDQCache();
+        await inv.rebuildDQCache();
         assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
                      14);
     });
@@ -311,11 +329,14 @@ describe("DQ Cache", async function() {
     it("loading inv from disk successfully loads dqCache", async function() {
         const path = "./files/" + uuid();
         let inv = new LocalInventoryClient(path);
+        await inv.populate();
+		await inv.populate();
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
 
         inv = new LocalInventoryClient(path);
+        await inv.populate();
         assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
                      14);
     });
@@ -323,12 +344,14 @@ describe("DQ Cache", async function() {
     it("loading inv from disk successfully rebuilds cache if cache is missing", async function() {
         const path = "./files/" + uuid();
         let inv = new LocalInventoryClient(path);
+		await inv.populate();
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
         inv.dqCache.clear();
 
         inv = new LocalInventoryClient(path);
+        await inv.populate();
         assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
                      14);
     });

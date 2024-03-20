@@ -70,13 +70,13 @@ class TestRelayServer {
             return null;
         }
 
-        function findLocal(file) {
+        async function findLocal(file) {
             const hex = file.substring(0, file.indexOf('.'));
             const ext = file.substring(file.indexOf('.'));
             const hash = Hash.fromHex(hex);
             const relay = new LocalRelayClient(toda, hash);
             if (ext == ".shield") {
-                const shield = relay._getShield(hash);
+                const shield = await relay._getShield(hash);
                 if (!shield) {
                     return null;
                 }
@@ -86,11 +86,11 @@ class TestRelayServer {
                 // HACK: Force the population of the relay's cachedLine
                 //       If this is used in a production environment
                 //       it will be very expensive
-                relay._populateLine();
+                await relay._populateLine();
                 if (!relay.cachedLine) {
                     return null;
                 }
-                const twist = relay._getNext(hash);
+                const twist = await relay._getNext(hash);
                 if (!twist) {
                     return null;
                 }
@@ -102,7 +102,7 @@ class TestRelayServer {
         app.get("/files/:file", async function (req, res, next) {
             try {
                 const file = req.params.file;
-                const b = findLocal(file) ?? await redirect(file);
+                const b = await findLocal(file) ?? await redirect(file);
                 if (b) {
                     return res.status(200).send(b);
                 }
@@ -117,7 +117,7 @@ class TestRelayServer {
             res.json({
                 itinerary: [
                     {
-                        twist: toda.get(hash).prev().getHash(),
+                        twist: (await toda.get(hash)).prev().getHash(),
                         url: "TODO",
                     },
                 ],
@@ -139,7 +139,7 @@ class TestRelayServer {
                     hashes.set(Hash.fromHex(k), Hash.fromHex(v));
                 }
 
-                const updatedTwist = toda.get(hash);
+                const updatedTwist = await toda.get(hash);
                 const pairtrie = PairTriePacket.createFromUnsorted(hashes);
                 // DON'T WAIT!
                 toda.append(updatedTwist,

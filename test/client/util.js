@@ -9,6 +9,7 @@ import fs from "fs";
 async function initRelay(port, upstreamBaseUrl, upstreamHash, initTwists = 2) {
     const inv = new LocalInventoryClient("./files/" + uuid());
     const toda = new TodaClient(inv, upstreamBaseUrl + "/files");
+    await toda.populateInventory();
     toda.shieldSalt = path.join(inv.invRoot, "salt");
     fs.writeFileSync(toda.shieldSalt, Buffer.from(uuid(), "utf-8"));
     const req = await SECP256r1.generate();
@@ -36,6 +37,7 @@ async function createLine(relayHash,
                           remoteRelayUrl = "http://localhost:8090/hoist") {
     const inv = new LocalInventoryClient("./files/" + uuid());
     const toda = new TodaClient(inv, remoteFileServer);
+    await toda.populateInventory();
     toda.shieldSalt = path.join(inv.invRoot, "salt");
     fs.writeFileSync(toda.shieldSalt, Buffer.from(uuid(), "utf-8"));
     toda.defaultRelayUrl = remoteRelayUrl;

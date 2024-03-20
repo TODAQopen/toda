@@ -27,6 +27,9 @@ class InventoryClient {
     unown() {
 
     }
+
+    async populate() {
+    }
 }
 
 class RemoteInventoryClient extends InventoryClient {
@@ -69,22 +72,24 @@ class LocalInventoryClient extends InventoryClient {
          * @type {DQCache}
          */
         this.dqCache = new DQCache(this.invRoot + "/dqCache.json");
+    }
 
+    async populate() {
         // xxx(acg): heavyweight operation; we could defer some of this
         // potentially.
-        this._listPaths().forEach(fname => {
-            this.loadFromDisk(fname.substr(0,fname.length-5)); //hack?
-        });
-
+        const promises = this._listPaths().map(fname => {
+            return this.loadFromDisk(fname.substr(0,fname.length-5)); //hack?
+        }) ?? [];
+        await Promise.all(promises);
         if (this.dqCache.isEmpty()) {
-            this.rebuildDQCache();
+            await this.rebuildDQCache();
         }
     }
 
-    rebuildDQCache() {
+    async rebuildDQCache() {
         this.dqCache.clear();
         for (const f of this.listLatest()) {
-            const atoms = this.getOwned(f);
+            const atoms = await this.getOwned(f);
             const twist = new Twist(atoms, atoms.focus);
             const abject = Abject.fromTwist(twist);
             if (abject && abject instanceof DQ) {
@@ -127,11 +132,12 @@ class LocalInventoryClient extends InventoryClient {
 
     //XXX(acg): I don't like this and would prefer just to be able to use hash
     //(even for local tethers)
-    getExplicitPath(p) {
+    async getExplicitPath(p) {
         if (!path.resolve(p).startsWith(path.resolve(this.invRoot))) {
             throw new Error("Security: attempted to access a file outside of this inventory");
         }
-        return Atoms.fromBytes(new Uint8Array(fs.readFileSync(p)));
+        const f = await fs.readFile(p);
+        return Atoms.fromBytes(new Uint8Array(f));
     }
 
     filePathForHash(hash) {
@@ -156,14 +162,10 @@ class LocalInventoryClient extends InventoryClient {
         return f.split(".")[0];
     }
 
-    getOwned(hash) {
-        //TODO: is this needed?
-        if (!this.twistIdx.has(hash)) {
-            this.loadFromDisk(hash);
-        }
+    async getOwned(hash) {
         const newest = this.findLatest(hash);
         if (newest) {
-            const atoms = this.loadFromDisk(newest);
+            const atoms = await this.loadFromDisk(newest);
             if (!atoms) {
                 throw new Error(`Expected to find file ${newest} but` + 
                                 " the file is not on disk");
@@ -184,10 +186,10 @@ class LocalInventoryClient extends InventoryClient {
         return this.files.get(first)?.hash;
     }
 
-    get(hash) {
-        return this.getOwned(hash) ??
-               this._getUnowned(hash) ?? 
-               this._getArchived(hash);
+    async get(hash) {
+        return await this.getOwned(hash) ??
+               await this._getUnowned(hash) ?? 
+               await this._getArchived(hash);
     } //TODO(acg): would like to see better testing of this.
 
     _getUnowned(hash) {
@@ -214,8 +216,8 @@ class LocalInventoryClient extends InventoryClient {
         return null;
     }
 
-    loadFromDisk(hash) {
-        let atoms = this._getFromDisk(hash);
+    async loadFromDisk(hash) {
+        let atoms = await this._getFromDisk(hash);
         if (atoms) {
             this._addAtoms(atoms);
         }

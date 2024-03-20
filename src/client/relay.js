@@ -128,27 +128,27 @@ class LocalRelayClient extends RelayClient {
         this.client = todaClient;
     }
 
-    _populateLine() {
-        const twist = this.client.get(this.tetherHash);
+    async _populateLine() {
+        const twist = await this.client.get(this.tetherHash);
         if (twist) {
             this.cachedLine = Line.fromTwist(twist);
         }
     }
 
-    get() {
-        this._populateLine();
+    async get() {
+        await this._populateLine();
         if (!this.cachedLine) {
             return null;
         }
-        return super.get();
+        return await super.get();
     }
 
-    getForwardsOnly() {
-        this._populateLine();
+    async getForwardsOnly() {
+        await this._populateLine();
         if (!this.cachedLine) {
             return null;
         }
-        return super.getForwardsOnly();
+        return await super.getForwardsOnly();
     }
 
     /**
@@ -245,8 +245,8 @@ class LocalRelayClient extends RelayClient {
         return !twist.lastFast()?.getHash().equals(predecessorHash);
     }
 
-    _getShield(twistHash) {
-        const twist = this.client.get(this.tetherHash);
+    async _getShield(twistHash) {
+        const twist = await this.client.get(this.tetherHash);
         if (twist && LocalRelayClient.shieldIsPublic(twist, twistHash)) {
             return twist.findPrevious(twistHash)?.shield();
         }

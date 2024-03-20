@@ -51,6 +51,10 @@ class TodaClient {
         this.shouldArchiveUnownedFiles = true;
     }
 
+    async populateInventory() {
+        await this.inv.populate();
+    }
+
     addSatisfier(rs) {
         this.requirementSatisfiers.push(rs);
     }
@@ -58,7 +62,7 @@ class TodaClient {
     async archiveUnownedFiles() {
         const hs = this.inv.listLatest();
         for(const h of hs) {
-            const twist = new Twist(this.inv.get(h));
+            const twist = new Twist(await this.inv.get(h));
             if(!await this.isSatisfiable(twist)) {
                 this.inv.unown(twist.getHash());
             }
@@ -168,28 +172,29 @@ class TodaClient {
 
     // typically used for looking up tethers, where we don't know if the proof
     // is in this file or another.
-    getFromAtomsOrInventory(atoms, hash) {
+    async getFromAtomsOrInventory(atoms, hash) {
         if (atoms.get(hash)) {
             return new Twist(atoms, hash);
         }
-        return this.get(hash);
+        return await this.get(hash);
     }
 
     latestHash(hash) {
         return this.inv.findLatest(hash);
     }
 
-    get(hash) {
-        let atoms = this.inv.get(hash);
+    async get(hash) {
+        let atoms = await this.inv.get(hash);
         if (atoms) {
             return new Twist(atoms);
         }
         return null;
     }
 
-    getExplicitPath(path) {
+    // TODO Remove???
+    async getExplicitPath(path) {
         // assumes current inv is a LocalInventoryClient
-        return new Twist(this.inv.getExplicitPath(path));
+        return new Twist(await this.inv.getExplicitPath(path));
     }
 
     _shouldShield(tb) {
@@ -523,7 +528,7 @@ class TodaClient {
             return true;
         } else {
             if (twist.isTethered()) {
-                let tether = this.getFromAtomsOrInventory(
+                let tether = await this.getFromAtomsOrInventory(
                     twist.getAtoms(), twist.getTetherHash());
                 if (tether) {
                     return this.isSatisfiable(tether);
@@ -581,7 +586,7 @@ class TodaClient {
     async listLatestControlledAbjects() {
         let abjs = [];
         for (let hash of this.listLatest()) {
-            let twist = this.get(hash);
+            let twist = await this.get(hash);
             if (await this.isSatisfiable(twist)) {
                 abjs.push(Abject.fromTwist(twist));
             }
@@ -671,8 +676,8 @@ class TodaClient {
         return newTwists;
     }
 
-    _getOwned(hash) {
-        const atoms = this.inv.getOwned(hash);
+    async _getOwned(hash) {
+        const atoms = await this.inv.getOwned(hash);
         return atoms ? new Twist(atoms) : null;
     }
 
@@ -695,25 +700,25 @@ class TodaClient {
                                          == quantity);
         
         if (exact) {
-            const twist = this._getOwned(exact);
+            const twist = await this._getOwned(exact);
             if (!twist) {
                 console.warn("DQ Cache contradicted inv; rebuilding cache");
-                this.inv.rebuildDQCache();
+                await this.inv.rebuildDQCache();
                 return await this.transfer({amount, typeHash, destHash});
             }
-            return this._transfer(typeHash, 
-                                  [twist], 
-                                  destHash, 
-                                  balance.poptop);
+            return await this._transfer(typeHash, 
+                                        [twist], 
+                                        destHash, 
+                                        balance.poptop);
         }
         const excess = Object.keys(balance.fileQuantities)
                              .find(h => balance.fileQuantities[h].quantity 
                                          > quantity);
         if (excess) {
-            const twist = this._getOwned(excess);
+            const twist = await this._getOwned(excess);
             if (!twist) {
                 console.warn("DQ Cache contradicted inv; rebuilding cache");
-                this.inv.rebuildDQCache();
+                await this.inv.rebuildDQCache();
                 return await this.transfer({amount, typeHash, destHash});
             }
             const dq = Abject.fromTwist(twist);
@@ -732,10 +737,10 @@ class TodaClient {
             if (cv >= quantity) {
                 break;
             }
-            const twist = this._getOwned(h);
+            const twist = await this._getOwned(h);
             if (!twist) {
                 console.warn("DQ Cache contradicted inv; rebuilding cache");
-                this.inv.rebuildDQCache();
+                await this.inv.rebuildDQCache();
                 return await this.transfer({amount, typeHash, destHash});
             }
             selected.push(twist);

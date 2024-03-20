@@ -91,6 +91,7 @@ class MockSimpleHistoricRelay {
             fs.mkdirSync(this.dirPath);
         }
         this.client = new TodaClient(new LocalInventoryClient(this.dirPath));
+        await this.client.populateInventory();
         this.client.defaultTopLineHash = this.toplineHash;
         let saltPath = this.dirPath + "/salt";
         fs.writeFileSync(saltPath, Buffer.from(uuidv4(), 'utf8'));
