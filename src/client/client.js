@@ -191,7 +191,11 @@ class TodaClient {
         return null;
     }
 
-    // TODO Remove???
+    clearInMemoryCache() {
+        this.inv.clearInMemoryCache();
+    }
+  
+    //TODO: remove?
     async getExplicitPath(path) {
         // assumes current inv is a LocalInventoryClient
         return new Twist(await this.inv.getExplicitPath(path));

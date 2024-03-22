@@ -72,6 +72,7 @@ class LocalInventoryClient extends InventoryClient {
          * @type {DQCache}
          */
         this.dqCache = new DQCache(this.invRoot + "/dqCache.json");
+        this.inMemCache = {};
     }
 
     async populate() {
@@ -84,6 +85,10 @@ class LocalInventoryClient extends InventoryClient {
         if (this.dqCache.isEmpty()) {
             await this.rebuildDQCache();
         }
+    }
+
+    clearInMemoryCache() {
+        this.inMemCache = {};
     }
 
     async rebuildDQCache() {
@@ -187,9 +192,19 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     async get(hash) {
-        return await this.getOwned(hash) ??
-               await this._getUnowned(hash) ?? 
-               await this._getArchived(hash);
+        const latest = this.findLatest(hash);
+        if (latest && this.inMemCache[latest]) {
+            return this.inMemCache[latest];
+        }
+        let file = await this.getOwned(hash);
+        if (latest && file) {
+            this.inMemCache[latest] = file;
+        }
+        if (!file) {
+            file = await this._getUnowned(hash) ??
+                   await this._getArchived(hash);
+        }
+        return file;
     } //TODO(acg): would like to see better testing of this.
 
     _getUnowned(hash) {
