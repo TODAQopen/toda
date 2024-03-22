@@ -91,7 +91,7 @@ class Interpreter {
     }
 
     /** @returns <Promise> verifies collected req-sats */
-    verifyTopline() {
+    async verifyTopline() {
         if (!this.line.get(this.topHash)) {
             throw new MissingError(this.topHash, "Missing topline hash");
         }
@@ -293,7 +293,7 @@ class Interpreter {
      * Assumption: Topline is already verified
      * @return <Twist> meet
      */
-    _verifyHitch(hash) {
+    async _verifyHitch(hash) {
         let meet = this.hitchMeet(hash);
 
         this._verifyLegitSeg(hash, meet.hash);
@@ -312,7 +312,7 @@ class Interpreter {
         if (!presumedLead) {
             throw new LooseTwistError(hoist.hash);
         }
-        this._verifyHitchLine(presumedLead.hash,
+        await this._verifyHitchLine(presumedLead.hash,
                               this.twist(hash).tether().hash,
                               true);
 
@@ -335,8 +335,8 @@ class Interpreter {
      * Stops at the hitch including optLastSupported, if this param is
      * provided.
      */
-    _verifyHitchLine(unverifiedFast, optLastSupported, optFirst) {
-        this._verifyHitch(unverifiedFast);
+    async _verifyHitchLine(unverifiedFast, optLastSupported, optFirst) {
+        await this._verifyHitch(unverifiedFast);
 
         if (!optFirst && !this.isFullHitch(unverifiedFast)) {
             throw new Error("not a full hitch..."); //todo
@@ -365,14 +365,14 @@ class Interpreter {
      *
      * @returns <Promise> Verifies all collected req/stats
      */
-    verifyHitchLine(hash, startHash = undefined) {
+    async verifyHitchLine(hash, startHash = undefined) {
         let twist = this.twist(hash);
 
         if (!twist.isTethered()) {
             console.log("WARN!! This line ends loosely. Are we chill with that?!");
             twist = this.prevTetheredTwist(hash);
         }
-        this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash,
+        await this._verifyHitchLine(this.prevTetheredTwist(twist.hash).hash,
                                      startHash, true);
 
         return this.verifyCollectedReqSats();
