@@ -16,6 +16,7 @@ class Line {
    */
     constructor() {
         this.atoms = new Atoms();
+        this.prevs = new HashMap();
         this.parents = new HashMap();
         this.successors = new HashMap();
         this.focus = null;
@@ -132,14 +133,8 @@ class Line {
    * @returns {Hash} hash of previous twist
    */
     prev(hash) {
-        let twist = this.twist(hash);
-
-        if (!twist) {
-            return null;
-        }
-        // I don't want the twist here; just the hash
-        let ph = twist.body.getPrevHash(); 
-        return ph.isNull() ? null : ph;
+        const ph = this.prevs.get(hash);
+        return ph?.isNull() ? null : ph;
     }
 
     /**
@@ -316,6 +311,7 @@ class Line {
             let body = this.get(packet.getBodyHash());
             if (body) {
                 let prev = body.getPrevHash();
+                this.prevs.set(hash, prev);
                 let existingSuccessor = this.successor(prev);
                 if (existingSuccessor) {
                     if (existingSuccessor.equals(hash)) {
@@ -339,6 +335,7 @@ class Line {
             let twistHash = parentHashes ? parentHashes[0] : null;
             if (twistHash) {
                 let prev = packet.getPrevHash();
+                this.prevs.set(twistHash, prev);
                 let existingSuccessor = this.successor(prev);
                 if (existingSuccessor) {
                     if (existingSuccessor.equals(twistHash)) {
