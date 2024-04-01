@@ -304,7 +304,6 @@ class TwistBuilder {
 }
 
 class Twist {
-
     constructor(atoms, hash) {
         this.atoms = atoms;
         this.hash = hash || atoms.focus;
@@ -323,6 +322,23 @@ class Twist {
         if (!this.body) {
             throw new MissingHashPacketError(this.packet.getBodyHash());
         }
+    }
+
+    static _shieldCache = new HashMap();
+
+    static _shieldCacheGet(shieldHash, hashToShield) {
+        return Twist._shieldCache.get(shieldHash)?.get(hashToShield);
+    }
+
+    static _shieldCachePut(shieldHash, hashToShield, shieldedHash) {
+        if (!Twist._shieldCache.has(shieldHash)) {
+            Twist._shieldCache.set(shieldHash, new HashMap());
+        }
+        Twist._shieldCache.get(shieldHash).set(hashToShield, shieldedHash);
+    }
+
+    static clearShieldCache() {
+        Twist._shieldCache.clear();
     }
 
     getHashImp() {
@@ -498,8 +514,7 @@ class Twist {
      */
     getShieldedKey() {
         if (!this._shieldedKey) {
-            let hashBytes = this.hash.toBytes();
-            this._shieldedKey = this.shieldFunction(hashBytes);
+            this._shieldedKey = this.shieldFunction(this.hash);
         }
 
         return this._shieldedKey;
@@ -512,7 +527,7 @@ class Twist {
     getDoubleShieldedKey() {
         if (!this.shieldedKeyDouble) {
             let single = this.getShieldedKey();
-            this.shieldedKeyDouble = this.shieldFunction(single.toBytes());
+            this.shieldedKeyDouble = this.shieldFunction(single);
         }
 
         return this.shieldedKeyDouble;
@@ -520,17 +535,30 @@ class Twist {
 
     /**
      * Applies the shield function for this twist to the bytes
-     * @param bytes <Uint8Array> Bytes to shield
+     * @param bytes <Hash> hash to shield
      * @returns <Hash>
      */
-    shieldFunction(bytes) {
+    shieldFunction(hash) {
+        if (!this.getShieldHash().isNull() &&
+            !this.shield()) {
+            throw new MissingHashPacketError(this.getShieldHash, 
+                                             `The shield for twist ${this.getHash()} is missing`);
+        }
+
+        const cached = Twist._shieldCacheGet(this.getShieldHash(), hash);
+        if (cached) {
+            return cached;
+        }
         let hashfun = this.hash.constructor;
         let shieldPacket = this.shield(); // can be null
         let shieldBytes = shieldPacket ? shieldPacket.getShapedValue() : null;
+        let bytes = hash.toBytes();
         let bytesToShield = shieldBytes ? 
                             byteConcat(shieldBytes, bytes) : 
                             bytes;
-        return hashfun.fromBytes(bytesToShield);
+        const shielded = hashfun.fromBytes(bytesToShield);
+        Twist._shieldCachePut(this.getShieldHash(), hash, shielded);
+        return shielded;
     }
 
 

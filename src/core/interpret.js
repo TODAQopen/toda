@@ -224,7 +224,7 @@ class Interpreter {
         ss ??= lead.getDoubleShieldedKey();
         let v = twist.rig(s);
         let vv = twist.rig(ss);
-        return v && vv && !v.equals(s) && lead.shieldFunction(v.toBytes()).equals(vv);
+        return v && vv && !v.equals(s) && lead.shieldFunction(v).equals(vv);
     }
 
     hoistForwardSearch(lead, twist) {

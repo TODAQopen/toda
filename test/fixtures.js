@@ -1,4 +1,5 @@
 import { RemoteRelayClient } from "../src/client/relay.js";
+import { Twist } from "../src/core/twist.js";
 import nock from "nock";
 
 export const mochaHooks = {
@@ -6,5 +7,6 @@ export const mochaHooks = {
         // Wipe all polluting state before each test
         nock.cleanAll();
         RemoteRelayClient.clearCache();
+        Twist.clearShieldCache();
     }
 };

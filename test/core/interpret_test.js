@@ -112,7 +112,7 @@ describe("Runs pickled rig tests (v1)", () => {
     });
 
     it("yellow: missing shield", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/missing_shield.toda`, MissingHoistError);
+        return runThrowsTest(`${__dirname}/../toda-tests/rigging/yellow/missing_shield.toda`, MissingHashPacketError);
     });
 
     it("yellow: missing rigging", async() => {

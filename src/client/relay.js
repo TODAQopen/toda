@@ -213,6 +213,11 @@ class LocalRelayClient extends RelayClient {
         return t;
     }
 
+    static clearCache() {
+        RemoteRelayClient.globalNextCache = {};
+        RemoteRelayClient.globalShieldCache = {};
+    }
+
     _getNext(twistHash) {
         const nextHash = this.cachedLine.successor(twistHash);
         if (!nextHash) {
