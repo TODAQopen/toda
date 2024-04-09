@@ -244,8 +244,10 @@ class LocalInventoryClient extends InventoryClient {
         fs.outputFileSync(tmpPath, atoms.toBytes());
 
         let destPath = explicitPath || this.filePathForHash(atoms.focus);
-        // for atomic mv
-        fs.renameSync(tmpPath, destPath);
+        // NOTE: copy + remove rather than rename since some file systems
+        //       have issues with rename
+        fs.copySync(tmpPath, destPath);
+        fs.removeSync(tmpPath);
         this._addAtoms(atoms);
         const abject = Abject.fromTwist(new Twist(atoms, atoms.focus));
         if (abject &&
