@@ -26,7 +26,7 @@ const __dirname = path.dirname(__filename);
 function isolateTwist(twist) {
     let isolated = new Atoms();
     isolated.set(twist.getBodyHash(), twist.getBody());
-    // We don't want to actually expand the rigging: 
+    // We don't want to actually expand the rigging:
     //  only want the pairtrie itself
     let rigging = twist.get(twist.getBody().getRiggingHash());
     if (rigging) {

@@ -11,12 +11,12 @@ import { Hash } from '../core/hash.js';
 import { DQ } from '../abject/quantity.js';
 
 /**
- * A persistent and in-memory cache of DQ information 
+ * A persistent and in-memory cache of DQ information
  *  owned by a client.
- * Stored structure: 
+ * Stored structure:
  *   {<fileHash>: <DQInfo>,
  *    ...}
- * 
+ *
  * Where DQInfo is an object as follows:
  * @typedef {Object} DQInfo
  * @property {Number} displayPrecision
@@ -26,7 +26,7 @@ import { DQ } from '../abject/quantity.js';
  */
 class DQCache {
     /**
-     * @param {string} filePath 
+     * @param {string} filePath
      */
     constructor(filePath) {
         this.filePath = path.resolve(filePath);
@@ -54,7 +54,7 @@ class DQCache {
      */
     add(...dqs) {
         for (const dq of dqs) {
-            this.cache[dq.getHash()] = 
+            this.cache[dq.getHash()] =
                 { rootId: dq.rootId(),
                   quantity: dq.quantity,
                   displayPrecision: dq.displayPrecision,
@@ -62,7 +62,7 @@ class DQCache {
         }
         this._saveToDisk();
     }
-    
+
     /**
      * Clears all dqs from the cache, then persist that
      *  change to disk
@@ -109,13 +109,13 @@ class DQCache {
             totalQuantity += info.quantity;
         }
         balanceInfo.totalQuantity = totalQuantity;
-        balanceInfo.totalDisplay = DQ.quantityToDisplay(totalQuantity, 
+        balanceInfo.totalDisplay = DQ.quantityToDisplay(totalQuantity,
                                                         displayPrecision);
         return balanceInfo;
     }
 
     /**
-     * @param {Hash} fileHash 
+     * @param {Hash} fileHash
      * @returns {Number | null}
      */
     getQuantity(fileHash) {
@@ -123,7 +123,7 @@ class DQCache {
     }
 
     /**
-     * @param {Hash} fileHash 
+     * @param {Hash} fileHash
      * @returns {Number | null}
      */
     getDisplay(fileHash) {
@@ -131,12 +131,12 @@ class DQCache {
         if (!info) {
             return null;
         }
-        return DQ.quantityToDisplay(info.quantity, 
+        return DQ.quantityToDisplay(info.quantity,
                                     info.displayPrecision);
     }
 
     /**
-     * @param {Hash} fileHash 
+     * @param {Hash} fileHash
      * @returns {Hash | null}
      */
     getRootId(fileHash) {
@@ -144,7 +144,7 @@ class DQCache {
     }
 
     /**
-     * @param {Hash} fileHash 
+     * @param {Hash} fileHash
      * @returns {Hash | null}
      */
     getPoptopForRootId(rootId) {
@@ -154,7 +154,7 @@ class DQCache {
     }
 
     /**
-     * @param {Hash} fileHash 
+     * @param {Hash} fileHash
      * @returns {Hash | null}
      */
     getDisplayPrecisionForRootId(rootId) {
@@ -190,7 +190,7 @@ class DQCache {
     }
 
     /**
-     * @param {Hash} fileHash 
+     * @param {Hash} fileHash
      * @returns {DQInfo}
      */
     _getDQInfo(fileHash) {

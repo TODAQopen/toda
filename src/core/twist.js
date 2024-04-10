@@ -541,7 +541,7 @@ class Twist {
     shieldFunction(hash) {
         if (!this.getShieldHash().isNull() &&
             !this.shield()) {
-            throw new MissingHashPacketError(this.getShieldHash, 
+            throw new MissingHashPacketError(this.getShieldHash,
                                              `The shield for twist ${this.getHash()} is missing`);
         }
 
@@ -553,8 +553,8 @@ class Twist {
         let shieldPacket = this.shield(); // can be null
         let shieldBytes = shieldPacket ? shieldPacket.getShapedValue() : null;
         let bytes = hash.toBytes();
-        let bytesToShield = shieldBytes ? 
-                            byteConcat(shieldBytes, bytes) : 
+        let bytesToShield = shieldBytes ?
+                            byteConcat(shieldBytes, bytes) :
                             bytes;
         const shielded = hashfun.fromBytes(bytesToShield);
         Twist._shieldCachePut(this.getShieldHash(), hash, shielded);

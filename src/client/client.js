@@ -194,7 +194,7 @@ class TodaClient {
     clearInMemoryCache() {
         this.inv.clearInMemoryCache();
     }
-  
+
     //TODO: remove?
     async getExplicitPath(path) {
         // assumes current inv is a LocalInventoryClient
@@ -213,7 +213,7 @@ class TodaClient {
 
     _generateShield(hash) {
         hash = hash || new NullHash();
-        return Sha256.hash(byteConcat(this._getSalt(), 
+        return Sha256.hash(byteConcat(this._getSalt(),
                                                     hash.toBytes()));
     }
 
@@ -353,7 +353,7 @@ class TodaClient {
         await this.satisfyRequirements(next);
         const nextTwist = next.twist();
         await this.put(nextTwist);
-        
+
         const lastFast = nextTwist.lastFast();
         if (tether && !tether.isNull() && lastFast && !noHoist) {
             // TODO(acg): ensure this is FIRMLY written before hoisting.
@@ -481,7 +481,7 @@ class TodaClient {
 
     async put(twist) {
         await this.inv.put(twist.getAtoms());
-        if (this.shouldArchiveUnownedFiles && 
+        if (this.shouldArchiveUnownedFiles &&
             !await this.isSatisfiable(twist)) {
             this.inv.unown(twist.getHash());
         }
@@ -575,7 +575,7 @@ class TodaClient {
                  quantity: totalQuantity,
                  type: typeHash.toString(),
                  displayPrecision,
-                 poptop, 
+                 poptop,
                  files: Object.keys(fileQuantities).map(h => h.toString()),
                  fileQuantities,
                  recalculating: false };
@@ -711,9 +711,9 @@ class TodaClient {
         }
 
         const exact = Object.keys(balance.fileQuantities)
-                            .find(h => balance.fileQuantities[h].quantity 
+                            .find(h => balance.fileQuantities[h].quantity
                                          == quantity);
-        
+
         if (exact) {
             const twist = await this._getOwned(exact);
             if (!twist) {
@@ -721,13 +721,13 @@ class TodaClient {
                 await this.inv.rebuildDQCache();
                 return await this.transfer({amount, typeHash, destHash});
             }
-            return await this._transfer(typeHash, 
-                                        [twist], 
-                                        destHash, 
+            return await this._transfer(typeHash,
+                                        [twist],
+                                        destHash,
                                         balance.poptop);
         }
         const excess = Object.keys(balance.fileQuantities)
-                             .find(h => balance.fileQuantities[h].quantity 
+                             .find(h => balance.fileQuantities[h].quantity
                                          > quantity);
         if (excess) {
             const twist = await this._getOwned(excess);
@@ -737,11 +737,11 @@ class TodaClient {
                 return await this.transfer({amount, typeHash, destHash});
             }
             const dq = Abject.fromTwist(twist);
-            let [delegated, _] = await this.delegateQuantity(dq, 
+            let [delegated, _] = await this.delegateQuantity(dq,
                                                              quantity);
-            return this._transfer(typeHash, 
-                                  [delegated], 
-                                  destHash, 
+            return this._transfer(typeHash,
+                                  [delegated],
+                                  destHash,
                                   balance.poptop);
         }
 

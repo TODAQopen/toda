@@ -10,16 +10,16 @@ import { bytesToHex, hexToBytes, utf8ToBytes } from './byteUtil.js';
 class Hash {
     /**
      * Raw constructor of a hash object. Users are recommended to use the static
-     * parsing method if reading off the wire, so you can 
+     * parsing method if reading off the wire, so you can
      *  take advantage of the subclasses.
      *
-     * @param hashValue <Uint8Array> representing the result of applying the 
-     *  hashing algorithm specified by algoCode. 
+     * @param hashValue <Uint8Array> representing the result of applying the
+     *  hashing algorithm specified by algoCode.
      *  Length depends on selected algorithm.
      */
     constructor(bytes, offset) {
         offset ||= 0;
-        this.length = Hash.ALGO_CODE_LENGTH + 
+        this.length = Hash.ALGO_CODE_LENGTH +
             this.constructor.getHashValueLength();
 
         // just guard against bad coding
@@ -57,8 +57,8 @@ class Hash {
      */
     toString() {
         if (!this.stringValue) {
-            this.stringValue = bytesToHex(this.bytes, 
-                                                       this.offset, 
+            this.stringValue = bytesToHex(this.bytes,
+                                                       this.offset,
                                                        this.length);
         }
 
@@ -82,7 +82,7 @@ class Hash {
      * this Hash's algo is used.
      */
     verifiesPacket(packet) {
-        return this.toString() === 
+        return this.toString() ===
             this.constructor.fromPacket(packet).toString();
     }
 
@@ -134,16 +134,16 @@ class Hash {
     }
 
     /**
-     * @param <Uint8Array> data the data to hash with this 
+     * @param <Uint8Array> data the data to hash with this
      *  alg and represent as a Hash
      * @returns <Hash> a newly created instance of a subclass of Hash
      */
     static fromBytes(data) {
         let hashBytes = this.hash(data);
 
-        // dx: todo: add a helper function for this and Symbol.fromStr... 
+        // dx: todo: add a helper function for this and Symbol.fromStr...
         //   or move it into SHA256 directly?
-        // dx: perf: this.hash returns a Uint8Array, and then we turn 
+        // dx: perf: this.hash returns a Uint8Array, and then we turn
         //  around and make a new one... can we do better?
         let bytes = new Uint8Array(hashBytes.byteLength + 1);
         bytes[0] = this.algoCode;
@@ -220,9 +220,9 @@ class Sha256 extends Hash {
     }
 
     static getHashValueLength() {
-        // This implementation always yields hashValues that 
+        // This implementation always yields hashValues that
         //  are precisely 32 bytes
-        return 32; 
+        return 32;
     }
 }
 

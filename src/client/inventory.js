@@ -44,7 +44,7 @@ class RemoteInventoryClient extends InventoryClient {
             method: "POST",
             url: this.url.toString(),
             headers: { "Content-Type": "application/octet-stream" },
-            // TODO(sfertman): add capability header 
+            // TODO(sfertman): add capability header
             //  once inventory server supports it
             responseType: "arraybuffer",
             data: bytes
@@ -57,7 +57,7 @@ class LocalInventoryClient extends InventoryClient {
     constructor(invRoot, shouldArchive = true) {
         super();
         this.invRoot = invRoot;
-        // use 'no archive' mode in some tests to avoid 
+        // use 'no archive' mode in some tests to avoid
         //  pre-seeded files from being archived
         this.shouldArchive = shouldArchive;
 
@@ -124,7 +124,7 @@ class LocalInventoryClient extends InventoryClient {
             }
             this.files.set(first, {hash: twist.getHash(), n: hs.length});
         } else if (this.files.get(first).n > hs.length) {
-            // the 'existing' file in the cache is 
+            // the 'existing' file in the cache is
             //  newer than this file; archive this
             this.archive(atoms.focus);
         }
@@ -172,7 +172,7 @@ class LocalInventoryClient extends InventoryClient {
         if (newest) {
             const atoms = await this.loadFromDisk(newest);
             if (!atoms) {
-                throw new Error(`Expected to find file ${newest} but` + 
+                throw new Error(`Expected to find file ${newest} but` +
                                 " the file is not on disk");
             }
             return atoms;
@@ -271,7 +271,7 @@ class LocalInventoryClient extends InventoryClient {
         this.dqCache.remove(hash);
         // If the hash is not in the inventory or if the most recent twist
         //  does not match `hash` return immediately (noop)
-        if(!firstHash || 
+        if(!firstHash ||
            !this.files.get(firstHash).hash.equals(hash)) {
             return;
         }

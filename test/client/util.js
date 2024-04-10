@@ -31,9 +31,9 @@ async function initRelay(port, upstreamBaseUrl, upstreamHash, initTwists = 2) {
     return { toda, server, twists, req };
 }
 
-async function createLine(relayHash, 
-                          topLineHash = relayHash, 
-                          remoteFileServer = "http://localhost:8090/files", 
+async function createLine(relayHash,
+                          topLineHash = relayHash,
+                          remoteFileServer = "http://localhost:8090/files",
                           remoteRelayUrl = "http://localhost:8090/hoist") {
     const inv = new LocalInventoryClient("./files/" + uuid());
     const toda = new TodaClient(inv, remoteFileServer);
@@ -51,10 +51,10 @@ async function createLine(relayHash,
 }
 
 async function mint(toda, qty, precision, tetherHash, topLineHash) {
-    return await toda.mint(qty, 
-                           precision, 
-                           tetherHash, 
-                           topLineHash, 
+    return await toda.mint(qty,
+                           precision,
+                           tetherHash,
+                           topLineHash,
                            JSON.stringify({uuid: uuid()}));
 }
 

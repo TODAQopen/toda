@@ -21,7 +21,7 @@ class PacketStore {
     }
 
     /**
-     * @returns <Array.<Hash>> the hashes of 
+     * @returns <Array.<Hash>> the hashes of
      *  packets which reference the supplied hash
      */
     getParentHashes(hash) {
@@ -52,8 +52,8 @@ class InMemoryPacketStore extends PacketStore {
 
     async get(hash) {
         // XXX(acg): shortcut if we have this actual object
-        return this.pairs.get(hash) || 
-               this.masterMap[hash] || 
+        return this.pairs.get(hash) ||
+               this.masterMap[hash] ||
                Promise.reject(new HashNotFoundError(hash));
     }
 
@@ -161,7 +161,7 @@ class SerialStore extends InMemoryPacketStore {
    * Adds a file to the serial store, ensuring the twist is put last
    */
     async putFile(file) {
-        return file.copyStoreInto(this).then(async () => 
+        return file.copyStoreInto(this).then(async () =>
             this.forcePut(file.getHash(), await file.getTwistPacket()));
     }
 
@@ -170,7 +170,7 @@ class SerialStore extends InMemoryPacketStore {
         if (!existingPacket) {
             const pairBytes = byteConcat(hash.toBytes(),
                                                        packet.toBytes());
-            this.byteBuffer = byteConcat(this.byteBuffer, 
+            this.byteBuffer = byteConcat(this.byteBuffer,
                                                        pairBytes);
             super.put(hash, packet);
         }
@@ -189,7 +189,7 @@ class SerialStore extends InMemoryPacketStore {
     forcePut(hash, packet) {
         const pairBytes = byteConcat(hash.toBytes(),
                                                        packet.toBytes());
-        this.byteBuffer = byteConcat(this.byteBuffer, 
+        this.byteBuffer = byteConcat(this.byteBuffer,
                                                    pairBytes);
         super.put(hash, packet);
         this.setPrimaryHash(hash);
@@ -257,8 +257,8 @@ class MemorySyncPacketStore extends PacketStore {
     }
 
     _throwConflictingSuccessor(existing, conflicting) {
-        throw new Error("Conflicting successors." +  
-            " This packet store does not support conflicting successors: " + 
+        throw new Error("Conflicting successors." +
+            " This packet store does not support conflicting successors: " +
             existing.toString() + " vs " + conflicting.toString());
     }
 
@@ -267,13 +267,13 @@ class MemorySyncPacketStore extends PacketStore {
         return this.successors.get(hash);
     }
 
-    // dx: think: is this just copied from line.js? 
+    // dx: think: is this just copied from line.js?
     //  is store.js used anywhere? what even is this?
     put(hash, packet) {
         super.put(hash, packet);
         this.atoms.set(hash, packet);
         this.atoms.focus = hash;
-        packet.getContainedHashes().forEach(childHash => 
+        packet.getContainedHashes().forEach(childHash =>
             this._addChildHash(hash, childHash));
 
         if (packet instanceof BasicTwistPacket) {

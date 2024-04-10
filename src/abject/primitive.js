@@ -45,7 +45,7 @@ class Primitive extends Abject {
 
         let primitiveValueHash = cargo.get(this.fieldSyms.value);
         if (!primitiveValueHash) {
-            throw new PrimitiveFieldMissingError(atoms, 
+            throw new PrimitiveFieldMissingError(atoms,
                 Primitive.fieldSyms.value);
         }
 

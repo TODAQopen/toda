@@ -15,8 +15,8 @@ class Shield {
      * @returns <Hash>
      */
     static _shield(twistHash, bytesToShield, shieldBytes) {
-        return twistHash.constructor.fromBytes(shieldBytes ? 
-            byteConcat(shieldBytes, bytesToShield) : 
+        return twistHash.constructor.fromBytes(shieldBytes ?
+            byteConcat(shieldBytes, bytesToShield) :
             bytesToShield);
     }
 

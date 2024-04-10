@@ -16,7 +16,7 @@ class Atoms {
     static _packets = {};
 
     hashes = {};
-    _focus = null; // dx: think: hash or string? what about list? 
+    _focus = null; // dx: think: hash or string? what about list?
     // maybe it's a list of hashes? then we don't need Atoms.hashes? ...
 
     static fromAtoms(...listOfAtoms) {
@@ -36,7 +36,7 @@ class Atoms {
     }
 
     toPairs(focus) {
-        // dx: perf: keep pairs as a cached structure 
+        // dx: perf: keep pairs as a cached structure
         //  internally once focus is removed
         let pairs = [];
         let fh = focus+"";
@@ -55,7 +55,7 @@ class Atoms {
     }
 
     keys() {
-        // dx: todo: delete this function? 
+        // dx: todo: delete this function?
         // it's only used three places, and two are tests
         return Object.values(this.hashes);
     }
@@ -94,7 +94,7 @@ class Atoms {
 
     static _addToCache(hash, hashHex, packet) {
         if (!Object.prototype.hasOwnProperty.call(Atoms._packets, hashHex)) {
-            // dx: think: could throw if packet != p already... 
+            // dx: think: could throw if packet != p already...
             //  but then we'd have to do an expensive equality check every time
             hash.assertVerifiesPacket(packet); // throws
             Atoms._packets[hashHex] = packet;
@@ -117,7 +117,7 @@ class Atoms {
     }
 
     mergeNOFOCUS(atoms) {
-        // dx: todo: this is very silly, remove this whole 
+        // dx: todo: this is very silly, remove this whole
         //  function once focus is removed
         this.hashes = {...this.hashes, ...atoms.hashes};
     }
@@ -129,10 +129,10 @@ class Atoms {
 
     toBytes(focus) {
         // dx: todo: remove the || once we lose focus
-        focus = focus || this._focus; 
+        focus = focus || this._focus;
         let a = this.toPairs(focus);
 
-        let len = a.reduce((acc, [h,p]) => 
+        let len = a.reduce((acc, [h,p]) =>
             acc + h.numBytes() + p.getLength(), 0);
         let ret = new Uint8Array(len);
         let off = 0;
@@ -164,7 +164,7 @@ class Atoms {
             if (!packet) {
                 packet = Packet.parse(bytes, i);
                 Atoms._addToCache(hash, h, packet);
-            } else {  
+            } else {
                 //todo(dx): make sure the bytes match... how is this not tested?
             }
 

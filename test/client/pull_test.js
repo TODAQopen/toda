@@ -21,7 +21,7 @@ describe("Unit test pull behaviour", async function () {
         const t3 = await toda.append(t2);
         const t4 = await toda.append(t3);
         toda.defaultTopLineHash = t1.getHash();
-        
+
         const f0TB = new TwistBuilder();
         f0TB.setPrevHash(randH);
         f0TB.setTetherHash(t2.getHash());
@@ -60,9 +60,9 @@ describe("Unit test pull behaviour", async function () {
         const t3 = await t();
         const m2 = await toda.append(m1, t3.getHash());
         const t4 = await t();
-        const m3 = await toda.append(m2, t4.getHash()); 
+        const m3 = await toda.append(m2, t4.getHash());
         const t5 = await t();
-        
+
         const f0TB = new TwistBuilder();
         f0TB.setPrevHash(randH);
         f0TB.setTetherHash(m2.getHash());
@@ -117,10 +117,10 @@ describe("Unit test pull behaviour", async function () {
         const m2a = await toda.append(m2);
         const m2b = await toda.append(m2a);
         const t4 = await t();
-        const m3 = await toda.append(m2b, t4.getHash()); 
-        const m3a = await toda.append(m3); 
+        const m3 = await toda.append(m2b, t4.getHash());
+        const m3a = await toda.append(m3);
         const t5 = await t();
-        
+
         const f0TB = new TwistBuilder();
         f0TB.setPrevHash(randH);
         f0TB.setTetherHash(m2.getHash());

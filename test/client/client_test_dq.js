@@ -5,7 +5,7 @@ import { TodaClient } from "../../src/client/client.js";
 import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { v4 as uuid } from "uuid";
 import { createLine, initRelay, mint } from "./util.js";
-import { InsufficientQuantity, InvalidDisplayPrecision, InvalidQuantity } 
+import { InsufficientQuantity, InvalidDisplayPrecision, InvalidQuantity }
     from "../../src/abject/quantity.js";
 import { SECP256r1 } from "../../src/client/secp256r1.js";
 
@@ -273,7 +273,7 @@ describe("Transfer tests; simple", async () => {
         toda._getSalt = () => new Uint8Array(new TextEncoder()
                                             .encode("I am salty!"));
         let {twist, root} = await mint(toda, 45, 1);
-        let [delegate] = 
+        let [delegate] =
             await toda.delegateValue(Abject.fromTwist(twist), 3);
         await toda.delegateValue(Abject.fromTwist(delegate), 1.5);
         // Now there are three bills: 1.5, 1.5, 1.5
@@ -309,7 +309,7 @@ describe("Transfer tests; simple", async () => {
 
 describe("Transfer tests; comprehensive", async function() {
     beforeEach(async function() {
-        const { toda, server, twists, req } = 
+        const { toda, server, twists, req } =
             await initRelay(8090, null, null, 5);
         this.relayReq = req;
         this.relayClient = toda;
@@ -322,14 +322,14 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob, same poptop", async function() {
-        const { toda: alice } = 
+        const { toda: alice } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -341,24 +341,24 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob => Charlie, same poptop", async function() {
-        const { toda: alice } = 
+        const { toda: alice } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
+        const { toda: charlie, hash: charlieHash } =
             await createLine(this.initRelayTwists[2].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -371,22 +371,22 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob => Alice, same poptop", async function() {
-        const { toda: alice, hash: aliceHash } = 
+        const { toda: alice, hash: aliceHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: aliceHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: aliceHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -398,22 +398,22 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob => Alice, Alice earlier poptop", async function() {
-        const { toda: alice, hash: aliceHash } = 
+        const { toda: alice, hash: aliceHash } =
             await createLine(this.initRelayTwists[0].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: aliceHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: aliceHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -425,22 +425,22 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob => Alice, Bob earlier poptop", async function() {
-        const { toda: alice, hash: aliceHash } = 
+        const { toda: alice, hash: aliceHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[0].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: aliceHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: aliceHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -452,24 +452,24 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob => Charlie, Bob earlier poptop, Charlie even earlier", async function() {
-        const { toda: alice } = 
+        const { toda: alice } =
             await createLine(this.initRelayTwists[4].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
+        const { toda: charlie, hash: charlieHash } =
             await createLine(this.initRelayTwists[0].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -482,22 +482,22 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob => Alice, DQ has earlier poptop than Bob", async function() {
-        const { toda: alice, hash: aliceHash } = 
+        const { toda: alice, hash: aliceHash } =
             await createLine(this.initRelayTwists[0].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: aliceHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: aliceHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -509,26 +509,26 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob => Alice, DQ has earlier poptop than either", async function() {
-        const { toda: alice, hash: aliceHash } = 
+        const { toda: alice, hash: aliceHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const dq = (await mint(alice, 
-                               143, 
-                               1, 
-                               aliceHash, 
+        const dq = (await mint(alice,
+                               143,
+                               1,
+                               aliceHash,
                                this.initRelayTwists[0].getHash())).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: aliceHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: aliceHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -540,28 +540,28 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob => Charlie, DQ has earlier poptop than all of them", async function() {
-        const { toda: alice, hash: aliceHash } = 
+        const { toda: alice, hash: aliceHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
+        const { toda: charlie, hash: charlieHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const dq = (await mint(alice, 
-                               143, 
-                               1, 
-                               aliceHash, 
+        const dq = (await mint(alice,
+                               143,
+                               1,
+                               aliceHash,
                                this.initRelayTwists[0].getHash())).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -574,41 +574,41 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob => Charlie, DQ has later poptop than all of them", async function() {
-        const { toda: alice, hash: aliceHash } = 
+        const { toda: alice, hash: aliceHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
+        const { toda: charlie, hash: charlieHash } =
             await createLine(this.initRelayTwists[2].getHash());
 
-        const recentTop = 
+        const recentTop =
             await this.relayClient.get(this.initRelayTwists[0].getHash());
         // create a more recent poptop
-        const newTop = await this.relayClient.append(recentTop, 
-            null, 
+        const newTop = await this.relayClient.append(recentTop,
+            null,
             this.relayReq);
         // make sure that new twist is available to the relay clients
         //  by making one more twist
-        await this.relayClient.append(newTop, 
-            null, 
+        await this.relayClient.append(newTop,
+            null,
             this.relayReq);
 
-        const dq = (await mint(alice, 
-                               143, 
-                               1, 
-                               aliceHash, 
+        const dq = (await mint(alice,
+                               143,
+                               1,
+                               aliceHash,
                                newTop.getHash())).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -621,9 +621,9 @@ describe("Transfer tests; comprehensive", async function() {
     });
 
     it("Alice => Bob, DQ cache contradiction", async function() {
-        const { toda: alice } = 
+        const { toda: alice } =
             await createLine(this.initRelayTwists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.initRelayTwists[2].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
@@ -635,8 +635,8 @@ describe("Transfer tests; comprehensive", async function() {
                poptop: null,
                rootId: dq};
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -651,7 +651,7 @@ describe("Transfer tests; comprehensive", async function() {
 describe("Transfer tests; comprehensive with multiple relays", async function() {
     beforeEach(async function() {
         const upper = await initRelay(8091, null, null, 5);
-        const lower = await initRelay(8090, "http://localhost:8091", 
+        const lower = await initRelay(8090, "http://localhost:8091",
                                       upper.twists[2].getHash(), 5);
         this.lowerRelay = lower;
         this.upperRelay = upper;
@@ -663,27 +663,27 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
     });
 
     it("Alice => Bob => Charlie, same poptop, multi layered poptop", async function() {
-        const { toda: alice } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: alice } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: bob, hash: bobHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: charlie, hash: charlieHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
-        let transferedTwists =  await alice.transfer({amount: 9.2, 
-                                                      destHash: bobHash, 
+        let transferedTwists =  await alice.transfer({amount: 9.2,
+                                                      destHash: bobHash,
                                                       typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -695,29 +695,29 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
         assert.equal((await charlie.getBalance(dq, true)).balance, 6.2);
     });
 
-    it("Alice => Bob => Charlie, same poptop, multi layered poptop", 
+    it("Alice => Bob => Charlie, same poptop, multi layered poptop",
     async function() {
-        const { toda: alice } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: alice } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: bob, hash: bobHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: charlie, hash: charlieHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
         const dq = (await mint(alice, 143, 1)).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -730,31 +730,31 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
     });
 
     it("Alice => Bob => Charlie, multi layered poptop, DQ has a lower poptop than addresses", async function() {
-        const { toda: alice, hash: aliceHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
-                             this.upperRelay.twists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: alice, hash: aliceHash } =
             await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const dq = (await mint(alice, 
-                               143, 
-                               1, 
-                               aliceHash, 
+        const { toda: charlie, hash: charlieHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
+                             this.upperRelay.twists[2].getHash());
+        const dq = (await mint(alice,
+                               143,
+                               1,
+                               aliceHash,
                                this.lowerRelay.twists[2].getHash())).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -767,29 +767,29 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
     });
 
     it("Alice => Bob => Charlie, multi layered poptop, DQ has a higher poptop than addresses", async function() {
-        const { toda: alice, hash: aliceHash } = 
+        const { toda: alice, hash: aliceHash } =
             await createLine(this.lowerRelay.twists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
+        const { toda: bob, hash: bobHash } =
             await createLine(this.lowerRelay.twists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
+        const { toda: charlie, hash: charlieHash } =
             await createLine(this.lowerRelay.twists[2].getHash());
 
-        const dq = (await mint(alice, 
-                               143, 
-                               1, 
-                               aliceHash, 
+        const dq = (await mint(alice,
+                               143,
+                               1,
+                               aliceHash,
                                this.upperRelay.twists[0].getHash())).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -802,32 +802,32 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
     });
 
     it("Alice => Bob => Charlie, DQ has earlier poptop, multi layered poptop", async function() {
-        const { toda: alice, hash: aliceHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: alice, hash: aliceHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: bob, hash: bobHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: charlie, hash: charlieHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
 
-        const dq = (await mint(alice, 
-                               143, 
-                               1, 
-                               aliceHash, 
+        const dq = (await mint(alice,
+                               143,
+                               1,
+                               aliceHash,
                                this.upperRelay.twists[0].getHash())).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -840,45 +840,45 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
     });
 
     it("Alice => Bob => Charlie, DQ has newer poptop, multi layered poptop", async function() {
-        const { toda: alice, hash: aliceHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: alice, hash: aliceHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const { toda: bob, hash: bobHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: bob, hash: bobHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
-        const { toda: charlie, hash: charlieHash } = 
-            await createLine(this.lowerRelay.twists[2].getHash(), 
+        const { toda: charlie, hash: charlieHash } =
+            await createLine(this.lowerRelay.twists[2].getHash(),
                              this.upperRelay.twists[2].getHash());
 
         const recentTop = await this.upperRelay
                                     .toda
                                     .get(this.upperRelay.twists[0].getHash());
         // create a more recent poptop
-        const newTop = await this.upperRelay.toda.append(recentTop, 
-                                                         null, 
+        const newTop = await this.upperRelay.toda.append(recentTop,
+                                                         null,
                                                          this.upperRelay.req);
         // make sure that new twist is available to the relay clients
         //  by making one more twist
-        await this.upperRelay.toda.append(newTop, 
-                                          null, 
+        await this.upperRelay.toda.append(newTop,
+                                          null,
                                           this.upperRelay.req);
 
-        const dq = (await mint(alice, 
-                               143, 
-                               1, 
-                               aliceHash, 
+        const dq = (await mint(alice,
+                               143,
+                               1,
+                               aliceHash,
                                newTop.getHash())).root;
 
-        let transferedTwists = await alice.transfer({amount: 9.2, 
-                                                     destHash: bobHash, 
+        let transferedTwists = await alice.transfer({amount: 9.2,
+                                                     destHash: bobHash,
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
             bob.inv.put(t.getAtoms());
         }
 
-        transferedTwists = await bob.transfer({amount: 6.2, 
-                                               destHash: charlieHash, 
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: charlieHash,
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
@@ -913,11 +913,11 @@ describe("Mint tests", async function () {
                 "http://localhost:8091/hoist");
             const t0 = await toda.create(hash);
             const t1 = await toda.append(t0, hash);
-            const { twist, root } = await toda.mint(1232, 
-                                                    1, 
-                                                    t1.getHash(), 
+            const { twist, root } = await toda.mint(1232,
+                                                    1,
+                                                    t1.getHash(),
                                                     topline.twists[2]
-                                                           .getHash(), 
+                                                           .getHash(),
                                                     "Hello!");
             const abj = Abject.fromTwist(twist);
             assert.equal(abj.quantity, 1232);

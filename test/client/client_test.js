@@ -813,10 +813,10 @@ describe("Multi-remote pull test", () => {
         await mid.populateInventory();
         mid._getSalt = () => utf8ToBytes("some salty2");
         mid.defaultRelayUrl = "http://localhost:8090/hoist";
-        const midRelay = await new TestRelayServer(mid, { port: 8091, 
+        const midRelay = await new TestRelayServer(mid, { port: 8091,
                                                           fileServerRedirects: ["http://localhost:8090/files"] }).start();
 
-        const foot = new TodaClient(new LocalInventoryClient("./files/" + uuid()), 
+        const foot = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
                                         "http://localhost:8091/files");
         await foot.populateInventory();
         foot.defaultRelayUrl = "http://localhost:8091/hoist";
@@ -881,7 +881,7 @@ describe("Unowned archiving works as expected", async function() {
 
     it("archiveUnownedFiles will unown all unowned files", async () => {
         // NOTE: To properly mock this behaviour, we'll use two keypairs
-        //       as we're generating files (to avoid having them being 
+        //       as we're generating files (to avoid having them being
         //       marked unowned as we're generating the files)
         //       Then we will reinstantiate the client with only one of them
 

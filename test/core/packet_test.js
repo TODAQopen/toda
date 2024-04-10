@@ -1,6 +1,6 @@
 import { bytesToHex, utf8ToBytes } from "../../src/core/byteUtil.js";
 import { Sha256 } from "../../src/core/hash.js";
-import { Packet, ArbitraryPacket, HashPacket, PairTriePacket } 
+import { Packet, ArbitraryPacket, HashPacket, PairTriePacket }
     from "../../src/core/packet.js";
 import assert from "assert";
 

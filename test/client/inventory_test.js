@@ -87,7 +87,7 @@ describe("Archives files", async () => {
         assert.ok(!fs.existsSync(inv.filePathForHash(t0.getHash())));
         assert.ok(!fs.existsSync(inv.filePathForHash(t1.getHash())));
         assert.ok(fs.existsSync(inv.filePathForHash(t2.getHash())));
-        
+
         // sanity check that archive files exist as expected
         assert.ok(fs.existsSync(inv.archivePathForHash(t0.getHash())));
         assert.ok(fs.existsSync(inv.archivePathForHash(t1.getHash())));
@@ -234,7 +234,7 @@ describe("DQ Cache", async function() {
         inv.put(twist.getAtoms());
         assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
                      14);
-        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()),
                          [twist.getHash().toString()]);
     });
 
@@ -250,12 +250,12 @@ describe("DQ Cache", async function() {
         inv.put(twist0.getAtoms());
         assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
                      14);
-        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()),
                          [twist0.getHash().toString()]);
         inv.put(twist1.getAtoms());
         assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
                     14);
-        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()),
                          [twist1.getHash().toString()]);
     });
 
@@ -271,12 +271,12 @@ describe("DQ Cache", async function() {
         inv.put(twist1.getAtoms());
         assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
                      14);
-        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()),
                          [twist1.getHash().toString()]);
         inv.put(twist0.getAtoms());
         assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
                     14);
-        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()), 
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()),
                          [twist1.getHash().toString()]);
     });
 

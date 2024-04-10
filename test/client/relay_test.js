@@ -7,7 +7,7 @@ import { Abject } from "../../src/abject/abject.js";
 import { Twist } from "../../src/core/twist.js";
 import { nockLocalFileServer } from "./mocks.js";
 import { randH, uuidCargo } from "../util.js";
-import { hexToBytes, utf8ToBytes } from "../../src/core/byteUtil.js"; 
+import { hexToBytes, utf8ToBytes } from "../../src/core/byteUtil.js";
 import nock from "nock";
 import assert from "assert";
 import fs from "fs-extra";

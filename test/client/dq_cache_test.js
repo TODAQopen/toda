@@ -58,7 +58,7 @@ describe("Save to disk", async function() {
 
             // monkey patch the cache
             const dummy = {};
-            dummy[h0.toString()] = {rootId: root0, quantity: 80, displayPrecision: 0, 
+            dummy[h0.toString()] = {rootId: root0, quantity: 80, displayPrecision: 0,
                                     poptop: poptop0};
             dummy[h1.toString()] = {rootId: root1, quantity: 91, displayPrecision: 2,
                                     poptop: poptop1};
@@ -203,7 +203,7 @@ describe("Clear", async function() {
             dummy[h1.toString()] = {rootId: root1, quantity: 91, displayPrecision: 2};
             dummy[h2.toString()] = {rootId: root1, quantity: 300, displayPrecision: 2};
             cache.cache = dummy;
-            
+
             // Sanity
             assert.equal(cache.listAll().length, 3);
 

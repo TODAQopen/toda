@@ -5,7 +5,7 @@
 * Apache License 2.0
 *************************************************************/
 
-import { fourByteInt, bytesToHex, 
+import { fourByteInt, bytesToHex,
          byteConcat, bytesToInt } from './byteUtil.js';
 import { Hash } from './hash.js';
 import { HashMap } from './map.js';
@@ -54,7 +54,7 @@ class Packet {
         const newBytes = new Uint8Array(Packet.PACKET_CONTENT_OFFSET + length);
         const lenBytes = fourByteInt(length);
         newBytes.set(lenBytes, Packet.PACKET_LENGTH_OFFSET);
-        newBytes.set(bytes.subarray(offset, offset + length), 
+        newBytes.set(bytes.subarray(offset, offset + length),
                      Packet.PACKET_CONTENT_OFFSET);
         this.bytes = newBytes;
         // note: subarray creates a 'view' of the array, not a new array
@@ -100,8 +100,8 @@ class Packet {
      */
     toString() {
         if (!this.strValue) {
-            this.strValue = bytesToHex(this.content, 
-                                                    this.offset, 
+            this.strValue = bytesToHex(this.content,
+                                                    this.offset,
                                                     this.length);
         }
 

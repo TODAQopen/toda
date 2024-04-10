@@ -32,7 +32,7 @@ class Actionable extends Abject {
         if (this.twistHash) {
             return this.twistHash;
         }
-        // otherwise we calculate it on-the-fly as a builder... 
+        // otherwise we calculate it on-the-fly as a builder...
         //  not going to be quick:
         return this.buildTwist().getHash();
     }
@@ -67,7 +67,7 @@ class Actionable extends Abject {
         let x = new this();
         x.atoms = atoms;
         // does htis work?
-        x.data = new HashMap(atoms.get(cargoHash).getShapedValue()); 
+        x.data = new HashMap(atoms.get(cargoHash).getShapedValue());
         x.twistHash = focusHash || atoms.focus;
         return x;
     }
@@ -142,7 +142,7 @@ class Actionable extends Abject {
     }
 
     setContext(abject, hashImp) {
-        return this.setFieldAbject(Actionable.fieldSyms.context, 
+        return this.setFieldAbject(Actionable.fieldSyms.context,
             abject, hashImp);
     }
 }
@@ -163,7 +163,7 @@ class DelegableActionable extends Actionable {
         return d;
     }
 
-    // XXX(acg): *overwrites* confirmation entry. 
+    // XXX(acg): *overwrites* confirmation entry.
     //  do not call multiple times for same twist
     confirmDelegate(d) {
         this.confirmDelegates([d]);

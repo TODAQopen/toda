@@ -64,7 +64,7 @@ class Line {
     _colinearForwards(hash0, hash1) {
         if (!hash0 || !hash1) return false;
         if (hash0.equals(hash1)) return true;
-        if (this.successor(hash0)) { 
+        if (this.successor(hash0)) {
             return this._colinearForwards(this.successor(hash0), hash1);
         }
         return false;
@@ -73,14 +73,14 @@ class Line {
     _colinearBackwards(hash0, hash1) {
         if (!hash0 || !hash1) return false;
         if (hash0.equals(hash1)) return true;
-        if (this.prev(hash0)) { 
+        if (this.prev(hash0)) {
             return this._colinearBackwards(this.prev(hash0), hash1);
         }
         return false;
     }
 
     colinear(hash0, hash1 = this.focus) {
-        return this._colinearBackwards(hash0, hash1) || 
+        return this._colinearBackwards(hash0, hash1) ||
                this._colinearForwards(hash0, hash1);
     }
 
@@ -160,7 +160,7 @@ class Line {
     }
 
     /**
-   * Returns the last successor for a given 
+   * Returns the last successor for a given
    *  twist hash if exist and null otherwize
    * @param {Hash} hash
    * @returns {Hash} The last successor in a twist line
@@ -205,7 +205,7 @@ class Line {
     }
 
     /**
-     * Returns the hash of the latest tethered twist before the 
+     * Returns the hash of the latest tethered twist before the
      *  given one (searches backwards from the given hash.)
      * Returns null if input hash is not found in store.
      * @param {Hash} hash
@@ -231,7 +231,7 @@ class Line {
 
 
     /**
-   * Returns a Twist object corresponding to 
+   * Returns a Twist object corresponding to
    *  the given hash if exists nd null otherwize
    * @param {Hash} hash
    * @returns {Twist} Twist corresponding to the given hash
@@ -288,8 +288,8 @@ class Line {
     }
 
     _throwConflictingSuccessor(existing, conflicting) {
-        throw new Error("Conflicting successors." + 
-            " This packet store does not support conflicting successors: " 
+        throw new Error("Conflicting successors." +
+            " This packet store does not support conflicting successors: "
             + existing.toString() + " vs " + conflicting.toString());
     }
 

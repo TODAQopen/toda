@@ -89,7 +89,7 @@ class DI extends Abject {
         return x;
     }
 
-    // FIXME(acg): SECURITY SECURITY these field 
+    // FIXME(acg): SECURITY SECURITY these field
     //  definitions must all be the same
     /**
      * @param dis Array.<DI>
@@ -105,7 +105,7 @@ class DI extends Abject {
         for (let di of dis.slice(1)) {
             let ac = di.getAssetClass();
             if (!ac.getHash().equals(ach)) {
-                throw new Error("cannot consolidate across " + 
+                throw new Error("cannot consolidate across " +
                     "different asset classes");
             }
             for (let field of ac.getFieldHashes()) {
@@ -187,7 +187,7 @@ class AssetClassField {
     consolidate(fOrig, fNext) {
 
         // honestly could just do these as subclasses
-        if (this.consolidation && 
+        if (this.consolidation &&
             this.consolidation.equals(DI.consolidations.remove)) {
             if (!this.list) {
                 throw new AbjectError(); // explode.
@@ -211,11 +211,11 @@ class AssetClassField {
                 return fOrig;
             }
         }
-        if (this.consolidation && 
+        if (this.consolidation &&
             this.consolidation.equals(DI.consolidations.firstWriteWins)) {
             return fOrig || fNext;
         }
-        if (this.consolidation && 
+        if (this.consolidation &&
             this.consolidation.equals(DI.consolidations.lastWriteWins)) {
             return fNext || fOrig;
         }
@@ -309,7 +309,7 @@ class DIAssetClassClass extends DI {
     }
 
     getFieldDefinition(fieldHash) {
-        return AssetClassField.parse(this.atoms, 
+        return AssetClassField.parse(this.atoms,
             this.getField(DI.fieldSyms.ACfields).get(fieldHash));
     }
 

@@ -32,7 +32,7 @@ class SimpleHistoric extends Abject {
         moniker: Hash.fromHex("229f6c4ba9f5d85c850530d33e7c5482b5074a26d6849e00b7e346aa9425c6158d"),
     };
 
-    //todo(mje): For a super quick interpretation of 
+    //todo(mje): For a super quick interpretation of
     // this line just read the di in the cargo of the last twist
     // So you can treat the whole line as one simple historic abject
     static parse(atoms, focusHash, cargoHash) {
@@ -43,7 +43,7 @@ class SimpleHistoric extends Abject {
         return x;
     }
 
-    //todo(mje): HACK - Temporary fix to read 
+    //todo(mje): HACK - Temporary fix to read
     // the focus correctly with `getHash()`
     getHash() {
         return this.twistHash ?? this.buildTwist().getHash();
@@ -102,26 +102,26 @@ class SimpleHistoric extends Abject {
     set(timestamp, tetherUrl, thisUrl, infoUrl, moniker) {
         let context = new DI();
         context.setAssetClass(SimpleHistoric.AC);
-        context.setFieldAbject(SimpleHistoric.AC.fieldSyms.timestamp, 
+        context.setFieldAbject(SimpleHistoric.AC.fieldSyms.timestamp,
             new P1String(timestamp));
 
         if (tetherUrl) {
-            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.tetherUrl, 
+            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.tetherUrl,
                 new P1String(tetherUrl));
         }
 
         if (thisUrl) {
-            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.thisUrl, 
+            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.thisUrl,
                 new P1String(thisUrl));
         }
 
         if (infoUrl) {
-            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.infoUrl, 
+            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.infoUrl,
                 new P1String(infoUrl));
         }
 
         if (moniker) {
-            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.moniker, 
+            context.setFieldAbject(SimpleHistoric.AC.fieldSyms.moniker,
                 new P1String(moniker));
         }
 

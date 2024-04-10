@@ -62,11 +62,11 @@ describe("Shield function caching", async function () {
         const h = Sha256.fromHex("4170ba33708cbfb103f1a8e34afef333ba7dc021022b2d9aaa583aabb8058d8d67");
         t.shieldFunction(h);
 
-        const bp = new BasicBodyPacket(new NullHash(), 
-                                       new NullHash(), 
-                                       new NullHash(), 
-                                       new NullHash(), 
-                                       new NullHash(), 
+        const bp = new BasicBodyPacket(new NullHash(),
+                                       new NullHash(),
+                                       new NullHash(),
+                                       new NullHash(),
+                                       new NullHash(),
                                        t.getShieldHash());
         const bh = Sha256.fromPacket(bp);
         const tp = new BasicTwistPacket(bh, new NullHash());
