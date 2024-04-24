@@ -6,10 +6,53 @@ import { Sha256 } from "../../src/core/hash.js";
 import { TwistBuilder } from "../../src/core/twist.js";
 
 import assert from 'assert';
+import fs from 'fs-extra';
 
 const randH = Sha256.fromHex("416ef975f0c646daa44bec0469384436ccc6cd459ac40562bd676d568187625b67");
 
 describe("Unit test pull behaviour", async function () {
+    it("Pull writes caches to disk", async function () {
+        const inv = new LocalInventoryClient("files/" + uuid());
+        const toda = new TodaClient(inv, null);
+        await toda.populateInventory();
+
+        const t0 = await toda.create(null, null, uuidCargo());
+        const t1 = await toda.append(t0);
+        const t2 = await toda.append(t1);
+        const t3 = await toda.append(t2);
+        toda.defaultTopLineHash = t1.getHash();
+
+        const f0TB = new TwistBuilder();
+        f0TB.setPrevHash(randH);
+        f0TB.setTetherHash(t2.getHash());
+        const f0 = f0TB.twist();
+
+        const f1TB = new TwistBuilder();
+        f1TB.setPrevHash(f0.getHash());
+        f1TB.setTetherHash(t3.getHash());
+
+        const f1 = f1TB.twist();
+        f1.addAtoms(f0.getAtoms());
+
+        const filesCacheLen = fs.readFileSync(
+            `${inv.invRoot}/filesCache.json`
+        ).length;
+
+        const twistIdxCacheLen = fs.readFileSync(
+            `${inv.invRoot}/twistIdxCache.json`
+        ).length;
+
+        await toda.pull(f1, toda.defaultTopLineHash);
+
+        assert(
+            fs.readFileSync(`${inv.invRoot}/filesCache.json`).length > filesCacheLen
+        );
+        assert(
+            fs.readFileSync(`${inv.invRoot}/twistIdxCache.json`).length >
+                twistIdxCacheLen
+        );
+    });
+
     it("Simple two-tiered test", async function() {
         const inv = new LocalInventoryClient("files/" + uuid());
         const toda = new TodaClient(inv, null);

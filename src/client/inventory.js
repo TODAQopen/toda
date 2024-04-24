@@ -3,7 +3,8 @@ import axios from 'axios';
 import fs from 'fs-extra';
 import path from 'path';
 import { Atoms } from '../core/atoms.js';
-import { HashMap } from '../core/map.js';
+import { HashMap, JSONFileBackedHashMap } from '../core/map.js';
+import { Hash } from "../core/hash.js"
 import { Twist } from '../core/twist.js';
 import { DQCache } from './dq_cache.js';
 import { Abject } from '../abject/abject.js';
@@ -30,6 +31,8 @@ class InventoryClient {
 
     async populate() {
     }
+
+    writeCachesToDisk() {}
 }
 
 class RemoteInventoryClient extends InventoryClient {
@@ -65,8 +68,27 @@ class LocalInventoryClient extends InventoryClient {
             fs.mkdirSync(invRoot, { recursive: true });
         }
 
-        this.files = new HashMap();
-        this.twistIdx = new HashMap();
+        // Populate these from files
+        this.files = new JSONFileBackedHashMap(
+            this.invRoot + "/filesCache.json",
+            [],
+            (obj) => {
+                Object.entries(obj).forEach(([k, v]) => {
+                    obj[k].hash = Hash.fromHex(v.hash);
+                });
+                return obj;
+            }
+        );
+        this.twistIdx = new JSONFileBackedHashMap(
+            this.invRoot + "/twistIdxCache.json",
+            [],
+            (obj) => {
+                Object.entries(obj).forEach(([k, v]) => {
+                    obj[k] = Hash.fromHex(v);
+                });
+                return obj;
+            }
+        );
 
         /**
          * @type {DQCache}
@@ -75,16 +97,43 @@ class LocalInventoryClient extends InventoryClient {
         this.inMemCache = {};
     }
 
+    // Read in filenames on disk, check to see if there is a 1:1 mapping of
+    // filenames : hashes in this.files and this.twistIdx and that the dqCache
+    // is not empty
+    _areCachesCurrent() {
+        const hashesMatchDisk = (hashMap, todaFiles) =>
+            hashMap.size === todaFiles.size &&
+            [...hashMap.keys()].every((value) => todaFiles.has(value));
+
+        const todaFiles = new Set(
+            this._listPaths().map((fname) => fname.split(".toda")[0])
+        );
+
+        return (
+            hashesMatchDisk(this.files, todaFiles) &&
+            hashesMatchDisk(this.twistIdx, todaFiles) &&
+            !this.dqCache.isEmpty()
+        );
+    }
+
     async populate() {
+        // Check to make sure caches aren't stale, otherwise reload all from disk
+        if (this._areCachesCurrent()) {
+            return;
+        }
         // xxx(acg): heavyweight operation; we could defer some of this
         // potentially.
         const promises = this._listPaths().map(fname => {
-            return this.loadFromDisk(fname.substr(0,fname.length-5)); //hack?
+            return this.loadFromDisk(fname.slice(0,fname.length-5)); //hack?
         }) ?? [];
         await Promise.all(promises);
-        if (this.dqCache.isEmpty()) {
-            await this.rebuildDQCache();
-        }
+        await this.rebuildDQCache();
+        this.writeCachesToDisk();
+    }
+
+    writeCachesToDisk() {
+        this.twistIdx.commit();
+        this.files.commit();
     }
 
     clearInMemoryCache() {
@@ -287,6 +336,7 @@ class LocalInventoryClient extends InventoryClient {
                 this.twistIdx.delete(k);
             }
         });
+        this.writeCachesToDisk();
     }
 
     isArchived(hash) {

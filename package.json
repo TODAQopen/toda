@@ -26,6 +26,7 @@
     "node": ">=16.0.0 <21.0.0"
   },
   "scripts": {
+    "test-debugger": " echo 'Visit chrome://inspect in chrome for your debugger\n'; mocha --inspect-brk --recursive --timeout 60000 --require test/fixtures.js",
     "test": "mocha --recursive --timeout 60000 --require test/fixtures.js",
     "build": "cd ./build && NODE_ENV=production npx webpack && cd ..",
     "test-only": "mocha --timeout 60000 --require test/fixtures.js"

@@ -1,11 +1,12 @@
-import { LocalInventoryClient } from "../../src/client/inventory.js";
+import { DQ } from "../../src/abject/quantity.js";
 import { Hash } from "../../src/core/hash.js";
+import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { TwistBuilder } from "../../src/core/twist.js";
 
 import assert from "assert";
 import { v4 as uuid } from "uuid";
 import fs from 'fs-extra';
-import { DQ } from "../../src/abject/quantity.js";
+import nodePath from 'path';
 
 describe("Archive", async () => {
     it("Should properly archive file", async () => {
@@ -191,7 +192,7 @@ describe("Unowned file mechanism", async function() {
     it("Can still get an archived file (extra sanity: reinstantiate inv to rm all state)", async function() {
         const path = "./files/" + uuid();
         let inv = new LocalInventoryClient(path);
-		await inv.populate();
+        await inv.populate();
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
 
@@ -330,7 +331,6 @@ describe("DQ Cache", async function() {
         const path = "./files/" + uuid();
         let inv = new LocalInventoryClient(path);
         await inv.populate();
-		await inv.populate();
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
@@ -344,7 +344,7 @@ describe("DQ Cache", async function() {
     it("loading inv from disk successfully rebuilds cache if cache is missing", async function() {
         const path = "./files/" + uuid();
         let inv = new LocalInventoryClient(path);
-		await inv.populate();
+        await inv.populate();
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
@@ -354,5 +354,86 @@ describe("DQ Cache", async function() {
         await inv.populate();
         assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
                      14);
+    });
+});
+
+describe("files and twistIdx Cache", async function () {
+    const _getJSONFile = (file) => JSON.parse(fs.readFileSync(file));
+
+    it("LocalInventoryClient can create twistIdx and files on disk", async function () {
+        const path = nodePath.resolve("./files/" + uuid());
+        let inv = new LocalInventoryClient(path);
+        await inv.populate();
+        const dq = DQ.mint(14, 1);
+        const twist = dq.buildTwist().twist();
+
+        inv.put(twist.getAtoms());
+        inv.writeCachesToDisk();
+
+        assert.equal(
+            Object.keys(_getJSONFile(`${path}/filesCache.json`)).length,
+            1
+        );
+        assert.equal(
+            Object.keys(_getJSONFile(`${path}/twistIdxCache.json`)).length,
+            1
+        );
+    });
+
+    it("loading LocalInventoryClient populates twistIdx from disk", async function () {
+        // create some data
+        const path = nodePath.resolve("./files/" + uuid());
+        let inv = new LocalInventoryClient(path);
+        await inv.populate();
+        const dq = DQ.mint(14, 1);
+        const twist = dq.buildTwist().twist();
+        inv.put(twist.getAtoms());
+
+        // write caches to disk
+        inv.writeCachesToDisk();
+
+        // Now assert that that we load the disk cache without having
+        // to `inv.populate()`
+        const oldPopulate = LocalInventoryClient.prototype.populate;
+        try {
+            LocalInventoryClient.prototype.populate = () => {
+                throw new Error("I shouldn't be called");
+            };
+            inv = new LocalInventoryClient(path);
+        } catch (e) {
+            throw e;
+        } finally {
+            LocalInventoryClient.prototype.populate = oldPopulate;
+        }
+
+        assert(inv.files.has(twist.hash.toString()));
+        assert(inv.twistIdx.has(twist.hash.toString()));
+        assert.deepEqual(
+            JSON.parse(JSON.stringify(Array.from(inv.files.entries()))),
+            [[twist.hash.toString(), { hash: twist.hash.toString(), n: 1 }]]
+        );
+        assert.deepEqual(
+            JSON.parse(JSON.stringify(Array.from(inv.twistIdx.entries()))),
+            [[twist.hash.toString(), twist.hash.toString()]]
+        );
+    });
+
+    it("popluating LocalInventoryClient with stale caches repopulates them from on disk files", async function () {
+        // create some data
+        const path = nodePath.resolve("./files/" + uuid());
+        let inv = new LocalInventoryClient(path);
+        await inv.populate();
+        const dq = DQ.mint(14, 1);
+        const twist = dq.buildTwist().twist();
+        inv.put(twist.getAtoms());
+
+        // NB no populate / writeCachesToDisk call here
+
+        // Make new inv, run populate, make sure files / twistIdx are
+        // correctly rebuilt
+        const inv2 = new LocalInventoryClient(path);
+        await inv2.populate();
+        assert(inv2.files.has(twist.hash.toString()));
+        assert(inv2.twistIdx.has(twist.hash.toString()));
     });
 });

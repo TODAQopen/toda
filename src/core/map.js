@@ -12,6 +12,9 @@
  * Is not opinionated about what values are used.
  */
 
+import fs from 'fs-extra';
+import path from 'path';
+
 class HashMap extends Map {
     // This could be probably done more efficiently, but this is a
     // first-pass stab we've used other places.
@@ -81,4 +84,38 @@ class HashMap extends Map {
     }
 }
 
-export { HashMap };
+/* HashMap subclass that stores the values in a given json file and tries to
+ * load them upon initialization
+ */
+class JSONFileBackedHashMap extends HashMap {
+    constructor(
+        filePath,
+        iterable = [],
+        deserializer = (x) => x,
+        serializer = (x) => x
+    ) {
+        const fullFilePath = path.resolve(filePath);
+        if (fs.existsSync(fullFilePath)) {
+            const diskData = deserializer(
+                JSON.parse(fs.readFileSync(fullFilePath))
+            );
+            iterable = iterable.concat(Object.entries(diskData));
+        }
+        super(iterable);
+        this.filePath = fullFilePath;
+        this.serializer = serializer;
+    }
+
+    commit() {
+        fs.writeFileSync(
+            this.filePath,
+            JSON.stringify(this.serializer(Object.fromEntries(this)))
+        );
+    }
+
+    clone() {
+        throw new Error("Not Implemented");
+    }
+}
+
+export { HashMap, JSONFileBackedHashMap };

@@ -485,6 +485,7 @@ class TodaClient {
             !await this.isSatisfiable(twist)) {
             this.inv.unown(twist.getHash());
         }
+        this.inv.writeCachesToDisk();
     }
 
     async isCanonical(twist, popTopHash) {
