@@ -9,7 +9,7 @@ import { NamedError } from './error.js';
 import { Twist } from './twist.js';
 import { Line } from './line.js';
 import { Shield } from './shield.js';
-import { RequirementSatisfier, ReqSatError } from './reqsat.js';
+import { RequirementSatisfier, ReqSatError, RequirementList } from './reqsat.js';
 
 class InterpreterResult extends NamedError {
 }
@@ -105,53 +105,71 @@ class Interpreter {
     }
 
     /**
-     * @param reqHash <Hash> the type of the requirement (e.g. secp...)
-     * @param prevTw <Twist>
      * @param twist <Twist>
-     * Mutates state to push required req/sats onto a list to be checked.
+     * @param reqHash <Hash> the type of the requirement (e.g. secp...)
+     * @param reqEntryHash <Hash> the hash of the corresponding requirement
+     * @param satEntryHash <Hash> the hash of the corresponding satisfaction
      */
-    _verifyReqSat(reqHash, prevTw, twist) {
-        let reqPacketHash = prevTw.reqs(reqHash);
-        let keyPacket = prevTw.get(reqPacketHash);
-        if (!keyPacket) {
-            throw new MissingError(reqPacketHash, "missing requirement packet");
+    async _verifyReqSat(twist, reqHash, reqEntryHash, satEntryHash) {
+        let reqPacket = twist.get(reqEntryHash);
+        if (!reqPacket) {
+            throw new MissingError(reqEntryHash, "missing requirement packet");
         }
-        // TODO: verify shape
-        let sigPacketHash = twist.sats(reqHash);
-        if (!sigPacketHash) {
-            throw new MissingEntryError(twist.hash, reqHash,
-                "missing sig entry");
+        let satPacket = twist.get(satEntryHash);
+        if (!satPacket) {
+            throw new MissingError(satEntryHash, "missing satisfaction packet");
         }
-        // TODO: verify shape
-        let sigPacket = twist.get(sigPacketHash);
-        if (!sigPacket) {
-            throw new MissingError(sigPacketHash, "missing sig packet...");
-        }
-        this.verificationPromises.push((async () => {
-            if (! (await RequirementSatisfier.verifySatisfaction(
-                reqHash, twist, keyPacket, sigPacket))) {
-                throw new ReqSatError(reqHash, twist.packet.getBodyHash(),
-                                      keyPacket, sigPacket);
+        // Special case RS lists
+        if (reqHash.equals(RequirementList.REQ_LIST)) {
+            throw new Error("not implemented");
+        } else {
+            if (await RequirementSatisfier.verifySatisfaction(
+                    reqHash, twist, reqPacket, satPacket)) {
+                // All good
             } else {
+                throw new ReqSatError(reqHash, 
+                                        twist.packet.getBodyHash(),
+                                        reqPacket, satPacket);
             }
-        })());
+        }
     }
 
-    _verifyLegit(prevTw, twist) {
-        if (prevTw.reqs() && twist.sats()) {
-            let reqKeys = prevTw.reqs().getContainedKeyHashes();
-            let satKeys = twist.sats().getContainedKeyHashes();
+    async _verifyReqSats(twist, reqTrieHash, satTrieHash) {
+        if (reqTrieHash.isNull() && satTrieHash.isNull()) {
+            // No reqsats; all good
+        } else if (reqTrieHash.isNull() || satTrieHash.isNull()) {
+            throw new Error("req/sat mismatch...");
+        } else {
+            const reqTrie = twist.get(reqTrieHash);
+            if (!reqTrie) {
+                throw new MissingError(reqTrieHash, "missing requirement trie");
+            }
+            const satTrie = twist.get(satTrieHash);
+            if (!satTrie) {
+                throw new MissingError(satTrie, "missing satisfaction trie");
+            }
+            const reqKeys = reqTrie.getContainedKeyHashes();
+            const satKeys = satTrie.getContainedKeyHashes();
             if (reqKeys.length != satKeys.length) {
                 throw new Error("req/sat trie key length mismatch");
             }
             for (const reqHash of reqKeys) {
-                this._verifyReqSat(reqHash, prevTw, twist);
+                await this._verifyReqSat(twist, 
+                                         reqHash, 
+                                         reqTrie.get(reqHash), 
+                                         satTrie.get(reqHash));
             }
-        } else if (!(prevTw.reqs() || twist.sats())) {
-            return undefined; //why does js not have xor...
-        } else {
-            throw new Error("req/sat mismatch..."); //todo
         }
+    }
+
+    /**
+     * Mutates state to push required req/sats onto a list to be checked.
+     */
+    _verifyLegit(prevTw, twist) {
+        const promise = this._verifyReqSats(twist, 
+                                            prevTw.getReqsHash(), 
+                                            twist.getSatsHash());
+        this.verificationPromises.push(promise);
     }
 
     /**
@@ -381,10 +399,10 @@ class Interpreter {
     verifyCollectedReqSats() {
         return Promise.all(this.verificationPromises);
     }
-
 }
 
 export { Interpreter };
+export { MissingError };
 export { MissingHoistError };
 export { MissingPrevious };
 export { MissingSuccessor };

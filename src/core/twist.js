@@ -574,6 +574,10 @@ class Twist {
         return this.body.getTetherHash();
     }
 
+    getReqsHash() {
+        return this.body.getReqsHash();
+    }
+
     /**
      * if param 'key' provided, does a lookup, otherwise returns trie.
      */
@@ -591,6 +595,10 @@ class Twist {
             return reqs.get(key);
         }
         return reqs;
+    }
+
+    getSatsHash() {
+        return this.packet.getSatsHash();
     }
 
     /**

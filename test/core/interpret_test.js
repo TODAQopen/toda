@@ -5,6 +5,7 @@ import {
     MissingSuccessor,
     MissingPostEntry,
     LooseTwistError,
+    MissingError,
 } from "../../src/core/interpret.js";
 
 import { Line } from "../../src/core/line.js";
@@ -324,11 +325,11 @@ describe("Runs pickled reqsattrie tests (v1)", () => {
     });
 
     it("yellow: reqtrie missing", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/reqtrie_missing.toda`, MissingHashPacketError);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/reqtrie_missing.toda`, MissingError);
     });
 
     it("yellow: sattrie missing", async() => {
-        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/sattrie_missing.toda`, MissingHashPacketError);
+        return runThrowsTest(`${__dirname}/../toda-tests/reqsat/reqsattrie/yellow/sattrie_missing.toda`, MissingError);
     });
 
     it("red: req is null but the sat is not", async() => {
