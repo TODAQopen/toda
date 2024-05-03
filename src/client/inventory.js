@@ -97,38 +97,50 @@ class LocalInventoryClient extends InventoryClient {
         this.inMemCache = {};
     }
 
-    // Read in filenames on disk, check to see if there is a 1:1 mapping of
-    // filenames : hashes in this.files and this.twistIdx and that the dqCache
-    // is not empty
-    _areCachesCurrent() {
-        const hashesMatchDisk = (hashMap, todaFiles) =>
-            hashMap.size === todaFiles.size &&
-            [...hashMap.keys()].every((value) => todaFiles.has(value));
-
+    _areFileCachesCurrent() {
+        // get files on disk
         const todaFiles = new Set(
             this._listPaths().map((fname) => fname.split(".toda")[0])
         );
 
-        return (
-            hashesMatchDisk(this.files, todaFiles) &&
-            hashesMatchDisk(this.twistIdx, todaFiles) &&
-            !this.dqCache.isEmpty()
-        );
+        // TODO do we care about the no-DQ case?
+
+        // do we have files on disk and nothing cached, or vice versa?
+        if (Boolean(todaFiles.size) === !this.files.size) {
+            return false;
+        }
+
+        // make sure all cached files are represented on disk
+        for (const [_, v] of this.files.entries()) {
+            if (
+                !todaFiles.has(v.hash.toString()) ||
+                !this.twistIdx.has(v.hash.toString())
+            ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
+
     async populate() {
-        // Check to make sure caches aren't stale, otherwise reload all from disk
-        if (this._areCachesCurrent()) {
-            return;
+        if (!this._areFileCachesCurrent()) {
+            // xxx(acg): heavyweight operation; we could defer some of this
+            // potentially.
+            this.files.clear();
+            this.twistIdx.clear();
+
+            const promises = this._listPaths().map(fname => {
+                return this.loadFromDisk(fname.slice(0,fname.length-5)); //hack?
+            }) ?? [];
+            await Promise.all(promises);
+            this.writeCachesToDisk();
         }
-        // xxx(acg): heavyweight operation; we could defer some of this
-        // potentially.
-        const promises = this._listPaths().map(fname => {
-            return this.loadFromDisk(fname.slice(0,fname.length-5)); //hack?
-        }) ?? [];
-        await Promise.all(promises);
-        await this.rebuildDQCache();
-        this.writeCachesToDisk();
+
+        if (this.dqCache.isEmpty()) {
+            await this.rebuildDQCache();
+        }
     }
 
     writeCachesToDisk() {

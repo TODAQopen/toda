@@ -363,7 +363,9 @@ describe("files and twistIdx Cache", async function () {
     it("LocalInventoryClient can create twistIdx and files on disk", async function () {
         const path = nodePath.resolve("./files/" + uuid());
         let inv = new LocalInventoryClient(path);
+        assert(inv._areFileCachesCurrent());
         await inv.populate();
+        assert(inv._areFileCachesCurrent());
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
 
@@ -384,56 +386,108 @@ describe("files and twistIdx Cache", async function () {
         // create some data
         const path = nodePath.resolve("./files/" + uuid());
         let inv = new LocalInventoryClient(path);
+        assert(inv._areFileCachesCurrent());
         await inv.populate();
-        const dq = DQ.mint(14, 1);
-        const twist = dq.buildTwist().twist();
-        inv.put(twist.getAtoms());
 
-        // write caches to disk
+        const dq0 = DQ.mint(1000, 1);
+        const twist0 = dq0.buildTwist().twist();
+        inv.put(twist0.getAtoms());
+
+        const del = dq0.delegate(5)
+        const next = dq0.createSuccessor();
+        next.confirmDelegate(del);
+        const twist1 = next.buildTwist().twist();
+        inv.put(twist1.getAtoms());
+
+        const del2 = next.delegate(4)
+        const next2 = next.createSuccessor();
+        next2.confirmDelegate(del2);
+        const twist2 = next2.buildTwist().twist();
+        inv.put(twist2.getAtoms());
+
         inv.writeCachesToDisk();
+        assert(inv._areFileCachesCurrent());
 
-        // Now assert that that we load the disk cache without having
-        // to `inv.populate()`
-        const oldPopulate = LocalInventoryClient.prototype.populate;
-        try {
-            LocalInventoryClient.prototype.populate = () => {
-                throw new Error("I shouldn't be called");
-            };
-            inv = new LocalInventoryClient(path);
-        } catch (e) {
-            throw e;
-        } finally {
-            LocalInventoryClient.prototype.populate = oldPopulate;
-        }
+        const inv2 = new LocalInventoryClient(path);
+        assert(inv2._areFileCachesCurrent());
 
-        assert(inv.files.has(twist.hash.toString()));
-        assert(inv.twistIdx.has(twist.hash.toString()));
         assert.deepEqual(
-            JSON.parse(JSON.stringify(Array.from(inv.files.entries()))),
-            [[twist.hash.toString(), { hash: twist.hash.toString(), n: 1 }]]
+            JSON.parse(JSON.stringify(Array.from(inv2.files.entries()))),
+            [[twist0.hash.toString(), { hash: twist2.hash.toString(), n: 3 }]]
         );
         assert.deepEqual(
-            JSON.parse(JSON.stringify(Array.from(inv.twistIdx.entries()))),
-            [[twist.hash.toString(), twist.hash.toString()]]
+            JSON.parse(JSON.stringify(Array.from(inv2.twistIdx.entries()))),
+            [[twist0.hash.toString(), twist0.hash.toString()],
+             [twist1.hash.toString(), twist0.hash.toString()],
+             [twist2.hash.toString(), twist0.hash.toString()]]
         );
     });
 
-    it("popluating LocalInventoryClient with stale caches repopulates them from on disk files", async function () {
+    it("popluating LocalInventoryClient with wrong caches repopulates them from on disk files", async function () {
         // create some data
         const path = nodePath.resolve("./files/" + uuid());
         let inv = new LocalInventoryClient(path);
         await inv.populate();
+        assert(inv._areFileCachesCurrent());
+        const dq = DQ.mint(14, 1);
+        const twist = dq.buildTwist().twist();
+        inv.put(twist.getAtoms());
+        inv.writeCachesToDisk()
+
+        // Break the cache
+        let brokenFileCache = _getJSONFile(`${path}/filesCache.json`)
+        brokenFileCache[twist.hash.toString()].hash = `41${"0".repeat(64)}`
+        fs.writeFileSync(
+            `${path}/filesCache.json`,
+            JSON.stringify(brokenFileCache)
+        );
+
+        // Make new inv, run populate, make sure files / twistIdx are
+        // correctly rebuilt
+        const inv2 = new LocalInventoryClient(path);
+        assert(!inv2._areFileCachesCurrent());
+        await inv2.populate();
+        assert(inv2._areFileCachesCurrent());
+
+        assert.deepEqual(
+            JSON.parse(JSON.stringify(Array.from(inv2.files.entries()))),
+            [[twist.hash.toString(), { hash: twist.hash.toString(), n: 1 }]]
+        );
+        assert.deepEqual(
+            JSON.parse(JSON.stringify(Array.from(inv2.twistIdx.entries()))),
+            [[twist.hash.toString(), twist.hash.toString()]]
+        );
+    });
+
+    it("popluating LocalInventoryClient with missing caches repopulates them from on disk files", async function () {
+        // create some data
+        const path = nodePath.resolve("./files/" + uuid());
+        let inv = new LocalInventoryClient(path);
+        assert(inv._areFileCachesCurrent());
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
 
         // NB no populate / writeCachesToDisk call here
+        // Files exist on disk, but weren't added to the inventory and
+        // weren't cached
+        assert(!fs.existsSync(`${path}/filesCache.json`));
+        assert(!fs.existsSync(`${path}/twistIdxCache.json`));
 
         // Make new inv, run populate, make sure files / twistIdx are
         // correctly rebuilt
         const inv2 = new LocalInventoryClient(path);
+        assert(!inv2._areFileCachesCurrent());
         await inv2.populate();
-        assert(inv2.files.has(twist.hash.toString()));
-        assert(inv2.twistIdx.has(twist.hash.toString()));
+        assert(inv2._areFileCachesCurrent());
+
+        assert.deepEqual(
+            JSON.parse(JSON.stringify(Array.from(inv2.files.entries()))),
+            [[twist.hash.toString(), { hash: twist.hash.toString(), n: 1 }]]
+        );
+        assert.deepEqual(
+            JSON.parse(JSON.stringify(Array.from(inv2.twistIdx.entries()))),
+            [[twist.hash.toString(), twist.hash.toString()]]
+        );
     });
 });
