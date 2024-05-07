@@ -57,12 +57,13 @@ class RemoteInventoryClient extends InventoryClient {
 }
 
 class LocalInventoryClient extends InventoryClient {
-    constructor(invRoot, shouldArchive = true) {
+    constructor(invRoot, { shouldArchive = true, deleteOld = false } = {}) {
         super();
         this.invRoot = invRoot;
         // use 'no archive' mode in some tests to avoid
         //  pre-seeded files from being archived
         this.shouldArchive = shouldArchive;
+        this.deleteOld = deleteOld;
 
         if (!fs.existsSync(invRoot)) {
             fs.mkdirSync(invRoot, { recursive: true });
@@ -323,6 +324,8 @@ class LocalInventoryClient extends InventoryClient {
         const f = this.filePathForHash(hash);
         if (this.shouldArchive && fs.existsSync(f)) {
             fs.moveSync(f, this.archivePathForHash(hash), { overwrite: true });
+        } else if (this.deleteOld && fs.existsSync(f)) {
+            fs.removeSync(f);
         }
         this.dqCache.remove(hash);
     }
@@ -343,11 +346,6 @@ class LocalInventoryClient extends InventoryClient {
         }
         // Remove any references to this file
         this.files.delete(firstHash);
-        this.twistIdx.forEach((v, k) => {
-            if (v.equals(firstHash)) {
-                this.twistIdx.delete(k);
-            }
-        });
         this.writeCachesToDisk();
     }
 

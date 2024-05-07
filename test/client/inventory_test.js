@@ -100,7 +100,7 @@ describe("Archives files", async () => {
 });
 
 describe("Unowned file mechanism", async function() {
-    it("Unown removes all references in this.files + this.twistIdx and move file", async function() {
+    it("Unown removes all references in this.files, keeps references in this.twistIdx, and moves the file", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
         await inv.populate();
@@ -118,8 +118,8 @@ describe("Unowned file mechanism", async function() {
         inv.unown(t1.getHash());
 
         assert.ok(!inv.files.has(t0.getHash()));
-        assert.ok(!inv.twistIdx.has(t0.getHash()));
-        assert.ok(!inv.twistIdx.has(t1.getHash()));
+        assert.ok(inv.twistIdx.has(t0.getHash()));
+        assert.ok(inv.twistIdx.has(t1.getHash()));
         assert.ok(!fs.existsSync(inv.filePathForHash(t1.getHash())));
         assert.ok(fs.existsSync(inv.unownedPathForHash(t1.getHash())));
     });
@@ -239,7 +239,7 @@ describe("DQ Cache", async function() {
                          [twist.getHash().toString()]);
     });
 
-    it("put() automatically archives", async function() {
+    it("put() automatically archives when shouldArchive = default", async function() {
         const path = "./files/" + uuid();
         const inv = new LocalInventoryClient(path);
         await inv.populate();
@@ -258,6 +258,33 @@ describe("DQ Cache", async function() {
                     14);
         assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()),
                          [twist1.getHash().toString()]);
+        assert.ok(inv.isArchived(twist0.getHash()));
+        assert.ok(!fs.existsSync(inv.filePathForHash(twist0.getHash())));
+        assert.ok(fs.existsSync(inv.archivePathForHash(twist0.getHash())));
+    });
+
+    it("put() automatically deletes when shouldArchive = false and deleteOld = true", async function() {
+        const path = "./files/" + uuid();
+        const inv = new LocalInventoryClient(path, { shouldArchive: false, deleteOld: true});
+        await inv.populate();
+        const dq0 = DQ.mint(14, 1);
+        const twist0 = dq0.buildTwist().twist();
+        const dq1 = dq0.createSuccessor();
+        const twist1 = dq1.buildTwist().twist();
+
+        inv.put(twist0.getAtoms());
+        assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
+                     14);
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()),
+                         [twist0.getHash().toString()]);
+        inv.put(twist1.getAtoms());
+        assert.equal(inv.dqCache.getBalance(twist0.getHash()).totalQuantity,
+                    14);
+        assert.deepEqual(inv.dqCache.listAll().map(h => h.toString()),
+                         [twist1.getHash().toString()]);
+        assert.ok(!inv.isArchived(twist0.getHash()));
+        assert.ok(!fs.existsSync(inv.filePathForHash(twist0.getHash())));
+        assert.ok(!fs.existsSync(inv.archivePathForHash(twist0.getHash())));
     });
 
     it("put() does not add to dqCache if file is old", async function() {
