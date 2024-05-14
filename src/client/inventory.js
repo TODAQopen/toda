@@ -132,10 +132,11 @@ class LocalInventoryClient extends InventoryClient {
             this.files.clear();
             this.twistIdx.clear();
 
-            const promises = this._listPaths().map(fname => {
-                return this.loadFromDisk(fname.slice(0,fname.length-5)); //hack?
-            }) ?? [];
-            await Promise.all(promises);
+            // Do not do these in parallel, really long lines will try to load
+            // in every single file at once and blow up
+            for (const fname of this._listPaths()){
+                await this.loadFromDisk(fname.slice(0,fname.length-5)); //hack?
+            }
             this.writeCachesToDisk();
         }
 
