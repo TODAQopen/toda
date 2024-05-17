@@ -401,45 +401,41 @@ class Twist {
 
     /**
       * Walks backwards, looking for the most
-      *  recent prev that matches `predicate`
+      *  recent prev that matches `predicate` INCLUSIVE
       * @param predicate <Function(this)>
       * @
      */
     findLast(predicate) {
-        if (predicate(this)) {
-            return this;
-        }
-        let p = this.prev();
-        if (p) {
-            return p.findLast(predicate);
+        let p = this;
+        while (p) {
+            if (predicate(p)) {
+                return p;
+            }
+            p = p.prev();
         }
         return null;
     }
 
-    /** Returns the last fast twist before this one. */
+    /** Returns the last fast twist before this one. EXCLUSIVE*/
     lastFast() {
-        let p = this.prev();
-        if (p) {
-            return p.findLast(t => t.isTethered());
-        }
-        return null;
+        const p = this.prev();
+        return p?.findLast(x => x.isTethered());
     }
 
     /**
      * Backwards search of previous twists, looking for the last tether that
-     *  exists in the this.atoms
+     *  exists in the this.atoms INCLUSIVE
      * @returns <Twist>
      */
     findLastStoredTether() {
-        if (this.get(this.getTetherHash())) {
-            return this.tether();
-        }
-        return this.lastFast()?.findLastStoredTether();
+        const t = this.findLast(x => x.isTethered() &&
+                                     x.get(x.getTetherHash()));
+        return t?.tether();
     }
 
     /**
      * Backwards search of previous twists, looking for the hash of the tether
-     *  whose twist exists in this.atoms
+     *  whose twist exists in this.atoms INCLUSIVE
      * @returns <Hash>
      */
     findLastStoredTetherHash() {
@@ -449,7 +445,7 @@ class Twist {
     /**
       * Looks to see if `previousHash`
       *  is one of the previous twists of this twist,
-      *  returning that twist if it does.
+      *  returning that twist if it does. INCLUSIVE
       * @param previousHash <Hash>
       * @returns <Twist>
       */
@@ -458,12 +454,11 @@ class Twist {
     }
 
     first() {
-        let prev = this.prev();
-        if (!prev) {
-            return this;
+        let p = this;
+        while (p.prev()) {
+            p = p.prev();
         }
-
-        return prev.first();
+        return p; 
     }
 
     knownHistory() {
