@@ -346,6 +346,29 @@ describe("append", async () => {
             await topRelay.stop();
         }
     });
+
+    it("Append does not pull poptop when noRemote: true", async () => {
+        let toda = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
+        await toda.populateInventory();
+        toda._getSalt = () => utf8ToBytes("some salty");
+        const t0 = await toda.create(null, null, uuidCargo());
+        toda.defaultTopLineHash = t0.getHash();
+        // Seed initial
+        const m0 = await toda.create(t0.getHash());
+        const f0 = await toda.create(m0.getHash());
+        const f1 = await toda.append(f0, m0.getHash());
+        const f2 = await toda.append(f1, m0.getHash());
+        const f3 = await toda.append(f2, m0.getHash());
+        const f4 = await toda.append(f3, m0.getHash());
+        const t1 = await toda.get(t0.getHash());
+        const t2 = await toda.append(t1);
+        const f5 = await toda.append(f4, m0.getHash(), null, null, 
+                                     () => {}, null, { noRemote: true });
+        // Sanity
+        assert.ok(f5.get(t1.getHash()));
+        // Actual check
+        assert.ok(!f5.get(t2.getHash()));
+    });
 });
 
 describe("finalize twist", async () => {

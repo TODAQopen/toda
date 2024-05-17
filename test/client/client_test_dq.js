@@ -508,6 +508,39 @@ describe("Transfer tests; comprehensive", async function() {
         assert.equal((await bob.getBalance(dq, true)).balance, 3);
     });
 
+    it("Alice => Bob => Alice, DQ has earlier poptop than Bob, multiple files transferred", async function() {
+        const { toda: alice, hash: aliceHash } =
+            await createLine(this.initRelayTwists[0].getHash());
+        const { toda: bob, hash: bobHash } =
+            await createLine(this.initRelayTwists[2].getHash());
+        const dq = (await mint(alice, 143, 1)).root;
+
+        // force a split s.t. multiple files are sent in the next tx
+        let transferedTwists = await alice.transfer({amount: 8,
+                                                     destHash: aliceHash,
+                                                     typeHash: dq});
+
+        transferedTwists = await alice.transfer({amount: 9.2,
+            destHash: bobHash,
+            typeHash: dq});
+
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            bob.inv.put(t.getAtoms());
+        }
+
+        transferedTwists = await bob.transfer({amount: 6.2,
+                                               destHash: aliceHash,
+                                               typeHash: dq});
+        for (const t of transferedTwists) {
+            await Abject.fromTwist(t).checkAllRigs();
+            alice.inv.put(t.getAtoms());
+        }
+
+        assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
+        assert.equal((await bob.getBalance(dq, true)).balance, 3);
+    });
+
     it("Alice => Bob => Alice, DQ has earlier poptop than either", async function() {
         const { toda: alice, hash: aliceHash } =
             await createLine(this.initRelayTwists[2].getHash());

@@ -367,9 +367,14 @@ class TodaClient {
                 let nth = nextTwist.getHash();
                 await r.hoist(lastFast, nth, { noFast: noRemote });
                 await this._waitForHoist(lastFast, r);
-                const pullUntil = popTop ??
-                              this.defaultTopLineHash ??
-                              tether;
+                let pullUntil;
+                if (noRemote) {
+                    pullUntil = lastFast.getTetherHash();
+                } else {
+                    pullUntil = popTop ??
+                                this.defaultTopLineHash ??
+                                lastFast.getTetherHash();
+                }
                 await this.pull(nextTwist, pullUntil);
             } catch (e) {
                 console.warn("Hoist error:", e);
