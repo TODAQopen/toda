@@ -495,9 +495,10 @@ describe("files and twistIdx Cache", async function () {
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
 
-        // NB no populate / writeCachesToDisk call here
-        // Files exist on disk, but weren't added to the inventory and
-        // weren't cached
+        // delete the caches
+        fs.removeSync(`${path}/filesCache.json`);
+        fs.removeSync(`${path}/twistIdxCache.json`);
+        // sanity check
         assert(!fs.existsSync(`${path}/filesCache.json`));
         assert(!fs.existsSync(`${path}/twistIdxCache.json`));
 

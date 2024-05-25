@@ -319,6 +319,7 @@ class LocalInventoryClient extends InventoryClient {
             !this.isUnowned(atoms.focus)) {
             this.dqCache.add(abject);
         }
+        this.writeCachesToDisk();
     }
 
     archive(hash) {
