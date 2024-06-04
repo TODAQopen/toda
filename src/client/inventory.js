@@ -180,12 +180,12 @@ class LocalInventoryClient extends InventoryClient {
         const first = hs[hs.length - 1];
         hs.forEach(h => this.twistIdx.set(h, first));
         if (!this.files.has(first) || this.files.get(first).n <= hs.length) {
-            const existing = this.files.get(first)?.hash;
-            if (existing && this.files.get(first).n < hs.length) {
-                // the 'existing' file in the cache is old; archive it
-                this.archive(existing);
-            }
+            const existing = this.files.get(first);
             this.files.set(first, {hash: twist.getHash(), n: hs.length});
+            if (existing && existing.n < hs.length) {
+                // the 'existing' file in the cache is old; archive it
+                this.archive(existing.hash);
+            }
         } else if (this.files.get(first).n > hs.length) {
             // the 'existing' file in the cache is
             //  newer than this file; archive this
