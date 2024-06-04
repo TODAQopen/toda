@@ -263,7 +263,7 @@ class TodaClient {
         if (hoist) {
             return hoist;
         }
-        console.warn("Expected to find a hoist but couldn't; rehoisting");
+        console.warn(`Expected to find a hoist for lead ${lead.getHash()} and meet ${meetHash} but couldn't; rehoisting`);
         await relay.hoist(lead, meetHash);
         return (await this._waitForHoist(lead, relay)).hoist;
     }
