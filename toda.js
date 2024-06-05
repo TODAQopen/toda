@@ -13,7 +13,9 @@ export { SignatureRequirement } from  "./src/core/reqsat.js";
 
 /** Abjects **/
 export { Abject } from  "./src/abject/abject.js";
-export { SimpleRigged, DelegableActionable } from  "./src/abject/actionable.js";
+export { SimpleRigged, 
+         Actionable,
+         DelegableActionable } from  "./src/abject/actionable.js";
 export { Capability } from  "./src/abject/capability.js";
 export { P1String, P1Date } from  "./src/abject/primitive.js";
 export { DI, DIAssetClassClass, AssetClassField } from  "./src/abject/di.js";
