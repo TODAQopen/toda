@@ -402,6 +402,54 @@ class TodaClient {
         }
     }
 
+    async _pullStep(relay, twist, poptopHash) {
+        let startTwist, startHash;
+        try {
+            startTwist = twist.findLastStoredTether();
+            startHash = startTwist?.getHash();
+        } catch (err) {
+            if (!(err instanceof MissingPrevError)) {
+                throw err;
+            }
+        }
+
+        if (startTwist?.isTethered()) {
+            await relay.populateShield?.(startTwist);
+            twist.addAtoms(startTwist.getAtoms());
+        }
+        let prevFastTwist;
+        try {
+            prevFastTwist = startTwist?.lastFast();
+        } catch (e) {
+            // There might not be a prev
+            if (!(e instanceof MissingPrevError)) {
+                throw e;
+            }
+        }
+        if (prevFastTwist) {
+            await relay.populateShield?.(prevFastTwist);
+            twist.addAtoms(prevFastTwist.getAtoms());
+        }
+
+        let upstream = await relay.get(startHash);
+        twist.addAtoms(upstream.getAtoms());
+        let relayTwist = new Twist(twist.getAtoms(), relay.tetherHash);
+        const relayLine = Line.fromTwist(relayTwist);
+
+        try {
+            if (relayLine.colinear(relayTwist.getHash(), poptopHash)) {
+                return null;
+            }
+        } catch (err) {
+            if (!(err instanceof MissingPrevError)) {
+                throw err;
+            }
+        }
+
+        // TODO(acg): prevent infinite looping if we mess up the poptop
+        return this.getRelay(relayTwist);
+    }
+
     /**
      * Given a path retrieves the latest atoms from the tethered
      *  up to the specified poptop and
@@ -426,56 +474,9 @@ class TodaClient {
             return;
         }
         let relay = this.getRelay(lastFast);
-
         while (relay) {
-            let startTwist, startHash;
-            try {
-                startTwist = twist.findLastStoredTether();
-                startHash = startTwist?.getHash();
-            } catch (err) {
-                if (!(err instanceof MissingPrevError)) {
-                    throw err;
-                }
-            }
-
-            if (startTwist?.isTethered()) {
-                await relay.populateShield?.(startTwist);
-                twist.addAtoms(startTwist.getAtoms());
-            }
-            let prevFastTwist;
-            try {
-                prevFastTwist = startTwist?.lastFast();
-            } catch (e) {
-                // There might not be a prev
-                if (!(e instanceof MissingPrevError)) {
-                    throw e;
-                }
-            }
-            if (prevFastTwist) {
-                await relay.populateShield?.(prevFastTwist);
-                twist.addAtoms(prevFastTwist.getAtoms());
-            }
-
-            let upstream = await relay.get(startHash);
-            twist.addAtoms(upstream.getAtoms());
-            let relayTwist = new Twist(twist.getAtoms(), relay.tetherHash);
-            const relayLine = Line.fromTwist(relayTwist);
-
-            try {
-                if (relayLine.colinear(relayTwist.getHash(), poptopHash)) {
-                    break;
-                }
-            } catch (err) {
-                if (!(err instanceof MissingPrevError)) {
-                    throw err;
-                }
-            }
-
-            // TODO(acg): prevent infinite looping if we mess up the poptop
-            relay = this.getRelay(relayTwist);
+            relay = await this._pullStep(relay, twist, poptopHash);
         }
-        // TODO: should this auto-save?
-        // yes
         await this.put(twist);
     }
 
