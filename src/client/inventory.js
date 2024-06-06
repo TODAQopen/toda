@@ -99,23 +99,18 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     _areFileCachesCurrent() {
+        // Declare caches current if all files on disk exist in the cache,
+        // don't worry about potential old files in cache that aren't on disk
+
         // get files on disk
         const todaFiles = new Set(
             this._listPaths().map((fname) => fname.split(".toda")[0])
         );
 
-        // TODO do we care about the no-DQ case?
-
-        // do we have files on disk and nothing cached, or vice versa?
-        if (Boolean(todaFiles.size) === !this.files.size) {
-            return false;
-        }
-
-        // make sure all cached files are represented on disk
-        for (const [_, v] of this.files.entries()) {
+        for (const fileName of todaFiles) {
             if (
-                !todaFiles.has(v.hash.toString()) ||
-                !this.twistIdx.has(v.hash.toString())
+                !this.twistIdx.has(fileName) ||
+                !this.files.has(this.twistIdx.get(fileName))
             ) {
                 return false;
             }

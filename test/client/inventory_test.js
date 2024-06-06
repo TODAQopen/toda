@@ -450,7 +450,7 @@ describe("files and twistIdx Cache", async function () {
         );
     });
 
-    it("popluating LocalInventoryClient with wrong caches repopulates them from on disk files", async function () {
+    it("popluating LocalInventoryClient with wrong caches fails _areFileCachesCurrent", async function () {
         // create some data
         const path = nodePath.resolve("./files/" + uuid());
         let inv = new LocalInventoryClient(path);
@@ -461,28 +461,33 @@ describe("files and twistIdx Cache", async function () {
         inv.put(twist.getAtoms());
         inv.writeCachesToDisk()
 
-        // Break the cache
-        let brokenFileCache = _getJSONFile(`${path}/filesCache.json`)
-        brokenFileCache[twist.hash.toString()].hash = `41${"0".repeat(64)}`
-        fs.writeFileSync(
-            `${path}/filesCache.json`,
-            JSON.stringify(brokenFileCache)
-        );
+        // Break the cache by adding a new file
+        const path2 = nodePath.resolve("./files/" + uuid());
+        let inv2 = new LocalInventoryClient(path2);
+        const newDq = DQ.mint(100, 1);
+        const newTwist = newDq.buildTwist().twist();
+        const newAtoms = newTwist.getAtoms()
+        inv2.put(newAtoms);
+        const currentFileLocation = inv2.filePathForHash(newAtoms.focus)
+        const newFileLocation = inv.filePathForHash(newAtoms.focus)
+        fs.copySync(currentFileLocation, newFileLocation);
 
         // Make new inv, run populate, make sure files / twistIdx are
         // correctly rebuilt
-        const inv2 = new LocalInventoryClient(path);
-        assert(!inv2._areFileCachesCurrent());
-        await inv2.populate();
-        assert(inv2._areFileCachesCurrent());
+        assert(!inv._areFileCachesCurrent());
+        await inv.populate();
+        assert(inv._areFileCachesCurrent());
 
+        assert.deepEqual(JSON.parse(JSON.stringify(Array.from(inv.files.entries()))), [
+            [twist.hash.toString(), { hash: twist.hash.toString(), n: 1 }],
+            [newTwist.hash.toString(), { hash: newTwist.hash.toString(), n: 1 }],
+        ]);
         assert.deepEqual(
-            JSON.parse(JSON.stringify(Array.from(inv2.files.entries()))),
-            [[twist.hash.toString(), { hash: twist.hash.toString(), n: 1 }]]
-        );
-        assert.deepEqual(
-            JSON.parse(JSON.stringify(Array.from(inv2.twistIdx.entries()))),
-            [[twist.hash.toString(), twist.hash.toString()]]
+            JSON.parse(JSON.stringify(Array.from(inv.twistIdx.entries()))),
+            [
+                [twist.hash.toString(), twist.hash.toString()],
+                [newTwist.hash.toString(), newTwist.hash.toString()],
+            ]
         );
     });
 
@@ -516,6 +521,47 @@ describe("files and twistIdx Cache", async function () {
         assert.deepEqual(
             JSON.parse(JSON.stringify(Array.from(inv2.twistIdx.entries()))),
             [[twist.hash.toString(), twist.hash.toString()]]
+        );
+    });
+
+    it("shouldArchive = false handles caches correctly", async function () {
+        // create some data
+        const path = nodePath.resolve("./files/" + uuid());
+        let inv = new LocalInventoryClient(path, {shouldArchive: false});
+        assert(inv._areFileCachesCurrent());
+        await inv.populate();
+
+        const dq0 = DQ.mint(1000, 1);
+        const twist0 = dq0.buildTwist().twist();
+        inv.put(twist0.getAtoms());
+
+        // make some more files so we have older unarchived files in the dir
+        const del = dq0.delegate(5)
+        const next = dq0.createSuccessor();
+        next.confirmDelegate(del);
+        const twist1 = next.buildTwist().twist();
+        inv.put(twist1.getAtoms());
+
+        const del2 = next.delegate(4)
+        const next2 = next.createSuccessor();
+        next2.confirmDelegate(del2);
+        const twist2 = next2.buildTwist().twist();
+        inv.put(twist2.getAtoms());
+
+        assert(inv._areFileCachesCurrent());
+
+        const inv2 = new LocalInventoryClient(path, {shouldArchive: false});
+        assert(inv2._areFileCachesCurrent());
+
+        assert.deepEqual(
+            JSON.parse(JSON.stringify(Array.from(inv2.files.entries()))),
+            [[twist0.hash.toString(), { hash: twist2.hash.toString(), n: 3 }]]
+        );
+        assert.deepEqual(
+            JSON.parse(JSON.stringify(Array.from(inv2.twistIdx.entries()))),
+            [[twist0.hash.toString(), twist0.hash.toString()],
+             [twist1.hash.toString(), twist0.hash.toString()],
+             [twist2.hash.toString(), twist0.hash.toString()]]
         );
     });
 });
