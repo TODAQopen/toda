@@ -259,7 +259,7 @@ class TodaClient {
             throw new WaitForHitchError(); //TODO: specialize this error
         }
         // Rehoist; in case we missed hoisting earlier
-        const hoist = (await relay.getHoist(lead)).hoist;
+        const hoist = (await relay.getHoist(lead))?.hoist;
         if (hoist) {
             return hoist;
         }
@@ -402,7 +402,7 @@ class TodaClient {
         }
     }
 
-    async _pullStep(relay, twist, poptopHash) {
+    async _pull(relay, twist, poptopHash) {
         let startTwist, startHash;
         try {
             startTwist = twist.findLastStoredTether();
@@ -432,6 +432,9 @@ class TodaClient {
         }
 
         let upstream = await relay.get(startHash);
+        if (!upstream) {
+            return; // TODO: warn?
+        }
         twist.addAtoms(upstream.getAtoms());
         let relayTwist = new Twist(twist.getAtoms(), relay.tetherHash);
         const relayLine = Line.fromTwist(relayTwist);
@@ -475,7 +478,7 @@ class TodaClient {
         }
         let relay = this.getRelay(lastFast);
         while (relay) {
-            relay = await this._pullStep(relay, twist, poptopHash);
+            relay = await this._pull(relay, twist, poptopHash);
         }
         await this.put(twist);
     }
