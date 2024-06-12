@@ -3,7 +3,8 @@ import axios from 'axios';
 import fs from 'fs-extra';
 import path from 'path';
 import { Atoms } from '../core/atoms.js';
-import { HashMap, JSONFileBackedHashMap } from '../core/map.js';
+import { HashMap } from '../core/map.js';
+import { JSONFileBackedHashMap } from '../core/fsMap.js';
 import { Hash } from "../core/hash.js"
 import { Twist } from '../core/twist.js';
 import { DQCache } from './dq_cache.js';
