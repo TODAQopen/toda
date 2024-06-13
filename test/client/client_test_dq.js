@@ -4,6 +4,7 @@ import { Hash } from "../../src/core/hash.js";
 import { TodaClient } from "../../src/client/client.js";
 import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { v4 as uuid } from "uuid";
+import { uuidCargo } from "../util.js";
 import { createLine, initRelay, mint } from "./util.js";
 import { InsufficientQuantity, InvalidDisplayPrecision, InvalidQuantity }
     from "../../src/abject/quantity.js";
@@ -955,5 +956,116 @@ describe("Mint tests", async function () {
                              InvalidDisplayPrecision);
         await assert.rejects(toda.mint(123, "HELLO!"),
                              InvalidDisplayPrecision);
+    });
+});
+
+describe("Transfer correct # notes", async () => {
+    it("Throws when no balance (ie, nothing for that type hash)", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const toda = new TodaClient(inv, "http://localhost:8000");
+        toda._getSalt = () => new Uint8Array(new TextEncoder()
+                                                .encode("I am salty!"));
+        const typeHash = Hash.fromHex("41469b867186c16db10cc6db093f1b8064cbf44a6d6e9e7f2921bd51896f0dcf6ac2");
+        const destHash = Hash.fromHex("410cc6db0519b867186c16db1bf896f0dcf6ac293f1b8064c4644a6d6e9e7f2921bd");
+        let err;
+        try {
+            await toda.transfer({amount: 40, typeHash, destHash });
+        } catch (e) {
+            err = e;
+        }
+        assert.equal(err?.message, "Insufficient funds");
+    });
+
+    it("Throws when not enough balance", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const toda = new TodaClient(inv, "http://localhost:8000");
+        toda._getSalt = () => new Uint8Array(new TextEncoder()
+                                                .encode("I am salty!"));
+        const t0 = await toda.create(null, null, uuidCargo());
+        const { root } = await toda.mint(30, 0, t0.getHash());
+        const destHash = Hash.fromHex("410cc6db0519b867186c16db1bf896f0dcf6ac293f1b8064c4644a6d6e9e7f2921bd");
+        let err;
+        try {
+            await toda.transfer({amount: 40, typeHash: root, destHash });
+        } catch (e) {
+            err = e;
+        }
+        assert.equal(err?.message, "Insufficient funds");
+    });
+
+    it("Transfers an exact amount when possible, no delegation", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const toda = new TodaClient(inv, "http://localhost:8000");
+        toda._getSalt = () => new Uint8Array(new TextEncoder()
+                                                .encode("I am salty!"));
+        const t0 = await toda.create(null, null, uuidCargo());
+        const { root } = await toda.mint(30, 0, t0.getHash());
+        // delegate quantities to self
+        const txd = await toda.transfer({amount: 21, typeHash: root, destHash: t0.getHash()});
+        const txdH = txd[0].getHash();
+        const destHash = Hash.fromHex("410cc6db0519b867186c16db1bf896f0dcf6ac293f1b8064c4644a6d6e9e7f2921bd");
+        const txd2 = await toda.transfer({amount: 21, typeHash: root, destHash });
+        assert.equal(txd2.length, 1);
+        // doesn't delegate; only creates a successor
+        assert.ok(txd2[0].getPrevHash().equals(txdH));
+    });
+
+    it("Delegates exactly 1 file when possible", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const toda = new TodaClient(inv, "http://localhost:8000");
+        toda._getSalt = () => new Uint8Array(new TextEncoder()
+                                                .encode("I am salty!"));
+        const t0 = await toda.create(null, null, uuidCargo());
+        const { root } = await toda.mint(30, 0, t0.getHash());
+        // delegate quantities to self
+        await toda.transfer({amount: 21, typeHash: root, destHash: t0.getHash()});
+        const destHash = Hash.fromHex("410cc6db0519b867186c16db1bf896f0dcf6ac293f1b8064c4644a6d6e9e7f2921bd");
+        const txd2 = await toda.transfer({amount: 20, typeHash: root, destHash });
+        assert.equal(txd2.length, 1);
+    });
+
+    it("Sends multiple files when no files with enough, no delegation case", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const toda = new TodaClient(inv, "http://localhost:8000");
+        toda._getSalt = () => new Uint8Array(new TextEncoder()
+                                                .encode("I am salty!"));
+        const t0 = await toda.create(null, null, uuidCargo());
+        const { root } = await toda.mint(30, 0, t0.getHash());
+        // delegate quantities to self
+        await toda.transfer({amount: 21, typeHash: root, destHash: t0.getHash()});
+
+        // existing files
+        const before = toda.getBalance(root).files;
+
+        const destHash = Hash.fromHex("410cc6db0519b867186c16db1bf896f0dcf6ac293f1b8064c4644a6d6e9e7f2921bd");
+        const txd2 = await toda.transfer({amount: 30, typeHash: root, destHash });
+
+        assert.equal(txd2.length, 2);
+        // Not delegated; just sent
+        for (const t of txd2) {
+            assert.ok(before.find(h => t.getPrevHash().equals(h)));
+        }
+    });
+
+    it("Sends multiple files when no files with enough, delegated", async () => {
+        const inv = new LocalInventoryClient("./files/" + uuid());
+        const toda = new TodaClient(inv, "http://localhost:8000");
+        toda._getSalt = () => new Uint8Array(new TextEncoder()
+                                                .encode("I am salty!"));
+        const t0 = await toda.create(null, null, uuidCargo());
+        const { root } = await toda.mint(30, 0, t0.getHash());
+        // delegate quantities to self
+        await toda.transfer({amount: 21, typeHash: root, destHash: t0.getHash()});
+        const destHash = Hash.fromHex("410cc6db0519b867186c16db1bf896f0dcf6ac293f1b8064c4644a6d6e9e7f2921bd");
+        const txd2 = await toda.transfer({amount: 29, typeHash: root, destHash });
+        assert.equal(txd2.length, 2);
+        // sanity
+        let sum = 0;
+        for (const t of txd2) {
+            const a = Abject.fromTwist(t);
+            sum += a.quantity;
+        }
+        assert.equal(sum, 29);
+        assert.equal(toda.getBalance(root).quantity, 1);
     });
 });

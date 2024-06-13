@@ -704,19 +704,19 @@ class TodaClient {
     async transfer({ amount, typeHash, destHash }) {
         // XXX(acg): always fastens last twist for now
         const balance = this.getBalance(typeHash);
-
-        if (!balance) {
+        
+        if (!balance || balance.quantity == 0) {
             throw new Error("Insufficient funds");
         }
 
         const quantity = DQ.displayToQuantity(amount, balance.displayPrecision);
 
-        if (quantity < balance.totalQuantity) {
+        if (quantity > balance.quantity) {
             throw new Error("Insufficient funds");
         }
 
         const exact = Object.keys(balance.fileQuantities)
-                            .find(h => balance.fileQuantities[h].quantity
+                            .find(h => balance.fileQuantities[h]
                                          == quantity);
 
         if (exact) {
@@ -732,7 +732,7 @@ class TodaClient {
                                         balance.poptop);
         }
         const excess = Object.keys(balance.fileQuantities)
-                             .find(h => balance.fileQuantities[h].quantity
+                             .find(h => balance.fileQuantities[h]
                                          > quantity);
         if (excess) {
             const twist = await this._getOwned(excess);
