@@ -370,7 +370,7 @@ class TodaClient {
                 const pullUntil = popTop ??
                               this.defaultTopLineHash ??
                               tether;
-                await this.pull(nextTwist, pullUntil);
+                await this.pull(nextTwist, pullUntil, { noRemote });
             } catch (e) {
                 console.warn("Hoist error:", e);
                 //We don't need to throw here; it can be rehoisted later
@@ -433,7 +433,7 @@ class TodaClient {
 
         let upstream = await relay.get(startHash);
         if (!upstream) {
-            return; // TODO: warn?
+            return null; // TODO: warn?
         }
         twist.addAtoms(upstream.getAtoms());
         let relayTwist = new Twist(twist.getAtoms(), relay.tetherHash);
@@ -470,16 +470,23 @@ class TodaClient {
      * "level" may need to contact multiple relays.
      *
      */
-    async pull(twist, poptopHash, previousGetResult) {
+    async pull(twist, poptopHash, { noRemote } = {}) {
         // TODO(acg): investigate what happens if the last twist isn't fast
         let lastFast = twist.lastFast();
         if (!lastFast) {
             return;
         }
         let relay = this.getRelay(lastFast);
-        while (relay) {
-            relay = await this._pull(relay, twist, poptopHash);
+    
+        if (noRemote) {
+            // Only 1 step when remote
+            await this._pull(relay, twist, poptopHash);
+        } else {
+            while (relay) {
+                relay = await this._pull(relay, twist, poptopHash);
+            }
         }
+
         await this.put(twist);
     }
 

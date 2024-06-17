@@ -848,6 +848,44 @@ describe("Multi-remote pull test", () => {
             await topRelay.stop();
         }
     });
+
+    it("Pull respects noRemote flag", async () => {
+        const top = new TodaClient(new LocalInventoryClient("./files/" + uuid()));
+        await top.populateInventory();
+        top._getSalt = () => utf8ToBytes("some salty");
+        const topRelay = await new TestRelayServer(top, { port: 8090 }).start();
+
+        const toda = new TodaClient(new LocalInventoryClient("./files/" + uuid()),
+                                    "http://localhost:8090/files");
+        await toda.populateInventory();
+        toda._getSalt = () => utf8ToBytes("some salty2");
+        toda.defaultRelayUrl = "http://localhost:8090/hoist";
+        try {
+            const t0 = await top.create(null, null, uuidCargo());
+            toda.defaultTopLineHash = t0.getHash();
+            await top.append(t0);
+
+            const m0 = await toda.create(t0.getHash());
+            await toda.append(m0, t0.getHash());            
+
+            const f0 = await toda.create(m0.getHash());
+            const f1 = await toda.append(f0, m0.getHash());
+            const f2 = await toda.append(f1, m0.getHash());
+
+            const t1 = await top.get(t0.getHash());
+            // Pulls to poptop completely when no remote unspecified
+            assert.ok(f2.get(t1.getHash()));
+
+            const t2 = await top.append(t1);
+            const f3 = await toda.append(f2, m0.getHash(), 
+                                         null, null, 
+                                         () => {}, null, {noRemote: true});
+            // PDoes not pull remote when no remote specified
+            assert.ok(!f3.get(t2.getHash()));
+        } finally {
+            await topRelay.stop();
+        }
+    });
 });
 
 describe("Unowned archiving works as expected", async function() {
