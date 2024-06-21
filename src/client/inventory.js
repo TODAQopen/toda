@@ -131,7 +131,12 @@ class LocalInventoryClient extends InventoryClient {
             // Do not do these in parallel, really long lines will try to load
             // in every single file at once and blow up
             for (const fname of this._listPaths()){
-                await this.loadFromDisk(fname.slice(0,fname.length-5)); //hack?
+                const hash = fname.slice(0,fname.length-5);
+                if (!this.findLatest(hash)) {
+                    await this.loadFromDisk(hash);
+                } else {
+                    this.archive(hash);
+                }
             }
             this.writeCachesToDisk();
         }
