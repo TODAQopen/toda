@@ -141,7 +141,7 @@ class LocalInventoryClient extends InventoryClient {
             this.writeCachesToDisk();
         }
 
-        if (this.dqCache.isEmpty()) {
+        if (this.dqCache.isEmpty() && this.files.size) {
             await this.rebuildDQCache();
         }
     }
