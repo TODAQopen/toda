@@ -800,7 +800,7 @@ class TodaClient {
      *      if null does not populate the mintingInfo field
      * @param {Hash || Null} popTop : the hash to put into
      *      the poptop field; client's default if unspecified
-     * @returns {Promise<{dq: Twist, root: Hash}>}
+     * @returns {Promise<{twist: Twist, root: Hash}>}
      */
     async mint(quantity, precision, tetherHash, popTop, mintingInfo) {
         tetherHash ||= this.defaultRelayHash;
