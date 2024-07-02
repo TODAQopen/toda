@@ -70,6 +70,9 @@ class LocalInventoryClient extends InventoryClient {
             fs.mkdirSync(invRoot, { recursive: true });
         }
 
+        // this.files, this.twistIdx, and this.dqCache are documented in:
+        // ./inventory_docs.md
+
         // Populate these from files
         this.files = new JSONFileBackedHashMap(
             this.invRoot + "/filesCache.json",
