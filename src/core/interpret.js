@@ -43,7 +43,7 @@ class MissingSuccessor extends MissingError {}
 class MissingPostEntry extends MissingEntryError {}
 
 class Interpreter {
-    constructor(lineOrTwist, topHash, isTopline) {
+    constructor(lineOrTwist, topHash) {
 
         if (lineOrTwist instanceof Twist) {
             this.line = Line.fromTwist(lineOrTwist);
