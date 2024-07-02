@@ -2,6 +2,7 @@ import { DQ } from "../../src/abject/quantity.js";
 import { Hash } from "../../src/core/hash.js";
 import { LocalInventoryClient } from "../../src/client/inventory.js";
 import { TwistBuilder } from "../../src/core/twist.js";
+import { uuidCargo } from "../util.js";
 
 import assert from "assert";
 import { v4 as uuid } from "uuid";
@@ -563,5 +564,147 @@ describe("files and twistIdx Cache", async function () {
              [twist1.hash.toString(), twist0.hash.toString()],
              [twist2.hash.toString(), twist0.hash.toString()]]
         );
+    });
+});
+
+describe("_smartHistory()", async () => {
+    it("Correctly returns expected values when no existing data in cache", async () => {
+        const t0b = new TwistBuilder();
+        t0b.setCargo(uuidCargo());
+        const t0 = t0b.twist();
+        const t1 = t0.createSuccessor().twist();
+        const t2 = t1.createSuccessor().twist();
+
+        const hs = t2.knownHistory();
+        const n = hs.length;
+        const first = t0.getHash();
+
+        const path = nodePath.resolve("./files/" + uuid());
+        const inv = new LocalInventoryClient(path);
+        const r = inv._smartHistory(t2);
+        assert.equal(JSON.stringify(r.newTwists), JSON.stringify(hs));
+        assert.equal(r.nTwists, n);
+        assert.ok(first.equals(r.firstTwist));
+    });
+
+    it("Correctly returns expected values existing data in cache", async () => {
+        const t0b = new TwistBuilder();
+        t0b.setCargo(uuidCargo());
+        const t0 = t0b.twist();
+        const t1 = t0.createSuccessor().twist();
+        const t2 = t1.createSuccessor().twist();
+
+        const hs = t2.knownHistory();
+        const n = hs.length;
+        const first = t0.getHash();
+
+        const path = nodePath.resolve("./files/" + uuid());
+        const inv = new LocalInventoryClient(path);
+
+        // Put t1 into the cache
+        inv.put(t1.getAtoms());
+
+        const r = inv._smartHistory(t2);
+        // Correctly identifies that t2 is new, and gets the n + first correct
+        assert.equal(JSON.stringify(r.newTwists), JSON.stringify([t2.getHash()]));
+        assert.equal(r.nTwists, n);
+        assert.ok(first.equals(r.firstTwist));
+    });
+
+    it("Same, but existing data in cache is exactly the first twist", async () => {
+        const t0b = new TwistBuilder();
+        t0b.setCargo(uuidCargo());
+        const t0 = t0b.twist();
+        const t1 = t0.createSuccessor().twist();
+        const t2 = t1.createSuccessor().twist();
+
+        const hs = t2.knownHistory();
+        const n = hs.length;
+        const first = t0.getHash();
+
+        const path = nodePath.resolve("./files/" + uuid());
+        const inv = new LocalInventoryClient(path);
+
+        // Put t0 into the cache
+        inv.put(t0.getAtoms());
+
+        const r = inv._smartHistory(t2);
+        // Correctly identifies that t2 is new, and gets the n + first correct
+        assert.equal(JSON.stringify(r.newTwists), JSON.stringify([t2.getHash(),
+                                                              t1.getHash()]));
+        assert.equal(r.nTwists, n);
+        assert.ok(first.equals(r.firstTwist));
+    });
+});
+
+describe("_addAtoms()", async () => {
+    it("Correctly populatess cache when no existing data in cache", async () => {
+        const t0b = new TwistBuilder();
+        t0b.setCargo(uuidCargo());
+        const t0 = t0b.twist();
+        const t1 = t0.createSuccessor().twist();
+        const t2 = t1.createSuccessor().twist();
+
+        const path = nodePath.resolve("./files/" + uuid());
+        const inv = new LocalInventoryClient(path);
+        inv._addAtoms(t2.getAtoms());
+        assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
+        assert.equal(inv.files.get(t0.getHash()).n, 3);
+    });
+
+    it("Correctly populates cache when existing but older in cache", async () => {
+        const t0b = new TwistBuilder();
+        t0b.setCargo(uuidCargo());
+        const t0 = t0b.twist();
+        const t1 = t0.createSuccessor().twist();
+        const t2 = t1.createSuccessor().twist();
+
+        const path = nodePath.resolve("./files/" + uuid());
+        const inv = new LocalInventoryClient(path);
+        // Add old first
+        inv._addAtoms(t1.getAtoms());
+        assert.ok(inv.files.get(t0.getHash()).hash.equals(t1.getHash()));
+        assert.equal(inv.files.get(t0.getHash()).n, 2);
+        // Update
+        inv._addAtoms(t2.getAtoms());
+        assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
+        assert.equal(inv.files.get(t0.getHash()).n, 3);
+    });
+
+    it("Same, but existing data in cache is exactly the first twist", async () => {
+        const t0b = new TwistBuilder();
+        t0b.setCargo(uuidCargo());
+        const t0 = t0b.twist();
+        const t1 = t0.createSuccessor().twist();
+        const t2 = t1.createSuccessor().twist();
+
+        const path = nodePath.resolve("./files/" + uuid());
+        const inv = new LocalInventoryClient(path);
+        // Add old first
+        inv._addAtoms(t0.getAtoms());
+        assert.ok(inv.files.get(t0.getHash()).hash.equals(t0.getHash()));
+        assert.equal(inv.files.get(t0.getHash()).n, 1);
+        // Update
+        inv._addAtoms(t2.getAtoms());
+        assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
+        assert.equal(inv.files.get(t0.getHash()).n, 3);
+    });
+
+    it("Does not corrupt cached values if _addAtoms() and older file", async () => {
+        const t0b = new TwistBuilder();
+        t0b.setCargo(uuidCargo());
+        const t0 = t0b.twist();
+        const t1 = t0.createSuccessor().twist();
+        const t2 = t1.createSuccessor().twist();
+
+        const path = nodePath.resolve("./files/" + uuid());
+        const inv = new LocalInventoryClient(path);
+        inv._addAtoms(t2.getAtoms());
+        assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
+        assert.equal(inv.files.get(t0.getHash()).n, 3);
+        // Add older file
+        inv._addAtoms(t1.getAtoms());
+        assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
+        assert.equal(inv.files.get(t0.getHash()).n, 3);
     });
 });

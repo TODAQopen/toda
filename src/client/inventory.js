@@ -178,22 +178,57 @@ class LocalInventoryClient extends InventoryClient {
         fs.emptyDirSync(this.invRoot);
     }
 
+    /**
+     *  Use the indexes to determine the relevant information for _addAtoms(),
+     *  rather than call twist.knownHistory() (which has to walk all the
+     *  way back to the start)
+     *  Assumption: `twist` does not already exist in the cache
+     *  
+     *  firstTwist: The very first twist of this line, nTwists: The total length of this twist,
+     *  newTwists: A truncated list of hashes containing only the new twists
+     * @returns {{firstTwist: Hash, nTwists: Number, newTwists: Hash[]}}
+     */
+    _smartHistory(twist) {
+        const newTwists = [];
+        let prev = twist;
+        let shorted;
+        while (prev) {
+            const ph = prev.getHash();
+            if (this.findLatest(ph)) {
+                shorted = ph;
+                break;
+            }
+            newTwists.push(ph);
+            prev = prev.safePrev();
+        }
+        let firstTwist, nTwists;
+        if (shorted) {
+            firstTwist = this.twistIdx.get(shorted);
+            nTwists = this.files.get(firstTwist).n + newTwists.length;
+        } else {
+            firstTwist = newTwists[newTwists.length - 1];
+            nTwists = newTwists.length;
+        }
+        return { firstTwist, newTwists, nTwists };
+    }
+
     _addAtoms(atoms) {
         const twist = new Twist(atoms, atoms.focus);
-        const hs = twist.knownHistory();
-        const first = hs[hs.length - 1];
-        hs.forEach(h => this.twistIdx.set(h, first));
-        if (!this.files.has(first) || this.files.get(first).n <= hs.length) {
-            const existing = this.files.get(first);
-            this.files.set(first, {hash: twist.getHash(), n: hs.length});
-            if (existing && existing.n < hs.length) {
-                // the 'existing' file in the cache is old; archive it
-                this.archive(existing.hash);
-            }
-        } else if (this.files.get(first).n > hs.length) {
+        const existingLatest = this.findLatest(atoms.focus);
+        if (existingLatest && !existingLatest.equals(atoms.focus)) {
             // the 'existing' file in the cache is
             //  newer than this file; archive this
             this.archive(atoms.focus);
+        } else {
+            const { firstTwist, newTwists, nTwists } = this._smartHistory(twist);
+            newTwists.forEach(h => this.twistIdx.set(h, firstTwist));
+            const existing = this.files.get(firstTwist);
+            this.files.set(firstTwist, {hash: twist.getHash(), n: nTwists});
+            if (existing && existing.n < nTwists) {
+                // the 'existing' file in the cache is old; archive it
+                this.archive(existing.hash);
+            }
+            // else it's a new file we don't know about yet; no archiving
         }
     }
 
