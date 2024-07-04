@@ -477,7 +477,7 @@ class TodaClient {
             return;
         }
         let relay = this.getRelay(lastFast);
-    
+
         if (noRemote) {
             // Only 1 step when remote
             await this._pull(relay, twist, poptopHash);
@@ -496,7 +496,6 @@ class TodaClient {
             !await this.isSatisfiable(twist)) {
             this.inv.unown(twist.getHash());
         }
-        this.inv.writeCachesToDisk();
     }
 
     async isCanonical(twist, popTopHash) {
@@ -711,7 +710,7 @@ class TodaClient {
     async transfer({ amount, typeHash, destHash }) {
         // XXX(acg): always fastens last twist for now
         const balance = this.getBalance(typeHash);
-        
+
         if (!balance || balance.quantity == 0) {
             throw new Error("Insufficient funds");
         }

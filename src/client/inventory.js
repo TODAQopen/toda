@@ -33,7 +33,7 @@ class InventoryClient {
     async populate() {
     }
 
-    writeCachesToDisk() {}
+    _writeCachesToDisk() {}
 }
 
 class RemoteInventoryClient extends InventoryClient {
@@ -141,7 +141,7 @@ class LocalInventoryClient extends InventoryClient {
                     this.archive(hash);
                 }
             }
-            this.writeCachesToDisk();
+            this._writeCachesToDisk();
         }
 
         if (this.dqCache.isEmpty() && this.files.size) {
@@ -149,7 +149,7 @@ class LocalInventoryClient extends InventoryClient {
         }
     }
 
-    writeCachesToDisk() {
+    _writeCachesToDisk() {
         this.twistIdx.commit();
         this.files.commit();
     }
@@ -183,7 +183,7 @@ class LocalInventoryClient extends InventoryClient {
      *  rather than call twist.knownHistory() (which has to walk all the
      *  way back to the start)
      *  Assumption: `twist` does not already exist in the cache
-     *  
+     *
      *  firstTwist: The very first twist of this line, nTwists: The total length of this twist,
      *  newTwists: A truncated list of hashes containing only the new twists
      * @returns {{firstTwist: Hash, nTwists: Number, newTwists: Hash[]}}
@@ -358,7 +358,7 @@ class LocalInventoryClient extends InventoryClient {
             !this.isUnowned(atoms.focus)) {
             this.dqCache.add(abject);
         }
-        this.writeCachesToDisk();
+        this._writeCachesToDisk();
     }
 
     archive(hash) {
@@ -387,7 +387,7 @@ class LocalInventoryClient extends InventoryClient {
         }
         // Remove any references to this file
         this.files.delete(firstHash);
-        this.writeCachesToDisk();
+        this._writeCachesToDisk();
     }
 
     isArchived(hash) {

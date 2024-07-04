@@ -398,7 +398,7 @@ describe("files and twistIdx Cache", async function () {
         const twist = dq.buildTwist().twist();
 
         inv.put(twist.getAtoms());
-        inv.writeCachesToDisk();
+        inv._writeCachesToDisk();
 
         assert.equal(
             Object.keys(_getJSONFile(`${path}/filesCache.json`)).length,
@@ -433,7 +433,7 @@ describe("files and twistIdx Cache", async function () {
         const twist2 = next2.buildTwist().twist();
         inv.put(twist2.getAtoms());
 
-        inv.writeCachesToDisk();
+        inv._writeCachesToDisk();
         assert(inv._areFileCachesCurrent());
 
         const inv2 = new LocalInventoryClient(path);
@@ -460,7 +460,7 @@ describe("files and twistIdx Cache", async function () {
         const dq = DQ.mint(14, 1);
         const twist = dq.buildTwist().twist();
         inv.put(twist.getAtoms());
-        inv.writeCachesToDisk()
+        inv._writeCachesToDisk()
 
         // Break the cache by adding a new file
         const path2 = nodePath.resolve("./files/" + uuid());
