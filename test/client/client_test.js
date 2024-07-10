@@ -420,7 +420,7 @@ describe("TodaClient unit tests", async () => {
         tb.setTetherHash(tether.getHash());
         tb = tb.createSuccessor();
         let twist = tb.twist();
-        inv.put(tether.getAtoms());
+        await inv.put(tether.getAtoms());
         let relay = toda.getRelay(twist);
         assert.ok(relay instanceof LocalRelayClient);
         assert.ok(relay.tetherHash.equals(tether.getHash()));
@@ -684,7 +684,7 @@ describe("pull should include all required info", async () => {
 
         // xfer it to the original twist in the remote.
         let aNNNext = await toda.append(aNNext, remoteLine.getHash());
-        toda2.inv.put(aNNNext.getAtoms());
+        await toda2.inv.put(aNNNext.getAtoms());
 
         assert.equal(await toda.isSatisfiable(aNNNext), false);
         assert(await toda2.isSatisfiable(aNNNext));

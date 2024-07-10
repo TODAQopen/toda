@@ -829,7 +829,7 @@ class TodaClient {
                                                 () => true);
             let prevToplineAtoms = (await relay.get()).getAtoms();
             dqTwist.addAtoms(prevToplineAtoms);
-            this.put(dqTwist);
+            await this.put(dqTwist);
         }
 
         const dqNextTB = Abject.fromTwist(dqTwist)

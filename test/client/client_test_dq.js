@@ -334,7 +334,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -355,7 +355,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -363,7 +363,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -383,7 +383,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -391,7 +391,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            alice.inv.put(t.getAtoms());
+            await alice.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
@@ -410,7 +410,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -418,7 +418,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            alice.inv.put(t.getAtoms());
+            await alice.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
@@ -437,7 +437,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -445,7 +445,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            alice.inv.put(t.getAtoms());
+            await alice.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
@@ -466,7 +466,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -474,7 +474,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -494,7 +494,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -502,7 +502,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            alice.inv.put(t.getAtoms());
+            await alice.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
@@ -525,7 +525,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -533,7 +533,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            alice.inv.put(t.getAtoms());
+            await alice.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 11.3);
@@ -558,7 +558,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -566,7 +566,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -605,7 +605,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -613,7 +613,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -641,7 +641,7 @@ describe("Transfer tests; comprehensive", async function() {
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -680,7 +680,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                       typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -688,7 +688,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -714,7 +714,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -722,7 +722,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -751,7 +751,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -759,7 +759,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -786,7 +786,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -794,7 +794,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -824,7 +824,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -832,7 +832,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);
@@ -875,7 +875,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                      typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            bob.inv.put(t.getAtoms());
+            await bob.inv.put(t.getAtoms());
         }
 
         transferedTwists = await bob.transfer({amount: 6.2,
@@ -883,7 +883,7 @@ describe("Transfer tests; comprehensive with multiple relays", async function() 
                                                typeHash: dq});
         for (const t of transferedTwists) {
             await Abject.fromTwist(t).checkAllRigs();
-            charlie.inv.put(t.getAtoms());
+            await charlie.inv.put(t.getAtoms());
         }
 
         assert.equal((await alice.getBalance(dq, true)).balance, 5.1);

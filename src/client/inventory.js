@@ -341,15 +341,15 @@ class LocalInventoryClient extends InventoryClient {
         return atoms;
     }
 
-    put(atoms, explicitPath) {
-        let tmpPath = this.tmpFilePathForHash(atoms.focus);
-        fs.outputFileSync(tmpPath, atoms.toBytes());
-
+    async _write(atoms, explicitPath) {
+        const tmpPath = this.tmpFilePathForHash(atoms.focus); 
+        await fs.writeFile(tmpPath, atoms.toBytes(), { overwrite: true });
         let destPath = explicitPath || this.filePathForHash(atoms.focus);
-        // NOTE: copy + remove rather than rename since some file systems
-        //       have issues with rename
-        fs.copySync(tmpPath, destPath);
-        fs.removeSync(tmpPath);
+        await fs.rename(tmpPath, destPath);
+    }
+
+    async put(atoms, explicitPath) {
+        await this._write(atoms, explicitPath);
         this._addAtoms(atoms);
         const abject = Abject.fromTwist(new Twist(atoms, atoms.focus));
         if (abject &&
