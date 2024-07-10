@@ -256,10 +256,11 @@ class DelegableActionable extends Actionable {
         if (!this.delegateInitiate()) {
             return [this];
         }
-        if (!this.delegateOf()) {
+        const dOf = this.delegateOf();
+        if (!dOf) {
             return [this]; //xxx(acg): maybe throw something instead of silent
         }
-        return [...this.delegateOf().delegationChain(), this];
+        return [...dOf.delegationChain(), this];
     }
 
     async checkAllRigs() {
@@ -272,7 +273,11 @@ class DelegableActionable extends Actionable {
     }
 
     root() {
-        return this.delegationChain()[0].first();
+        let di = this.delegateInitiate();
+        if (di) {
+            return di.root();
+        }
+        return this.first();
     }
 
     rootId() {

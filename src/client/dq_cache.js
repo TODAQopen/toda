@@ -54,11 +54,12 @@ class DQCache {
      */
     add(...dqs) {
         for (const dq of dqs) {
+            const root = dq.root();
             this.cache[dq.getHash()] =
-                { rootId: dq.rootId(),
+                { rootId: root.getHash(),
                   quantity: dq.quantity,
-                  displayPrecision: dq.displayPrecision,
-                  poptop: dq.popTop() };
+                  displayPrecision: root.displayPrecision,
+                  poptop: root.popTop() };
         }
         this._saveToDisk();
     }
