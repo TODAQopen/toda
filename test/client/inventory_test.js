@@ -17,14 +17,14 @@ describe("Archive", async () => {
         await inv.put(t.getAtoms());
         const h = t.getHash();
         assert.ok(fs.existsSync(inv.filePathForHash(h)));
-        inv.archive(h);
+        await inv.archive(h);
         assert.ok(!fs.existsSync(inv.filePathForHash(h)));
         assert.ok(fs.existsSync(inv.archivePathForHash(h)));
     });
 
     it("Shouldn't explode if trying to archive a file that does not exist", async () => {
         const inv = new LocalInventoryClient("./files/" + uuid());
-        inv.archive(Hash.fromHex("417f670328e674d0becd4aca5354574c7372f3f95e459caaf426e7516fe43688c4"));
+        await inv.archive(Hash.fromHex("417f670328e674d0becd4aca5354574c7372f3f95e459caaf426e7516fe43688c4"));
     });
 });
 
@@ -116,7 +116,7 @@ describe("Unowned file mechanism", async function() {
         assert.ok(inv.twistIdx.has(t1.getHash()));
         assert.ok(fs.existsSync(inv.filePathForHash(t1.getHash())));
 
-        inv.unown(t1.getHash());
+        await inv.unown(t1.getHash());
 
         assert.ok(!inv.files.has(t0.getHash()));
         assert.ok(inv.twistIdx.has(t0.getHash()));
@@ -140,7 +140,7 @@ describe("Unowned file mechanism", async function() {
         assert.ok(inv.twistIdx.has(t1.getHash()));
         assert.ok(fs.existsSync(inv.filePathForHash(t1.getHash())));
 
-        inv.unown(t0.getHash());
+        await inv.unown(t0.getHash());
 
         assert.ok(inv.files.has(t0.getHash()));
         assert.ok(inv.twistIdx.has(t0.getHash()));
@@ -155,7 +155,7 @@ describe("Unowned file mechanism", async function() {
         const t0 = (new TwistBuilder()).twist();
         const t1 = t0.createSuccessor().twist();
         await inv.put(t1.getAtoms());
-        inv.unown(Hash.fromHex("41574c7372f3f95e459caaf4267f670328e674d0becd4aca5354e7516fe43688c4"));
+        await inv.unown(Hash.fromHex("41574c7372f3f95e459caaf4267f670328e674d0becd4aca5354e7516fe43688c4"));
     });
 
     it("Can still get an unowned file", async function() {
@@ -166,7 +166,7 @@ describe("Unowned file mechanism", async function() {
         const t1 = t0.createSuccessor().twist();
 
         await inv.put(t1.getAtoms());
-        inv.unown(t0.getHash());
+        await inv.unown(t0.getHash());
 
         const atoms = await inv.get(t1.getHash());
         assert.ok(atoms);
@@ -181,7 +181,7 @@ describe("Unowned file mechanism", async function() {
         const t1 = t0.createSuccessor().twist();
 
         await inv.put(t1.getAtoms());
-        inv.unown(t1.getHash());
+        await inv.unown(t1.getHash());
 
         inv = new LocalInventoryClient(path);
 
@@ -199,7 +199,7 @@ describe("Unowned file mechanism", async function() {
 
         await inv.put(t0.getAtoms());
         await inv.put(t1.getAtoms());
-        inv.unown(t1.getHash());
+        await inv.unown(t1.getHash());
 
         inv = new LocalInventoryClient(path);
 
@@ -319,7 +319,7 @@ describe("DQ Cache", async function() {
         // sanity
         assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
                      14);
-        inv.archive(twist.getHash());
+        await inv.archive(twist.getHash());
         assert.equal(inv.dqCache.getBalance(twist.getHash()),
                      null);
     });
@@ -334,7 +334,7 @@ describe("DQ Cache", async function() {
         // sanity
         assert.equal(inv.dqCache.getBalance(twist.getHash()).totalQuantity,
                      14);
-        inv.unown(twist.getHash());
+        await inv.unown(twist.getHash());
         assert.equal(inv.dqCache.getBalance(twist.getHash()),
                      null);
     });
@@ -647,7 +647,7 @@ describe("_addAtoms()", async () => {
 
         const path = nodePath.resolve("./files/" + uuid());
         const inv = new LocalInventoryClient(path);
-        inv._addAtoms(t2.getAtoms());
+        await inv._addAtoms(t2.getAtoms());
         assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
         assert.equal(inv.files.get(t0.getHash()).n, 3);
     });
@@ -662,11 +662,11 @@ describe("_addAtoms()", async () => {
         const path = nodePath.resolve("./files/" + uuid());
         const inv = new LocalInventoryClient(path);
         // Add old first
-        inv._addAtoms(t1.getAtoms());
+        await inv._addAtoms(t1.getAtoms());
         assert.ok(inv.files.get(t0.getHash()).hash.equals(t1.getHash()));
         assert.equal(inv.files.get(t0.getHash()).n, 2);
         // Update
-        inv._addAtoms(t2.getAtoms());
+        await inv._addAtoms(t2.getAtoms());
         assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
         assert.equal(inv.files.get(t0.getHash()).n, 3);
     });
@@ -681,11 +681,11 @@ describe("_addAtoms()", async () => {
         const path = nodePath.resolve("./files/" + uuid());
         const inv = new LocalInventoryClient(path);
         // Add old first
-        inv._addAtoms(t0.getAtoms());
+        await inv._addAtoms(t0.getAtoms());
         assert.ok(inv.files.get(t0.getHash()).hash.equals(t0.getHash()));
         assert.equal(inv.files.get(t0.getHash()).n, 1);
         // Update
-        inv._addAtoms(t2.getAtoms());
+        await inv._addAtoms(t2.getAtoms());
         assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
         assert.equal(inv.files.get(t0.getHash()).n, 3);
     });
@@ -699,11 +699,11 @@ describe("_addAtoms()", async () => {
 
         const path = nodePath.resolve("./files/" + uuid());
         const inv = new LocalInventoryClient(path);
-        inv._addAtoms(t2.getAtoms());
+        await inv._addAtoms(t2.getAtoms());
         assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
         assert.equal(inv.files.get(t0.getHash()).n, 3);
         // Add older file
-        inv._addAtoms(t1.getAtoms());
+        await inv._addAtoms(t1.getAtoms());
         assert.ok(inv.files.get(t0.getHash()).hash.equals(t2.getHash()));
         assert.equal(inv.files.get(t0.getHash()).n, 3);
     });

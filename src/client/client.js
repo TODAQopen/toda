@@ -64,7 +64,7 @@ class TodaClient {
         for(const h of hs) {
             const twist = new Twist(await this.inv.get(h));
             if(!await this.isSatisfiable(twist)) {
-                this.inv.unown(twist.getHash());
+                await this.inv.unown(twist.getHash());
             }
         }
     }
@@ -494,7 +494,7 @@ class TodaClient {
         await this.inv.put(twist.getAtoms());
         if (this.shouldArchiveUnownedFiles &&
             !await this.isSatisfiable(twist)) {
-            this.inv.unown(twist.getHash());
+                await this.inv.unown(twist.getHash());
         }
     }
 

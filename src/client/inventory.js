@@ -26,7 +26,7 @@ class InventoryClient {
         throw new Error("not implemented");
     }
 
-    unown() {
+    async unown() {
 
     }
 
@@ -68,6 +68,14 @@ class LocalInventoryClient extends InventoryClient {
 
         if (!fs.existsSync(invRoot)) {
             fs.mkdirSync(invRoot, { recursive: true });
+        }
+        const archivePath = path.join(this.invRoot, "archive");
+        const unownedPath = path.join(this.invRoot, "unowned");
+        if (!fs.existsSync(archivePath)) {
+            fs.mkdirSync(archivePath, { recursive: true });
+        }
+        if (!fs.existsSync(unownedPath)) {
+            fs.mkdirSync(unownedPath, { recursive: true });
         }
 
         // this.files, this.twistIdx, and this.dqCache are documented in:
@@ -138,7 +146,7 @@ class LocalInventoryClient extends InventoryClient {
                 if (!this.findLatest(hash)) {
                     await this.loadFromDisk(hash);
                 } else {
-                    this.archive(hash);
+                    await this.archive(hash);
                 }
             }
             this._writeCachesToDisk();
@@ -212,13 +220,13 @@ class LocalInventoryClient extends InventoryClient {
         return { firstTwist, newTwists, nTwists };
     }
 
-    _addAtoms(atoms) {
+    async _addAtoms(atoms) {
         const twist = new Twist(atoms, atoms.focus);
         const existingLatest = this.findLatest(atoms.focus);
         if (existingLatest && !existingLatest.equals(atoms.focus)) {
             // the 'existing' file in the cache is
             //  newer than this file; archive this
-            this.archive(atoms.focus);
+            await this.archive(atoms.focus);
         } else {
             const { firstTwist, newTwists, nTwists } = this._smartHistory(twist);
             newTwists.forEach(h => this.twistIdx.set(h, firstTwist));
@@ -226,7 +234,7 @@ class LocalInventoryClient extends InventoryClient {
             this.files.set(firstTwist, {hash: twist.getHash(), n: nTwists});
             if (existing && existing.n < nTwists) {
                 // the 'existing' file in the cache is old; archive it
-                this.archive(existing.hash);
+                await this.archive(existing.hash);
             }
             // else it's a new file we don't know about yet; no archiving
         }
@@ -336,7 +344,7 @@ class LocalInventoryClient extends InventoryClient {
     async loadFromDisk(hash) {
         let atoms = await this._getFromDisk(hash);
         if (atoms) {
-            this._addAtoms(atoms);
+            await this._addAtoms(atoms);
         }
         return atoms;
     }
@@ -350,7 +358,7 @@ class LocalInventoryClient extends InventoryClient {
 
     async put(atoms, explicitPath) {
         await this._write(atoms, explicitPath);
-        this._addAtoms(atoms);
+        await this._addAtoms(atoms);
         const abject = Abject.fromTwist(new Twist(atoms, atoms.focus));
         if (abject &&
             abject instanceof DQ &&
@@ -361,17 +369,17 @@ class LocalInventoryClient extends InventoryClient {
         this._writeCachesToDisk();
     }
 
-    archive(hash) {
+    async archive(hash) {
         const f = this.filePathForHash(hash);
         if (this.shouldArchive && fs.existsSync(f)) {
-            fs.moveSync(f, this.archivePathForHash(hash), { overwrite: true });
+            await fs.rename(f, this.archivePathForHash(hash));
         } else if (this.deleteOld && fs.existsSync(f)) {
-            fs.removeSync(f);
+            await fs.remove(f);
         }
         this.dqCache.remove(hash);
     }
 
-    unown(hash) {
+    async unown(hash) {
         const firstHash = this.twistIdx.get(hash);
         this.dqCache.remove(hash);
         // If the hash is not in the inventory or if the most recent twist
@@ -382,8 +390,8 @@ class LocalInventoryClient extends InventoryClient {
         }
         // Move the file itself
         const f = this.filePathForHash(hash);
-        if (fs.existsSync(f)) {
-            fs.moveSync(f, this.unownedPathForHash(hash), { overwrite: true });
+        if (await fs.exists(f)) {
+            await fs.rename(f, this.unownedPathForHash(hash));
         }
         // Remove any references to this file
         this.files.delete(firstHash);
