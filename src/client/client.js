@@ -803,9 +803,10 @@ class TodaClient {
      *      if null does not populate the mintingInfo field
      * @param {Hash || Null} popTop : the hash to put into
      *      the poptop field; client's default if unspecified
+     * @param {{noHoist, noRemote, popTop: Hash}} opts: opts to pass to append()
      * @returns {Promise<{twist: Twist, root: Hash}>}
      */
-    async mint(quantity, precision, tetherHash, popTop, mintingInfo) {
+    async mint(quantity, precision, tetherHash, popTop, mintingInfo, opts) {
         tetherHash ||= this.defaultRelayHash;
         popTop ||= this.defaultTopLineHash;
         precision ||= 0;
@@ -822,11 +823,17 @@ class TodaClient {
         if (popTop) {
             dq.setPopTop(popTop);
         }
-        const dqTwist = await this.finalizeTwist(dq.buildTwist(),
-                                                 tetherHash);
+        const dqTwist = await this._append(null, 
+                                           dq.buildTwist(),
+                                           tetherHash,
+                                           null,
+                                           null,
+                                           undefined,
+                                           null,
+                                           opts);
 
         // HACK: This is a temporary solution for populating older poptops
-        if (popTop) {
+        if (popTop && !opts?.noRemote) {
             const relay = new RemoteRelayClient(this.defaultRelayUrl,
                                                 this.fileServerUrl,
                                                 popTop,
@@ -841,9 +848,14 @@ class TodaClient {
                                .buildTwist();
 
         dqNextTB.setPrev(dqTwist);
-        const dqNextTwist = await this.finalizeTwist(dqNextTB,
-                                                     dqTwist.getTetherHash());
-
+        const dqNextTwist = await this._append(null, 
+                                               dqNextTB,
+                                               dqTwist.getTetherHash(),
+                                               null,
+                                               null,
+                                               undefined,
+                                               null,
+                                               opts);
         return {twist: dqNextTwist, root: dqTwist.getHash()};
     }
 }
