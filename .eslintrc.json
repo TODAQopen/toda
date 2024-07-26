@@ -41,7 +41,7 @@
         ],
         "eol-last": [
             "error",
-            "never"
+            "always"
         ],
         "max-len": [
             "warn",

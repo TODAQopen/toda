@@ -29,7 +29,8 @@
     "test-debugger": " echo 'Visit chrome://inspect in chrome for your debugger\n'; mocha --inspect-brk --recursive --timeout 60000 --require test/fixtures.js",
     "test": "mocha --recursive --timeout 60000 --require test/fixtures.js",
     "build": "cd ./build && NODE_ENV=production npx webpack && cd ..",
-    "test-only": "mocha --timeout 60000 --require test/fixtures.js"
+    "test-only": "mocha --timeout 60000 --require test/fixtures.js",
+    "lint": "npx eslint src/*"
   },
   "dependencies": {
     "@peculiar/webcrypto": "^1.3.3",
