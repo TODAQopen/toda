@@ -62,21 +62,17 @@ class Line {
     }
 
     _colinearForwards(hash0, hash1) {
-        if (!hash0 || !hash1) return false;
-        if (hash0.equals(hash1)) return true;
-        if (this.successor(hash0)) {
-            return this._colinearForwards(this.successor(hash0), hash1);
+        while (hash0) {
+            if (hash0.equals(hash1)) return true;
+            hash0 = this.successor(hash0);
         }
-        return false;
     }
 
     _colinearBackwards(hash0, hash1) {
-        if (!hash0 || !hash1) return false;
-        if (hash0.equals(hash1)) return true;
-        if (this.prev(hash0)) {
-            return this._colinearBackwards(this.prev(hash0), hash1);
+        while (hash0) {
+            if (hash0.equals(hash1)) return true;
+            hash0 = this.prev(hash0);
         }
-        return false;
     }
 
     colinear(hash0, hash1 = this.focus) {
