@@ -49,6 +49,10 @@ class TodaClient {
         this.retryInterval = 1000;
 
         this.shouldArchiveUnownedFiles = true;
+
+        this.log = (s) => console.log(s);
+        this.warn = (s) => console.warn(s);
+        this.error = (s) => console.error(s);
     }
 
     async populateInventory() {
@@ -127,7 +131,7 @@ class TodaClient {
                     this._backwardsStopPredicate(fastTwist),
                     this.defaultTopLineHash);
         }
-        console.error("No default relay found.");
+        this.error("No default relay found.");
         return null;
     }
 
@@ -224,7 +228,7 @@ class TodaClient {
                 this._generateShield(tb.getPrevHash())));
             // xxx(acg): perhaps have twistbuilder create the packet
         } else {
-            //console.log("NOT setting shield.");
+            //this.log("NOT setting shield.");
         }
     }
 
@@ -255,7 +259,7 @@ class TodaClient {
     async _getHoistFromRelay(lead, meetHash) {
         const relay = this.getRelay(lead);
         if (!relay) {
-            console.error("NO RELAY FOUND FOR:", lead.getHash().toString());
+            this.error("NO RELAY FOUND FOR:", lead.getHash().toString());
             throw new WaitForHitchError(); //TODO: specialize this error
         }
         // Rehoist; in case we missed hoisting earlier
@@ -263,7 +267,7 @@ class TodaClient {
         if (hoist) {
             return hoist;
         }
-        console.warn(`Expected to find a hoist for lead ${lead.getHash()} and meet ${meetHash} but couldn't; rehoisting`);
+        this.warn(`Expected to find a hoist for lead ${lead.getHash()} and meet ${meetHash} but couldn't; rehoisting`);
         await relay.hoist(lead, meetHash);
         return (await this._waitForHoist(lead, relay)).hoist;
     }
@@ -372,7 +376,7 @@ class TodaClient {
                               tether;
                 await this.pull(nextTwist, pullUntil, { noRemote });
             } catch (e) {
-                console.warn("Hoist error:", e);
+                this.warn("Hoist error:", e);
                 //We don't need to throw here; it can be rehoisted later
             }
         }
@@ -512,7 +516,7 @@ class TodaClient {
                 await i.verifyTopline();
                 await i.verifyHitchLine(twist.getHash());
             } catch (e) {
-                console.error(e);
+                this.error(e);
                 throw e;
             }
         }
@@ -728,7 +732,7 @@ class TodaClient {
         if (exact) {
             const twist = await this._getOwned(exact);
             if (!twist) {
-                console.warn("DQ Cache contradicted inv; rebuilding cache");
+                this.warn("DQ Cache contradicted inv; rebuilding cache");
                 await this.inv.rebuildDQCache();
                 return await this.transfer({amount, typeHash, destHash});
             }
@@ -743,7 +747,7 @@ class TodaClient {
         if (excess) {
             const twist = await this._getOwned(excess);
             if (!twist) {
-                console.warn("DQ Cache contradicted inv; rebuilding cache");
+                this.warn("DQ Cache contradicted inv; rebuilding cache");
                 await this.inv.rebuildDQCache();
                 return await this.transfer({amount, typeHash, destHash});
             }
@@ -765,7 +769,7 @@ class TodaClient {
             }
             const twist = await this._getOwned(h);
             if (!twist) {
-                console.warn("DQ Cache contradicted inv; rebuilding cache");
+                this.warn("DQ Cache contradicted inv; rebuilding cache");
                 await this.inv.rebuildDQCache();
                 return await this.transfer({amount, typeHash, destHash});
             }
