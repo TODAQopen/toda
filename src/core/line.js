@@ -66,6 +66,7 @@ class Line {
             if (hash0.equals(hash1)) return true;
             hash0 = this.successor(hash0);
         }
+        return false;
     }
 
     _colinearBackwards(hash0, hash1) {
@@ -73,6 +74,7 @@ class Line {
             if (hash0.equals(hash1)) return true;
             hash0 = this.prev(hash0);
         }
+        return false;
     }
 
     colinear(hash0, hash1 = this.focus) {
