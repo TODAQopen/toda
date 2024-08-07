@@ -277,11 +277,14 @@ class LocalInventoryClient extends InventoryClient {
         return f.split(".")[0];
     }
 
-    async getOwned(hash) {
+    async getOwned(hash, retries = 3) {
         const newest = this.findLatest(hash);
         if (newest) {
             const atoms = await this.loadFromDisk(newest);
-            if (!atoms) {
+            if (!atoms && retries > 0) {
+                console.warn(`Expected to find ${hash} but couldn't; retrying`);
+                return await this.getOwned(hash, retries - 1);
+            } else if (!atoms) {
                 throw new Error(`Expected to find file ${newest} but` +
                                 " the file is not on disk");
             }
