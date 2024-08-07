@@ -50,9 +50,9 @@ class TodaClient {
 
         this.shouldArchiveUnownedFiles = true;
 
-        this.log = (s) => console.log(s);
-        this.warn = (s) => console.warn(s);
-        this.error = (s) => console.error(s);
+        this.log = (...args) => console.log(...args);
+        this.warn = (...args) => console.warn(...args);
+        this.error = (...args) => console.error(...args);
     }
 
     async populateInventory() {
