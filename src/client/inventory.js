@@ -82,6 +82,11 @@ class LocalInventoryClient extends InventoryClient {
         // ./inventory_docs.md
 
         // Populate these from files
+        this._loadOnDiskCaches();
+        this.inMemCache = {};
+    }
+
+    _loadOnDiskCaches() {
         this.files = new JSONFileBackedHashMap(
             this.invRoot + "/filesCache.json",
             [],
@@ -107,7 +112,6 @@ class LocalInventoryClient extends InventoryClient {
          * @type {DQCache}
          */
         this.dqCache = new DQCache(this.invRoot + "/dqCache.json");
-        this.inMemCache = {};
     }
 
     _areFileCachesCurrent() {
@@ -283,6 +287,9 @@ class LocalInventoryClient extends InventoryClient {
             const atoms = await this.loadFromDisk(newest);
             if (!atoms && retries > 0) {
                 console.warn(`Expected to find ${hash} but couldn't; retrying`);
+                // Reload the caches; possible another process has changed them
+                //  which this needs to respect
+                this._loadOnDiskCaches();
                 return await this.getOwned(hash, retries - 1);
             } else if (!atoms) {
                 throw new Error(`Expected to find file ${newest} but` +
