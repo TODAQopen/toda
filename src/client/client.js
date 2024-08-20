@@ -322,7 +322,7 @@ class TodaClient {
      */
     async _append(prev, next, tether, req, cargo,
                   preSignHook = () => {}, rigging,
-                  { noHoist, noRemote, popTop } = {} ) {
+                  { noHoist, noRemote, popTop, noSave } = {} ) {
         if (req) {
             // TODO: _potentially_ re-introduce check to ensure we control
             //  this key?
@@ -355,11 +355,19 @@ class TodaClient {
         // modifications before signing and hoisting
         preSignHook(next);
         await this.satisfyRequirements(next);
-        const nextTwist = next.twist();
-        await this.put(nextTwist);
 
+        const nextTwist = next.twist();
         const lastFast = nextTwist.lastFast();
-        if (tether && !tether.isNull() && lastFast && !noHoist) {
+        const shouldHoist = tether && !tether.isNull() && lastFast && !noHoist;
+
+        if (shouldHoist && noSave) {
+            throw new Error("noSave and shouldHoist cannot both be true");
+        }
+        if (!noSave) {
+            await this.put(nextTwist);
+        }
+
+        if (shouldHoist) {
             // TODO(acg): ensure this is FIRMLY written before hoisting.
             try {
                 let r = this.getRelay(lastFast);
@@ -645,7 +653,7 @@ class TodaClient {
      * @param {Number} quantity
      * @returns {Promise<Array>} [delegatedTwist, remainingTwist]
      */
-    async delegateQuantity(dq, quantity, { lastFast } = {}) {
+    async delegateQuantity(dq, quantity, { lastFast, doNotSaveNextDelegate } = {}) {
 
         // TODO(acg): There's a really weird
         // amount of back-forth between Abj and
@@ -666,7 +674,7 @@ class TodaClient {
         let dqDel = dq.delegate(quantity);
         let dqDelTwist = await this._append(null, dqDel.buildTwist(), dqTether,
                                             null, null, undefined, null,
-                                            { noRemote: true, popTop });
+                                            { noRemote: true, popTop, noSave: true });
 
         // Append to delegator for CONFIRM
         let dqNext = dq.createSuccessor();
@@ -678,12 +686,14 @@ class TodaClient {
         // Append to delegate for COMPLETE
         let dqDelNext = Abject.fromTwist(dqDelTwist).createSuccessor();
         dqDelNext.completeDelegate(Abject.fromTwist(dqNextTwist));
+        const delNextTether = doNotSaveNextDelegate ? null : dqTether;
         let dqDelNextTwist = await this._append(dqDelTwist,
                                                 dqDelNext.buildTwist(),
-                                                dqTether,
+                                                delNextTether,
                                                 null, null, undefined, null,
                                                 { noRemote: !lastFast,
-                                                  popTop });
+                                                  popTop,
+                                                  noSave: doNotSaveNextDelegate });
 
         return [dqDelNextTwist, dqNextTwist];
     }
@@ -753,7 +763,8 @@ class TodaClient {
             }
             const dq = Abject.fromTwist(twist);
             let [delegated, _] = await this.delegateQuantity(dq,
-                                                             quantity);
+                                                             quantity,
+                                                             { doNotSaveNextDelegate: true });
             return this._transfer(typeHash,
                                   [delegated],
                                   destHash,
@@ -782,9 +793,10 @@ class TodaClient {
         if (cv > quantity) {
             let lastBill = selected.pop();
             const dq = Abject.fromTwist(lastBill);
-            let [_, delegator] =
-                await this.delegateQuantity(dq, cv - quantity);
-            selected.push(delegator);
+            let [delegate, _] =
+            await this.delegateQuantity(dq, dq.quantity - cv + quantity, 
+                                        { doNotSaveNextDelegate: true });
+            selected.push(delegate);
         }
 
         if (cv >= quantity) {
