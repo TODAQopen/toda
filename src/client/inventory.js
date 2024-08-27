@@ -390,22 +390,31 @@ class LocalInventoryClient extends InventoryClient {
     }
 
     async unown(hash) {
-        const firstHash = this.twistIdx.get(hash);
         this.dqCache.remove(hash);
+        
         // If the hash is not in the inventory or if the most recent twist
         //  does not match `hash` return immediately (noop)
+        const firstHash = this.twistIdx.get(hash);
         if(!firstHash ||
            !this.files.get(firstHash).hash.equals(hash)) {
             return;
         }
+
+        /* NOTE: The order is important; we want to make sure we
+                 remove it from the cache before removing it from
+                 the folder in case a separate process attempts to
+                 call getOwned(), finds 'firstHash' in the files 
+                 cache, then explodes when it can't actually find 
+                 the file on disk */
+        // Remove any references to this file
+        this.files.delete(firstHash);
+        this._writeCachesToDisk();
+
         // Move the file itself
         const f = this.filePathForHash(hash);
         if (await fs.exists(f)) {
             await fs.rename(f, this.unownedPathForHash(hash));
         }
-        // Remove any references to this file
-        this.files.delete(firstHash);
-        this._writeCachesToDisk();
     }
 
     isArchived(hash) {
