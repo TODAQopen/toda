@@ -15,6 +15,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { HashMap } from './map.js';
+import { v4 } from 'uuid';
 
 /* HashMap subclass that stores the values in a given json file and tries to
  * load them upon initialization
@@ -39,10 +40,12 @@ class JSONFileBackedHashMap extends HashMap {
     }
 
     commit() {
+        const tmpPath = `${this.filePath}_${v4()}.tmp`;
         fs.writeFileSync(
-            this.filePath,
+            tmpPath,
             JSON.stringify(this.serializer(Object.fromEntries(this)))
         );
+        fs.moveSync(tmpPath, this.filePath, { overwrite: true });
     }
 
     clone() {
