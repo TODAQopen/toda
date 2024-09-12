@@ -9,6 +9,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { Hash } from '../core/hash.js';
 import { DQ } from '../abject/quantity.js';
+import { v4 } from 'uuid';
 
 /**
  * A persistent and in-memory cache of DQ information
@@ -187,7 +188,12 @@ class DQCache {
     }
 
     _saveToDisk() {
-        fs.writeFileSync(this.filePath, JSON.stringify(this.cache));
+        const tmpPath = `${this.filePath}_${v4()}.tmp`;
+        fs.writeFileSync(
+            tmpPath,
+            JSON.stringify(this.cache)
+        );
+        fs.moveSync(tmpPath, this.filePath, { overwrite: true });
     }
 
     /**
