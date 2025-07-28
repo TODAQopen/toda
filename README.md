@@ -9,7 +9,7 @@
 A TODA file is a representation of a digital asset. It is based on a novel cryptographic data structure.
 <br>
 <br>
-This package contains the library for interacting with low-level structures, as well as higher-level abstractions for application design.  It additionally contains the `toda` command-line tool to assist with development, debugging, admin and support.  Further, the CLI now contains a quick-start server for serving and viewing assets.
+This package contains the library for interacting with low-level structures, as well as higher-level abstractions for application design. 
 
 * Authors: https://engineering.todaq.net
 * Theoretics: https://arxiv.org/abs/2208.13617
@@ -18,15 +18,9 @@ This package contains the library for interacting with low-level structures, as 
 
 ## Table of contents
 
-- [Command Line Suite](#command-line-suite)
 - [Code Layout](#code-layout)
 - [TODA Client](#toda-client)
 
-## Command Line Suite
-
-`npm install -g todajs` using node >= 16 LTS, < 19
-
-See the [command line tools documentation](docs/cli.md)
 
 ## Code Layout
 
@@ -49,5 +43,5 @@ Higher-level structures describing contents of TODA assets, and how to apply the
 - Primitive: Boxes up values for float, string, boolean in a well-specified byte representation
 - Capability: a DelegableActionable intended for authorization
 
-## TODA Client
-Coming soon: while the command-line tools provide a window into the range of functionality provided by the core libraries, these are being abstracted into an application developer-friendly class.
+## client:
+Runtime object for interacting with TODA data and servers.
